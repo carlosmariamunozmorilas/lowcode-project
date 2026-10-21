@@ -25,4 +25,16 @@ does on trust and cannot evidence.
 
 ## Status
 
-Week 1. Repository initialised; project idea recorded.
+Week 3, as of 21 October 2026.
+
+- **Week 1** — repository, a minimal Flask application, and the project idea above.
+- **Week 2** — Claude and Gemini compared on the same prompt, with the raw
+  output kept in `experiments/week02/`. Claude chosen for the main build:
+  [`docs/week02-tool-comparison.md`](docs/week02-tool-comparison.md).
+- **Week 3** — the specification is drafted in
+  [`docs/specification.md`](docs/specification.md); the multi-file application
+  is generated from it in the lab on 28 October.
+
+**Known issue.** `requirements.txt` pins Flask 3.1.0 and Werkzeug 3.1.3, which
+carry six known advisories (`pip-audit`, 21 October 2026). The upgrade is due
+when the Week 3 lab regenerates the dependencies.
