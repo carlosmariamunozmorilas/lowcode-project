@@ -310,7 +310,26 @@ Designed now, written as SQL in **Week 5**, once the schema is final. Writing it
 
 ---
 
-## 9 · Open questions for the session ❓
+## 9 · Security surface — what Week 8 should find
+
+Authorisation is what AI-generated CRUD code gets wrong most reliably, because the model checks *authentication* — are you signed in? — and forgets *authorisation* — are you allowed to do this specific thing? The approve route concentrates four classic findings in one handler.
+
+| # | Finding | The question that exposes it |
+|---|---|---|
+| 1 | **IDOR** | Does `POST /requests/42/approve` verify the actor against *this* request, or only that a session exists? |
+| 2 | **Mass assignment** | Does a form POST containing `status=approved` get written straight into the model, letting a requester skip the workflow? |
+| 3 | **Client-side-only enforcement** | The Approve button is hidden for non-reviewers — is the route still open to anyone who curls it? |
+| 4 | **Race condition** | Two reviewers approving simultaneously: two audit rows and an ambiguous history? |
+
+Finding 3 is the most common output of the four, and it is why test 15 exists: curl `/approve` as the requester and expect a refusal, not a redirect.
+
+Scanners will not find most of these. Bandit and Semgrep catch injection, hardcoded secrets and unsafe deserialisation; they do not know who is allowed to approve what. That is the point of Week 8 — the report is triage and judgement, not a tool dump.
+
+`check_transition()` in `lifecycle.py` is the control, and the tests are the proof the control holds.
+
+---
+
+## 10 · Open questions for the session ❓
 
 1. **The approval deadlock.** Owner cannot approve own work. In a three-person team, nobody may be eligible. Admin override that logs loudly, or drop the rule?
 2. **Password storage.** Flask has no built-in. `werkzeug.security` is already a dependency — likely the answer, but Week 8 should confirm the algorithm is current.
@@ -319,6 +338,6 @@ Designed now, written as SQL in **Week 5**, once the schema is final. Writing it
 
 ---
 
-## 10 · Out of scope
+## 11 · Out of scope
 
 Stated so the generated code does not acquire them: no Gantt or dependencies, no time tracking, no chat or threaded comments, no file attachments, no multi-tenancy, no email sent by the app itself, no auto-assignment beyond a default owner per type, no public API beyond the two machine routes, no mobile app.

@@ -1,3 +1,7 @@
+-- Initial schema for MarketingOps.
+-- Drafted Week 2, to be finalised in Week 5 after the paper data model.
+-- The delete rule and the review check keys are still open decisions.
+
 -- Marketing operations workflow — Week 5 schema (SQLite)
 -- Dates stored as ISO 8601 text (YYYY-MM-DD HH:MM:SS), UTC.
 PRAGMA foreign_keys = ON;
