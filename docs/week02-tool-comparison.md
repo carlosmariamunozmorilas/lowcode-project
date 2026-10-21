@@ -1,12 +1,12 @@
 # Week 2 — Tool comparison
 
-Claude (Opus) vs Gemini (Pro). Two comparisons: the Week 1 prompt re-run for Block A, and the `/contact` feature built in the live session for Block B.
+Claude (Opus) vs Gemini (Pro), on the Week 1 prompt: re-run on Gemini in Block A, written up here for Block B. The Week 2 sheet asks for verbatim prompts, scores with evidence and a reasoned choice. It does not ask for a second feature to be built, so there is one comparison, not two.
 
 > Scores are mine to fill in. The evidence below is what was actually observed; the judgement is the part that is assessed.
 
 ---
 
-## Part 1 — Block A: re-running the Week 1 prompt
+## Re-running the Week 1 prompt
 
 **Claude's output:** produced in Week 1, saved in `experiments/week02/tool-a/`.
 **Gemini's output:** two runs on 2026-10-21, Gemini **Pro**, saved in
@@ -181,53 +181,6 @@ All three outputs respected all three: no database, no blueprints, no
 
 ---
 
-## Part 2 — Block B: the `/contact` feature
-
-**Date:** 2026-10-21, live session
-
-### The prompt
-
-Identical for both tools. Paste verbatim.
-
-```
-[paste here]
-```
-
-### Tool A — Claude
-
-Raw output: `experiments/week02/tool-a/`
-
-| Criterion | Score /5 | Evidence |
-|---|---|---|
-| Correctness | | |
-| Code quality | | |
-| Completeness | | |
-| Security | | |
-
-### Tool B — Gemini
-
-Raw output: `experiments/week02/tool-b/`
-
-| Criterion | Score /5 | Evidence |
-|---|---|---|
-| Correctness | | |
-| Code quality | | |
-| Completeness | | |
-| Security | | |
-
-### The tests
-
-| Input | Expected | Claude | Gemini |
-|---|---|---|---|
-| Empty submission | Rejected, not a 500 | | |
-| Invalid email (`notanemail`) | Rejected | | |
-| Message containing `<script>alert(1)</script>` | Escaped, not executed | | |
-| `curl` straight to the route, bypassing the browser | **Still rejected** | | |
-
-The last row decides it. Validation that only runs in the browser is not server-side validation, and a tool whose output fails that row did not build the feature that was asked for.
-
----
-
 ## Decision
 
 **Chosen for the main build:**
@@ -248,4 +201,3 @@ For the forum post.
 
 - [x] Gemini's raw output, two runs, in `experiments/week02/tool-b/run-1/` and `run-2/`, with `PROVENANCE.md` (2026-10-21)
 - [x] Claude's Week 1 output in `experiments/week02/tool-a/`
-- [ ] Both `/contact` outputs from the live session
