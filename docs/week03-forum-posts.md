@@ -4,7 +4,7 @@ Drafted before the live session of 28 October 2026, for the Block A forum:
 the chosen domain for a scope sanity-check, and the three required answers.
 
 These are the pre-session drafts. Every claim is evidenced elsewhere in this
-repository — the `127.0.0.1` finding and the dependency pinning come from
+repository — the bind-address finding and the dependency pinning come from
 [`week02-tool-comparison.md`](week02-tool-comparison.md), the lifecycle and the
 exclusion list from [`specification.md`](specification.md). What was actually
 posted was rewritten from these in my own words.
@@ -74,12 +74,14 @@ the clean-clone test and, from Week 7, the test suite.
 ## Answer 3 — two things a specification must state that a one-line request does not
 
 **The runtime environment.** My Week 2 comparison is the evidence: Claude and
-Gemini were given the same one-line prompt and both emitted
-`app.run(host="127.0.0.1")`, because the prompt never said where the app would
-run. That default is correct on a laptop and wrong inside a container in Week 9,
-and wrong on the internet in Week 10. Neither tool was at fault — the gap was in
-the request, and a specification closes it by stating the bind address, the port
-and the fact that this thing eventually lives behind a WSGI server.
+Gemini were given the same prompt, which never said where the app would run, and
+they filled that silence with opposite defaults. Claude bound to `127.0.0.1`,
+which works on a laptop and fails inside a container in Week 9. Gemini, twice,
+bound to `0.0.0.0`, which works in a container and on a laptop exposes the
+development server to everyone on the same Wi-Fi. Neither tool was at fault —
+the gap was in the request, and a specification closes it by stating the bind
+address, the port and the fact that this thing eventually lives behind a WSGI
+server.
 
 **What is excluded.** A one-line request can only add; it has no way of saying
 *not this*. Generated code fills silence with plausible features, so a spec that
