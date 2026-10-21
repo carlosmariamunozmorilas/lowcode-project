@@ -2,7 +2,11 @@
 
 Claude (Opus) vs Gemini (Pro), on the Week 1 prompt: re-run on Gemini in Block A, written up here for Block B. The Week 2 sheet asks for verbatim prompts, scores with evidence and a reasoned choice. It does not ask for a second feature to be built, so there is one comparison, not two.
 
-> Scores are mine to fill in. The evidence below is what was actually observed; the judgement is the part that is assessed.
+> **How the scores were made.** Drafted with Claude from measurements taken on
+> 2026-10-21 — `pip-audit`, `pycodestyle`, and a clean install of each
+> `requirements.txt` — then reviewed by me before merging. Claude is one of the
+> two tools being scored, so every score below cites a measurement rather than
+> an impression, and the Claude column deserves the more sceptical reading.
 
 ---
 
@@ -11,8 +15,6 @@ Claude (Opus) vs Gemini (Pro), on the Week 1 prompt: re-run on Gemini in Block A
 **Claude's output:** produced in Week 1, saved in `experiments/week02/tool-a/`.
 **Gemini's output:** two runs on 2026-10-21, Gemini **Pro**, saved in
 `experiments/week02/tool-b/run-1/` and `run-2/`, with `PROVENANCE.md`.
-
-> Scores are mine to fill in. The evidence below is what was actually observed; the judgement is the part that is assessed.
 
 > **Correction, 2026-10-21.** An earlier version of this section reported a
 > different Gemini result — Werkzeug left unpinned, no viewport meta tag, and the
@@ -66,23 +68,24 @@ Gemini's two runs produced byte-identical files.
 | colorama | `0.4.6 ; sys_platform == "win32"` | absent |
 | **Total pinned** | **8 of 8** | **7 of 7** |
 
-Both honoured the instruction: every dependency pinned to an exact version,
-transitive ones included. Run 1 said so above the file —
+Both pinned every package they listed, transitive ones included. Run 1 said so
+above the file —
 
 > *"This file pins Flask exactly to 3.1.0 along with its core dependencies to ensure fully deterministic installs."*
 
-— and on this occasion the claim and the artefact agree. Run 2 produced the same
-file and made no claim at all.
+— and every line of the file is indeed pinned. Run 2 produced the same file and
+made no claim at all.
 
 Two differences remain. Gemini resolved **older** versions of `click` and
-`Jinja2` than Claude, twice — not wrong, but a reminder that a pinned file
-freezes whatever the model believed current, which is not the same as current.
-Week 8 runs `pip-audit` over both.
+`Jinja2` than Claude, twice — a reminder that a pinned file freezes whatever the
+model believed current, which is not the same as current. The measurements below
+show what that costs.
 
-Claude additionally emitted `colorama` with an environment marker, a conditional
-dependency that installs only on Windows. Gemini omitted it. On this machine
-that is the difference between a `pip freeze` that matches the file and one that
-does not.
+And Claude emitted `colorama` with an environment marker, a conditional
+dependency that installs only on Windows. Gemini omitted it — which turns out to
+matter: on Windows a clean install of Gemini's file pulls `colorama` in anyway,
+unpinned. "Every line pinned" and "every dependency pinned" are not the same
+claim, and only the second is what the prompt asked for.
 
 ### `app.py`
 
@@ -165,14 +168,61 @@ entirely. Run 1 now exists only in `tool-b/run-1/`.
 That is why `experiments/` exists, why its README says a corrected file proves
 nothing, and why `tool-b/` carries a `PROVENANCE.md`.
 
+### Measurements
+
+Taken 2026-10-21 in throwaway virtual environments, so nothing touched the
+project's own `.venv`.
+
+**`pip-audit` against each `requirements.txt`** — known advisories, counted once each:
+
+| Package | Claude | Gemini | Fixed in |
+|---|---|---|---|
+| Flask `3.1.0` | 2 | 2 | 3.1.3 |
+| Werkzeug `3.1.3` | 4 | 4 | 3.1.9 |
+| Jinja2 | `3.1.6`: 0 | `3.1.4`: **3** | 3.1.6 |
+| **Total** | **6** | **9** | |
+
+Six of the nine are shared, and two of those six are the prompt's fault, not
+either tool's: *"Flask 3.1.0, pinned to that exact version"* pinned a version
+with two known advisories. Pinning did not make the application safe. It made
+it auditable — `pip-audit` can only report these because every version is
+fixed.
+
+**`pycodestyle` on each `app.py`:**
+
+| | Findings |
+|---|---|
+| Claude | 1 — `E501`, an 87-character line inside the HTML string. Within Ruff's default limit of 88, which is what Week 7 uses. |
+| Gemini run 1 | 2 — `E302` and `E305`, one blank line where PEP 8 wants two around a top-level function |
+| Gemini run 2 | 2 — the same two |
+
+**A clean install of each file on this machine (Windows), compared with what it pins:**
+
+| | Pinned | Installed | Installed but not in the file |
+|---|---|---|---|
+| Claude | 8 | 8 | none |
+| Gemini | 7 | 8 | **`colorama==0.4.6`** |
+
+`click` depends on `colorama` on Windows only. Claude listed it with a
+`sys_platform == "win32"` marker; Gemini did not list it, so pip resolves it
+freely. On the platform this course is taught on, Gemini's file does not meet
+the prompt's *"every dependency pinned to an exact version"*.
+
 ### Scores
+
+Out of 5.
 
 | Criterion | Claude | Gemini | Evidence |
 |---|---|---|---|
-| Correctness | | | All three run; all return 200 on `GET /`, checked 2026-10-21 |
-| Code quality | | | `PAGE` constant vs inline HTML; run 2 indents its HTML inside the string |
-| Completeness | | | 8/8 pinned incl. Windows marker vs 7/7; viewport in Claude, in one of two Gemini runs |
-| Security | | | Bind address differs; Gemini's click and Jinja2 are older |
+| Correctness | 5 | 5 | All three files run and return 200 on `GET /`; every explicit instruction met, Gemini more literally (`methods=['GET']`) |
+| Code quality | 5 | 3 | Claude: one long line, clean under Ruff; content separated from the route as a `PAGE` constant. Gemini: two PEP 8 errors in each run, HTML inline, and run 2 indents it inside the string and drops `lang` and `charset`. Scored on the weaker run, since you do not choose which run you get |
+| Completeness | 5 | 3 | Claude: clean install matches the file exactly; viewport, `lang`, `charset` present. Gemini: `colorama` installs unpinned on Windows; viewport, `lang` and `charset` in only one of two runs |
+| Security | 3 | 2 | Both: debug off; Flask and Werkzeug carry 6 shared advisories. Gemini: 3 more from Jinja2 3.1.4, and `0.0.0.0` puts the development server — with those Werkzeug advisories — on the local network when run as instructed |
+| **Total** | **18** | **13** | |
+
+**What these scores cannot show.** Claude was sampled once and Gemini twice, so
+Gemini's variability is measured and Claude's is not. A second Claude run could
+vary as much. The Week 3 lab is the place to find out.
 
 ### Exclusions
 
@@ -183,17 +233,51 @@ All three outputs respected all three: no database, no blueprints, no
 
 ## Decision
 
-**Chosen for the main build:**
+**Chosen for the main build:** Claude.
 
 **Why, in terms of the evidence above:**
 
+- **Its `requirements.txt` is complete on the platform I build on.** A clean
+  install matches the file exactly. Gemini's leaves `colorama` floating on
+  Windows, which defeats the reason for pinning.
+- **Fewer known vulnerabilities from its own choices** — 6 advisories against 9.
+  The difference is entirely Jinja2: Claude chose 3.1.6, Gemini 3.1.4.
+- **Closer to what Weeks 6 and 7 will mark.** Viewport, `lang` and `charset` are
+  present, and the code is clean under the linter Week 7 uses. Gemini dropped
+  all three in one of its two runs.
+
+What Gemini did better, and what I keep from it: it read the specification more
+literally, and its `0.0.0.0` is the right default for the container in Week 9.
+Gemini stays in use as the second opinion and for long-document reading, where
+its variability matters less.
+
 **What had to be fixed before integrating:**
+
+1. **The bind address.** Claude's `127.0.0.1` cannot be reached from outside a
+   container. It has to come from the environment before Week 9, and the
+   Week 3 specification should state it, since neither model could guess it.
+2. **Flask and Werkzeug.** The project's own `requirements.txt` is Claude's
+   output, so the six shared advisories are in the main repository today.
+   Upgrading to Flask 3.1.3 and Werkzeug 3.1.9 clears them. That is due when
+   the Week 3 lab regenerates the application and its dependencies, and in any
+   case before anything is deployed in Week 10.
 
 ---
 
 ## One surprising difference
 
 For the forum post.
+
+> I expected the surprising difference to be an unpinned dependency, and it was
+> — just not the one I first wrote down. My first comparison said Gemini left
+> Werkzeug without a version. That turned out to be my own mistake: I had read
+> the reply off the page as text, and the text was cut off mid-line. Re-running
+> it and saving the files showed Werkzeug pinned. The real gap was a package
+> that was not in Gemini's file at all. `click` needs `colorama` on Windows, so
+> a clean install of Gemini's "fully pinned" file quietly pulls it in at
+> whatever version pip finds. Claude listed it with a Windows-only marker. Same
+> prompt, and the difference only shows up when you install it on the machine
+> you actually use.
 
 ---
 
