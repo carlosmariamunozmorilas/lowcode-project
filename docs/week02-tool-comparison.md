@@ -270,13 +270,14 @@ For the forum post.
 
 > I expected the surprising difference to be an unpinned dependency, and it was
 > — just not the one I first wrote down. My first comparison said Gemini left
-> Werkzeug without a version. That turned out to be my own mistake: I had read
-> the reply off the page as text, and the text was cut off mid-line. Re-running
-> it and saving the files showed Werkzeug pinned. The real gap was a package
-> that was not in Gemini's file at all. `click` needs `colorama` on Windows, so
-> a clean install of Gemini's "fully pinned" file quietly pulls it in at
-> whatever version pip finds. Claude listed it with a Windows-only marker. Same
-> prompt, and the difference only shows up when you install it on the machine
+> Werkzeug without a version. That was a mistake in how I collected the
+> evidence: I had Claude read Gemini's reply through its Chrome extension, as
+> page text, and the text was cut off mid-line. When I re-ran the prompt and
+> saved the actual files, Werkzeug was pinned. The real gap was a package that
+> wasn't in Gemini's file at all: `click` needs `colorama` on Windows, so a
+> clean install of Gemini's "fully pinned" `requirements.txt` quietly pulls it
+> in at whatever version pip finds. Claude listed it with a Windows-only marker. Same
+> prompt — and the difference only shows up when you install it on the machine
 > you actually use.
 
 ---
