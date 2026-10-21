@@ -1,1 +1,20 @@
-[paste the exact prompt used for every tool]
+The exact prompt, used identically for every tool (Week 1 re-run, Block A).
+
+Entered into Claude in Week 1 and re-run verbatim in Gemini on 2026-10-21.
+
+----------------------------------------------------------------------
+Write a minimal Flask web application for Python 3.11.
+
+- A single file called app.py
+- Flask 3.1.0, pinned to that exact version
+- One route, GET /, returning an HTML page with an <h1> and a short paragraph
+- Runs with `python app.py` on port 5000, debug off
+- Also produce requirements.txt with every dependency pinned to an exact version
+
+Do not add a database, blueprints, or a templates directory. Keep it to those two files.
+----------------------------------------------------------------------
+
+Caveat, recorded rather than hidden: the prompt was entered into Gemini through
+browser automation and the leading "- " of the first bullet was lost, so Gemini
+received "A single file called app.py". Everything else was identical, and the
+instruction itself survived intact.
