@@ -249,7 +249,68 @@ Each gets `docs/portfolio/automation-0N.md` with the business problem (who, how 
 
 ---
 
-## 8 · Open questions for the session ❓
+## 8 · Seed data
+
+The schema is real; only its contents are invented. Without rows there is no interface to screenshot in Week 6, no demo in Week 10, nothing for automation #4 to summarise and nothing to present on 13 January.
+
+**Seed data and test fixtures are different things and must not share a file.**
+
+| | Seed | Fixtures |
+|---|---|---|
+| Purpose | make the demo credible | make a test deterministic |
+| Size | tens of rows | two or three |
+| Lives in | `schema/002_seed.sql`, run by an explicit flag | `tests/conftest.py` |
+| Lifetime | persists | created and destroyed per test |
+
+A test that depends on demo data breaks every time the demo changes. The seed must never run automatically in production.
+
+### Shape
+
+**8 users:** 2 requesters, 3 owners, 2 reviewers, 1 admin. Enough that "the owner cannot approve their own work" has someone left to approve.
+
+**~24 requests**, spread across every status and every type:
+
+| Status | Count | Type | Count |
+|---|---|---|---|
+| `submitted` | 4 | `content` | 7 |
+| `assigned` | 6 | `campaign` | 6 |
+| `in_review` | 3 | `landing_page` | 4 |
+| `approved` | 8 | `lead` | 4 |
+| `rejected` | 2 | `data` | 3 |
+| `cancelled` | 1 | | |
+
+### Timestamps must be backdated — this is the part people get wrong
+
+Spread over **the previous eight weeks**. If every row is written with `datetime('now')`, every transition happens in the same second, so cycle time is zero, nothing is ever stuck, and automation #4 produces a weekly report that says nothing at all.
+
+Approved requests should show a realistic spread of 2 to 14 days end to end.
+
+### Cases the seed must contain
+
+Not decoration — each one makes a rule or a metric demonstrable:
+
+1. **A request in `assigned` with an open task** — proves the review guard refuses it
+2. **A request sitting in `in_review` for 14+ days** — gives the "stuck beyond N days" metric something to report
+3. **A rework loop** — `in_review → assigned → in_review`, so the timeline shows a round trip
+4. **A reassignment** — `assigned → assigned` with a different owner, the transition that does not change status
+5. **A rejected request with a note explaining why**
+6. **An approved request where the reviewer is neither requester nor owner** — the happy path, provable
+7. **Two automation events sharing an `external_id`** — one request created, proving idempotency
+8. **Requests of each type with their type-specific review checks**, some passed, some not
+
+### Content rules
+
+Invented, but plausible. Marketing request titles of the kind a real team raises — a one-pager for an outbound push, a landing page for a webinar, a pricing copy refresh.
+
+**Nothing real.** No real client names, no real campaign data, no real email addresses, no real figures. Week 11 covers exactly this, with the Data Protection Commission's guidance, and a public repository is a public repository. Seed passwords are obvious placeholders, hashed the same way real ones would be.
+
+### When
+
+Designed now, written as SQL in **Week 5**, once the schema is final. Writing it earlier means rewriting it after the 28th.
+
+---
+
+## 9 · Open questions for the session ❓
 
 1. **The approval deadlock.** Owner cannot approve own work. In a three-person team, nobody may be eligible. Admin override that logs loudly, or drop the rule?
 2. **Password storage.** Flask has no built-in. `werkzeug.security` is already a dependency — likely the answer, but Week 8 should confirm the algorithm is current.
@@ -258,6 +319,6 @@ Each gets `docs/portfolio/automation-0N.md` with the business problem (who, how 
 
 ---
 
-## 9 · Out of scope
+## 10 · Out of scope
 
 Stated so the generated code does not acquire them: no Gantt or dependencies, no time tracking, no chat or threaded comments, no file attachments, no multi-tenancy, no email sent by the app itself, no auto-assignment beyond a default owner per type, no public API beyond the two machine routes, no mobile app.
