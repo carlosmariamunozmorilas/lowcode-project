@@ -7,5 +7,6 @@ as its evidence.
 - `prompt.txt` — the exact prompt, used identically for every tool
 - `tool-a/` — first assistant's output, as received
 - `tool-b/` — second assistant's output, as received
+- `tool-c/` — third assistant's output, as received
 
 Save the output before touching it. A corrected file proves nothing.
