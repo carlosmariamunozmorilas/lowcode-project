@@ -13,28 +13,36 @@ posted was rewritten from these in my own words.
 
 ## Post 0 — chosen domain, for the scope sanity-check
 
-**Domain:** marketing operations — a system of record for marketing work
-requests, where the approval trail is enforced by the database rather than
-documented in a policy.
+**Domain:** marketing operations with an ROI layer — a system of record in
+which every piece of marketing work states the KPI it is meant to move, by how
+much and at what cost, and is closed with what it actually achieved. ROI is
+computed on gross profit with people's time counted as a cost, not as ROAS.
 
-**What a user does with it (three things):** raise a request; pick it up as an
-owner and work it; review it against a type-specific checklist and approve or
-reject it. Every status change writes an append-only transition row, so the
-question "who approved this, and were they allowed to?" has an answer.
+**What a user does with it (three things):** propose an action and name the
+lever it pulls, with a hypothesis and a cost in money and hours; take it through
+review and approval against a type-specific checklist; close it with the actual
+result and a confidence label, so the project's real return is on the record.
+Every status change, target and measurement is append-only, so "who signed this
+off, and who moved the target afterwards?" always has an answer.
 
-**Out of scope, deliberately:** no Gantt charts or task dependencies, no time
-tracking, no comment threads, no file attachments, no multi-tenancy, no email
-sent by the app itself. These are listed in the spec so the generated code does
-not quietly acquire them.
+**Out of scope, deliberately:** no formula builder, no live connections to ad
+platforms, no causal attribution or forecasting, no timesheets, no comment
+threads, no file attachments, no multi-tenancy, no email sent by the app itself.
+These are listed in the spec so the generated code does not quietly acquire
+them.
 
-**What I would like sanity-checked:** two things.
+**What I would like sanity-checked:** three things.
 
-1. Is a six-state lifecycle with role-based approval the right size for ten
-   weeks, or should I cut a state? I have `submitted → assigned → in_review →
-   approved / rejected / cancelled`.
-2. My rule that the owner who did the work cannot approve it deadlocks in a
-   three-person team — nobody is left eligible. Is an admin override that logs
-   loudly the normal answer to this, or is the rule itself wrong?
+1. Is an ROI layer on top of a request workflow the right size for ten weeks?
+   The KPI tree is fixed — revenue = sessions × conversion × order value — and
+   the figures arrive by hand or from one automation, never from live APIs.
+2. Attribution: I don't claim to prove what caused a change. Each result
+   carries a label — holdout, before/after, or correlated — and the interface
+   never shows a correlated result as proven. Is that an honest enough answer
+   for this course, or should I narrow it further?
+3. My rule that whoever requested or did the work cannot approve it — or
+   certify its result — deadlocks in a three-person team. Is an admin override
+   that logs loudly the normal answer, or is the rule itself wrong?
 
 **And one ask:** is there a route through the Industry Engagement Forum to
 attach this to a real company's approval process? It would make the Week 12
@@ -85,8 +93,8 @@ server.
 
 **What is excluded.** A one-line request can only add; it has no way of saying
 *not this*. Generated code fills silence with plausible features, so a spec that
-does not say "no comment threads, no attachments, no time tracking" will get them
-eventually, and then they need testing, securing and explaining. The exclusion
+does not say "no live ad-platform connections, no forecasting, no attachments"
+will get them eventually, and then they need testing, securing and explaining. The exclusion
 list is the cheapest section in my spec and the one that will save the most work.
 
 *(A third, if a third is wanted: who is allowed to do what. A one-liner that says
