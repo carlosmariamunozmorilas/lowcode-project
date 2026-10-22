@@ -4,6 +4,10 @@ A request-tracking application for marketing teams: submit a request, route it
 to an owner, review it against a checklist, approve it, and log every
 transition so the approval trail is auditable.
 
+**New here?** [`docs/overview.md`](docs/overview.md) explains the whole
+application in plain English — a request from start to finish, who does what,
+and the four automations around it.
+
 Built for the CCT College Dublin *Certificate in Low-Code, No-Code & AI-Assisted
 Application Development* (QQI Level 7, Oct 2026 – Jan 2027).
 
