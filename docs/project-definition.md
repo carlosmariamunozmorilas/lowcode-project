@@ -19,7 +19,7 @@ A system of record for marketing work requests, in which the approval trail is e
 | `requester` | Sales rep, founder, product | Open requests, view their own, cancel their own |
 | `owner` | Marketing specialist | Own a request, add and complete tasks, send to review |
 | `reviewer` | Marketing lead, legal, brand | Approve or reject — only if not the requester and not the owner |
-| `admin` | Ops | Everything, plus the override on the rule above |
+| `admin` | Ops | Everything — but bound by the same rule: cannot approve a request they raised or worked on. Whether admins get a logged override for small teams is an **open decision** (`specification.md` §10) |
 
 ### The lifecycle
 
@@ -92,7 +92,7 @@ Four automations, each documented as `docs/portfolio/automation-0N.md` with: the
 
 **Built in Make** (recommended by the course: free tier allows multi-step scenarios and 1,000 operations; Zapier's free tier caps at two steps).
 
-**The boundary that applies to all four:** they talk to the application through `POST /api/events`. None of them touches the database directly. From layer 38 of the influence model — *do not let a recommendation silently become an unrestricted write action.*
+**The boundary that applies to all four:** they talk to the application only through its API — `POST /api/events` for the two that create work, `GET /api/metrics` for the two that report. None of them touches the database directly. From layer 38 of the influence model — *do not let a recommendation silently become an unrestricted write action.*
 
 ### Automation 1 — Paid media lead intake · Week 4
 

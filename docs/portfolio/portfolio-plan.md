@@ -23,14 +23,21 @@ From the Week 4 brief, non-negotiable:
 
 ## The shared contract
 
-All four reach the application only through `POST /api/events`. None touches the database.
+All four reach the application only through its API. None touches the database.
+
+| Automations | Route | Direction |
+|---|---|---|
+| 1 · Lead intake, 3 · Threshold alert | `POST /api/events` | create work |
+| 2 · Daily digest, 4 · Weekly summary | `GET /api/metrics` | read aggregates |
+
+The two that write send:
 
 ```json
 { "source": "...", "external_id": "...", "payload": { } }
 ```
 
-- **Signed** — `X-Signature`, HMAC-SHA256 of the raw body, secret from the environment
-- **Idempotent** — `UNIQUE (source, external_id)`; a redelivery returns `200` and changes nothing
+- **Signed** — `X-Signature`, HMAC-SHA256 of the raw body, secret from the environment; the two `GET` calls are signed too
+- **Idempotent** — `UNIQUE (source, external_id)`; a redelivery returns `200` and changes nothing. Applies to the two that write; reading twice changes nothing by definition
 - **Untrusted** — the payload is attacker-controlled; whitelist the fields read, never interpolate into SQL or HTML
 - **Attributed** — each automation runs as its own service user, so the audit log names an actor instead of showing a null
 

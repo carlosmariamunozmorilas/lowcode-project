@@ -168,6 +168,8 @@ Check keys, taken from the governance layer of the AI-Era influence model rather
 
 Every lifecycle route goes through `check_transition()` before writing. No route writes a status directly.
 
+**Every status change is one transaction.** The route updates `requests.status` and inserts the matching `request_transitions` row inside a single database transaction: both are written, or neither is. Without that, a failure between the two writes leaves a request whose status says one thing and whose history says another — an approval with no record of who approved it, which is the one thing this application exists to prevent. Test 10 checks the result; the transaction is what guarantees it.
+
 ### `POST /api/events`
 
 ```json
@@ -217,7 +219,7 @@ Week 7 asks for at least eight covering valid, invalid, empty and boundary input
 **`test_requests.py`**
 8. A request with an open task cannot enter review
 9. A request with unpassed required checks cannot be approved
-10. `requests.status` always equals the latest transition's `to_status`
+10. `requests.status` always equals the latest transition's `to_status` — including when the transition insert fails, in which case the status change is rolled back too
 
 **`test_api_events.py`**
 11. Valid signed event creates a request
@@ -234,7 +236,7 @@ Fifteen. Deliberately more than eight, and all of 1–7 run in milliseconds.
 
 ## 7 · The portfolio components — 40%
 
-All four built in **Make**. All four reach the app only through `POST /api/events`.
+All four built in **Make**. All four reach the app only through its own API, never its database: the two that create work (1 and 3) send events with `POST /api/events`, and the two that report (2 and 4) read aggregates with `GET /api/metrics`.
 
 | | Make modules | `external_id` | On duplicate | On partial failure |
 |---|---|---|---|---|
