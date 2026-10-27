@@ -51,6 +51,7 @@ answered:
 | | |
 |---|---|
 | [`docs/overview.md`](docs/overview.md) | the application in plain English |
+| [`docs/influence-models.md`](docs/influence-models.md) | where the ideas come from: my influence models, and what the application takes from them |
 | [`docs/design/`](docs/design/README.md) | the design pack against the brief: ERD, roles, DFD, STRIDE, GDPR |
 | [`docs/specification.md`](docs/specification.md) | the technical design: entities, routes, tests, security |
 | [`docs/week03-slice.md`](docs/week03-slice.md) | the first small slice the Week 3 lab generates |
