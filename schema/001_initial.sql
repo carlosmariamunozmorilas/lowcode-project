@@ -1,6 +1,7 @@
 -- Initial schema for MarketingOps with the ROI layer.
 -- Drafted Week 2, reshaped 22 October for the ROI layer, given a named
--- reviewer and an outbox on 27 October for the project brief, finalised in
+-- reviewer and an outbox on 27 October for the project brief, then a fixed
+-- prediction before review and a decision at close. Finalised in
 -- Week 5 after the paper data model. The delete rule is still an open decision.
 
 -- Marketing operations workflow — Week 5 schema (SQLite)
@@ -72,6 +73,7 @@ CREATE TABLE requests (
     window_end     TEXT,
     actual_delta   REAL,
     confidence     TEXT             CHECK (confidence IN ('holdout', 'before_after', 'correlated')),
+    decision       TEXT             CHECK (decision IN ('scale', 'hold', 'redesign', 'retire')),
     created_at     TEXT    NOT NULL DEFAULT (datetime('now')),
     -- An unowned request cannot be past the submitted stage.
     CHECK (status = 'submitted' OR status = 'cancelled' OR owner_id IS NOT NULL),
@@ -79,8 +81,13 @@ CREATE TABLE requests (
     -- who asked for the work or the person who did it.
     CHECK (status NOT IN ('in_review', 'approved', 'closed') OR reviewer_id IS NOT NULL),
     CHECK (reviewer_id IS NULL OR (reviewer_id <> requester_id AND reviewer_id IS NOT owner_id)),
-    -- Nothing is closed without its result and how sure we are of it.
-    CHECK (status <> 'closed' OR (actual_delta IS NOT NULL AND confidence IS NOT NULL))
+    -- The prediction is fixed before review, so it cannot be fitted to the result.
+    CHECK (status NOT IN ('in_review', 'approved', 'closed')
+           OR (expected_delta IS NOT NULL AND window_start IS NOT NULL AND window_end IS NOT NULL)),
+    CHECK (window_start IS NULL OR window_end IS NULL OR window_end > window_start),
+    -- Nothing is closed without its result, how sure we are of it, and what
+    -- the team decides to do next.
+    CHECK (status <> 'closed' OR (actual_delta IS NOT NULL AND confidence IS NOT NULL AND decision IS NOT NULL))
 );
 
 CREATE INDEX idx_requests_status  ON requests(status);

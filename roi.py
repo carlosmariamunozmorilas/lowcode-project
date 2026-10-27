@@ -13,6 +13,11 @@ The KPI tree is fixed: revenue = sessions x conversion rate x average order
 value. A lever moves exactly one of those three; the revenue it is credited
 with holds the other two at their baseline. That is a first-order estimate,
 and it ignores interaction between levers on purpose.
+
+What ROI divides by is stated, because the same gain gives a different ratio
+over a different denominator: here it is always the full investment of the
+action, cash plus people time. Losses are reported as computed; a ratio below
+-1 means the action lost more than it cost, and nothing clips it.
 """
 
 from collections.abc import Iterable
@@ -51,6 +56,18 @@ def incremental_gross_profit(revenue_delta: float, gross_margin: float) -> float
     return revenue_delta * gross_margin
 
 
+def net_gain(gross_profit_delta: float, invested: float) -> float:
+    """Profit change minus investment, in euros. Defined even when ROI is not."""
+    return gross_profit_delta - invested
+
+
+def break_even_revenue(invested: float, gross_margin: float) -> float:
+    """The extra revenue an action must bring in for its ROI to reach zero."""
+    if gross_margin <= 0:
+        raise ValueError("gross margin must be above zero")
+    return invested / gross_margin
+
+
 def roi(gross_profit_delta: float, invested: float) -> float | None:
     """Net return per euro invested, or None when nothing was invested.
 
@@ -59,7 +76,7 @@ def roi(gross_profit_delta: float, invested: float) -> float | None:
     """
     if invested == 0:
         return None
-    return (gross_profit_delta - invested) / invested
+    return net_gain(gross_profit_delta, invested) / invested
 
 
 @dataclass(frozen=True)

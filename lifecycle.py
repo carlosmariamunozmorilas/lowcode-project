@@ -26,6 +26,10 @@ ALLOWED: dict[Status, frozenset[Status]] = {
 # The app never presents a before/after comparison as proof.
 CONFIDENCE: frozenset[str] = frozenset({"holdout", "before_after", "correlated"})
 
+# What the team does next with what it learned. A result without a decision
+# is a number nobody acts on.
+DECISIONS: frozenset[str] = frozenset({"scale", "hold", "redesign", "retire"})
+
 
 class TransitionError(Exception):
     """Raised when a transition is not permitted by the lifecycle or by policy."""
@@ -42,6 +46,10 @@ class Request:
     actual_delta: float | None = None
     confidence: str | None = None
     reviewer_id: int | None = None
+    expected_delta: float | None = None
+    window_start: str | None = None
+    window_end: str | None = None
+    decision: str | None = None
 
 
 @dataclass(frozen=True)
@@ -54,8 +62,9 @@ def check_transition(request: Request, to_status: Status, actor: User) -> None:
     """Validate a proposed status change. Raises TransitionError if refused.
 
     Separate gates, deliberately kept separate so each fails its own test: the
-    status graph, what review needs (including a named reviewer), the approval
-    policy, and what closing needs.
+    status graph, what review needs (a lever, a hypothesis, the expected change
+    and its window, a named reviewer), the approval policy, and what closing
+    needs (the result, a confidence label and a decision).
     """
     if to_status not in ALLOWED.get(request.status, frozenset()):
         raise TransitionError(
@@ -69,6 +78,18 @@ def check_transition(request: Request, to_status: Status, actor: User) -> None:
             raise TransitionError(
                 "an action cannot enter review without a lever and a hypothesis"
             )
+        # The prediction is fixed before any result exists, so it cannot be
+        # written to fit the result afterwards.
+        if request.expected_delta is None:
+            raise TransitionError(
+                "an action cannot enter review without its expected change"
+            )
+        if not (request.window_start and request.window_end):
+            raise TransitionError(
+                "an action cannot enter review without its measurement window"
+            )
+        if request.window_end <= request.window_start:
+            raise TransitionError("the measurement window must end after it starts")
         # Named now, so the approval goes to one accountable person and the
         # automation that asks for it knows whom to ask.
         if request.reviewer_id is None:
@@ -103,4 +124,9 @@ def check_transition(request: Request, to_status: Status, actor: User) -> None:
         if request.confidence not in CONFIDENCE:
             raise TransitionError(
                 "an action cannot be closed without a confidence label"
+            )
+        if request.decision not in DECISIONS:
+            raise TransitionError(
+                "an action cannot be closed without a decision: "
+                "scale, hold, redesign or retire"
             )
