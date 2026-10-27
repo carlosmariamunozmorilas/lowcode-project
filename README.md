@@ -32,18 +32,35 @@ The campaign that looks healthy on ROAS loses money. The fix that never appears
 on a ROAS report returns the most. These figures come from
 [`roi.py`](roi.py), not from a spreadsheet.
 
+## Against the project brief
+
+The course's project brief sets six minimum requirements. Where each one is
+answered:
+
+| Requirement | Here |
+|---|---|
+| Data model, ≥ 3 related tables | 12 tables — [ERD](docs/design/erd.md) |
+| Automations: scheduled, event-triggered, human approval | Monday intake · drift alert on each new figure · approval routing to a named reviewer, plus an AI weekly report — [portfolio plan](docs/portfolio/portfolio-plan.md) |
+| ≥ 2 roles, enforced on the data | 5 roles, four layers of enforcement — [roles](docs/design/roles.md) |
+| Level-1 data flow diagram | [DFD](docs/design/dfd.md) |
+| STRIDE threat analysis | 18 threats on 11 boundary-crossing flows — [STRIDE](docs/design/stride.md) |
+| Data protection | staff data only, no customer data — [GDPR](docs/design/gdpr.md) |
+
 ## What is where
 
 | | |
 |---|---|
 | [`docs/overview.md`](docs/overview.md) | the application in plain English |
+| [`docs/design/`](docs/design/README.md) | the design pack against the brief: ERD, roles, DFD, STRIDE, GDPR |
 | [`docs/specification.md`](docs/specification.md) | the technical design: entities, routes, tests, security |
+| [`docs/week03-slice.md`](docs/week03-slice.md) | the first small slice the Week 3 lab generates |
 | [`docs/project-definition.md`](docs/project-definition.md) | scope, invariants and the week-by-week plan |
 | [`docs/portfolio/portfolio-plan.md`](docs/portfolio/portfolio-plan.md) | the four automations — the 40% portfolio |
 | [`lifecycle.py`](lifecycle.py) | who may move an action to which stage, and what each stage requires |
 | [`roi.py`](roi.py) | investment, incremental revenue and profit, ROI |
 | [`schema/001_initial.sql`](schema/001_initial.sql) | the database, with its append-only record |
 | [`docs/week02-tool-comparison.md`](docs/week02-tool-comparison.md) | Claude, Gemini and ChatGPT on the same prompt, measured |
+| [`experiments/week02/`](experiments/week02/) | the raw output of all three tools behind that comparison |
 
 ## Project idea
 
@@ -72,15 +89,16 @@ and the append-only record all remain; the ROI layer sits on top.
 
 ## Status
 
-Week 3, as of 22 October 2026.
+Week 3, as of 27 October 2026.
 
 - **Week 1** — repository, a minimal Flask application, and the project idea above.
 - **Week 2** — Claude, Gemini and ChatGPT compared on the same prompt, with the
   raw output kept in `experiments/week02/`. Claude chosen for the main build:
   [`docs/week02-tool-comparison.md`](docs/week02-tool-comparison.md).
-- **Week 3** — the specification is rewritten for the ROI layer, and its core
-  rules already run: `lifecycle.py`, `roi.py` and the schema. The multi-file
-  application is generated from the specification in the lab on 28 October.
+- **Week 3** — the specification is rewritten for the ROI layer and aligned
+  with the project brief, and its core rules already run: `lifecycle.py`,
+  `roi.py` and the schema. A first slice of the application is generated from
+  the specification in the lab on 28 October.
 
 **Known issue.** `requirements.txt` pins Flask 3.1.0 and Werkzeug 3.1.3, which
 carry six known advisories (`pip-audit`, 21 October 2026). The upgrade is due

@@ -2,7 +2,7 @@
 
 Working name: **MarketingOps**, with the ROI layer
 Repository: `lowcode-project` · Docker image: `lowcode-app`
-Drafted 2026-10-21, reshaped 2026-10-22 for the ROI layer. This is the Week 3 Block A draft, to be refined in the live session on 28 October; the technical detail is in `docs/specification.md`.
+Drafted 2026-10-21, reshaped 2026-10-22 for the ROI layer, aligned 2026-10-27 with the project brief's six minimum requirements (evidence in `docs/design/`). This is the Week 3 Block A draft, to be refined in the live session on 28 October; the technical detail is in `docs/specification.md`.
 
 ---
 
@@ -21,9 +21,12 @@ Most marketing dashboards report ROAS: revenue divided by ad spend. It flatters.
 | Role | Who | May do |
 |---|---|---|
 | `requester` | Founder, sales, product | Open actions, view their own, cancel their own |
-| `owner` | Marketing specialist | Own an action, add and complete tasks, record measurements, send to review |
-| `reviewer` | Marketing lead, finance, brand | Approve, reject or close — only if not the requester and not the owner |
-| `admin` | Ops | Everything — but bound by the same rule: cannot approve or close an action they raised or worked on. Whether admins get a logged override for small teams is an **open decision** (`specification.md` §10) |
+| `owner` | Marketing specialist | Own an action, add and complete tasks, record measurements, send to review naming a reviewer |
+| `reviewer` | Marketing lead, finance, brand | Approve, reject or close — only the actions they are **named** on, and never one they raised or worked on |
+| `admin` | Ops | Projects, targets, users — and bound by the same rule: signs off only when named, never their own work. Whether admins get a logged override for small teams is an **open decision** (`specification.md` §10) |
+| `service` | One per writing automation | Opens drift actions and records measurements through the API; no password, never signs anything off |
+
+What each role can create, read, update and delete, and the four layers that enforce it, is in [`design/roles.md`](design/roles.md).
 
 ### The lifecycle
 
@@ -53,7 +56,7 @@ Each action pulls one **lever**, and each lever moves exactly one of the three l
 
 ### Entities
 
-`users` · `projects` · `kpis` · `levers` · `requests` (the actions) · `request_transitions` · `kpi_targets` · `kpi_measurements` · `tasks` · `review_checks` · `automation_events`
+`users` · `projects` · `kpis` · `levers` · `requests` (the actions) · `request_transitions` · `kpi_targets` · `kpi_measurements` · `tasks` · `review_checks` · `automation_events` · `outbound_events` — diagram in [`design/erd.md`](design/erd.md)
 
 DDL in `schema/001_initial.sql`, finalised in Week 5. The invariant that defines the project: **the record cannot be quietly rewritten.** `request_transitions`, `kpi_targets` and `kpi_measurements` are append-only, enforced by triggers that abort `UPDATE` and `DELETE`; a correction is a new row that supersedes the old one.
 
@@ -72,13 +75,14 @@ DDL in `schema/001_initial.sql`, finalised in Week 5. The invariant that defines
 
 **Machine interface**
 - `POST /api/events` — automation intake. HMAC-signed, idempotent on `(source, external_id)`
-- `GET /api/metrics` — KPIs against target, ROI, cycle times
+- `GET /api/metrics` — KPIs against target, ROI, cycle times, actions awaiting review
+- Outward, the only call the app makes: a signed, ids-only announcement to Make when a measurement is recorded or an action enters or leaves review
 
 ### The invariants worth testing
 
 1. An action cannot enter review while it has an incomplete task, or without a lever and a hypothesis.
 2. It cannot be approved while any required check for its type is unpassed.
-3. Nobody approves or closes their own action, and the owner who did the work does not either.
+3. Only the reviewer named on an action approves or closes it, and that reviewer is neither the person who asked for it nor the owner who did the work.
 4. ROI is computed from gross profit and counts people time; zero investment has no ROI rather than an infinite one.
 5. A number on the record is never edited — only superseded.
 
@@ -104,16 +108,16 @@ Four automations, each documented as `docs/portfolio/automation-0N.md` with: the
 
 **Built in Make** (recommended by the course: free tier allows multi-step scenarios and 1,000 operations; Zapier's free tier caps at two steps).
 
-**The boundary that applies to all four:** they talk to the application only through its API — `POST /api/events` for the two that create something, `GET /api/metrics` for the two that report. None of them touches the database directly, and none of them computes ROI: Make moves data, the app does the maths. From layer 38 of the influence model — *do not let a recommendation silently become an unrestricted write action.*
+**The boundary that applies to all four:** they talk to the application only through its API — `POST /api/events` to create something, `GET /api/metrics` to read. None of them touches the database directly, none computes ROI and none decides anything: Make moves data and messages, the app does the maths and enforces the rules. From layer 38 of the influence model — *do not let a recommendation silently become an unrestricted write action.*
 
-They form one loop with the application: spend arrives → the app records it → a KPI drifts → an action is opened → it is approved, done and closed → the app computes realised ROI → the Monday report explains it.
+The brief requires one scheduled automation, one triggered by an event and one with a human approval step. They form one loop with the application: spend arrives → the app records it → a KPI is off target and an action opens → the owner names a reviewer, who is asked to approve → the work is done and the reviewer certifies the result → the app computes realised ROI → the Monday report explains it.
 
-| | Automation | Week | Route |
-|---|---|---|---|
-| 1 | **Spend and revenue intake** — a weekly platform export becomes measurements | 4 | `POST /api/events` |
-| 2 | **Daily digest** — KPIs against target, actions waiting for review or closing | 5 | `GET /api/metrics` |
-| 3 | **KPI drift alert** — a KPI off target opens an action, or adds a task to the open one | 7 | both |
-| 4 | **Weekly ROI narrative** — an AI writes the summary from aggregates only | 8 / 11 | `GET /api/metrics` |
+| | Automation | Brief type | Week | Route |
+|---|---|---|---|---|
+| 1 | **Spend and revenue intake** — a weekly platform export becomes measurements | Scheduled | 4 | `POST /api/events` |
+| 2 | **KPI drift alert** — a recorded measurement that is off target opens an action, or adds a task to the open one | Event-triggered | 5 | announcement in; both API routes |
+| 3 | **Approval routing** — the named reviewer is asked, reminded and the outcome reported; the decision is made in the app | Human approval | 7 | announcements in; `GET /api/metrics` |
+| 4 | **Weekly ROI narrative** — an AI writes the summary from aggregates only | Scheduled, AI | 8 / 11 | `GET /api/metrics` |
 
 ---
 
@@ -123,11 +127,11 @@ They form one loop with the application: spend arrives → the app records it �
 |---|---|---|
 | 1 ✅ | 14 Oct | `app.py` · `requirements.txt` · `.gitignore` · `README.md` with the project note |
 | 2 ✅ | 21 Oct | `experiments/week02/` raw outputs from three tools · `docs/week02-tool-comparison.md` with measured scores and a reasoned choice |
-| 3 | 28 Oct | `docs/specification.md` with the ROI layer · `lifecycle.py` and `roi.py` · multi-file app generated from the spec, on a branch, merged via PR · `docs/week03-review.md` · clean-clone fixes |
+| 3 | 28 Oct | `docs/specification.md` with the ROI layer · `docs/design/` against the brief · `lifecycle.py` and `roi.py` · the Week 3 slice (`docs/week03-slice.md`) generated on a branch, merged via PR · `docs/week03-review.md` · clean-clone fixes |
 | 4 | 4 Nov | the `POST /api/events` handler for spend and revenue · `docs/portfolio/automation-01.md` · `docs/portfolio/img/` |
-| 5 | 11 Nov | `schema/001_initial.sql` final · `docs/data-model.md` with ER diagram and the delete rule · CRUD with parameterised queries · string-formatted SQL removed · `automation-02.md` begun |
+| 5 | 11 Nov | `schema/001_initial.sql` final · `docs/design/erd.md` checked against the real schema, with the delete rule · CRUD with parameterised queries · string-formatted SQL removed · the outbox · `automation-02.md` |
 | 6 | 18 Nov | Templates: responsive, accessible, Tailwind; the project page with KPI charts · `docs/week06-ui-review.md` · before/after screenshots |
-| 7 | 25 Nov | `ruff.toml` · `tests/` with the 23 tests · `docs/week07-bugs.md` · `automation-03.md` |
+| 7 | 25 Nov | `ruff.toml` · `tests/` with the 30 tests · `docs/week07-bugs.md` · `automation-03.md` |
 | 8 | 2 Dec | `security/` scan evidence · `docs/security-report.md` with before/after table · dependencies upgraded · automation 4 built |
 | 9 | 9 Dec | `Dockerfile` multi-stage, non-root, under 250 MB · `.dockerignore` · `docker-compose.yml` with Postgres |
 | 10 | 16 Dec | `docs/deployment.md` including teardown · live HTTPS URL in `README.md` |
@@ -144,3 +148,5 @@ They form one loop with the application: spend arrives → the app records it �
 4. **The problem statement.** The 150 words in the README must describe something actually lived. Week 12 asks what is in the repository that could not be explained in an interview.
 5. **The real manual process for automation 1.** The Week 4 sheet: *"Bring a real one. Contrived scenarios are obvious and they mark badly."* Who copies platform numbers by hand, how often, and how long it takes — yours to supply.
 6. **An industry problem.** Whether this attaches to a real company's process, via the Industry Engagement Forum. Ask on the Week 3 forum post.
+7. **Lecturer agreement.** The project brief: an own idea is welcome but must be *"agreed with your lecturer before you start building"* — before the 28 October lab.
+8. **The named user group.** The brief asks for a real problem for a named group of users; the design pack leaves that cell for the project's owner to fill (`design/README.md`).

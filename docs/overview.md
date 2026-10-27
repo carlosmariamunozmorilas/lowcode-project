@@ -58,12 +58,13 @@ Each piece of work is an **action**.
    cash and hours.
 3. **They break it into tasks and do the work.** The work happens in other
    tools; MarketingOps records its progress.
-4. **They send it for review.** The application refuses while any task is
-   open, or if no lever and hypothesis have been given.
-5. **A reviewer approves it** against a checklist — claims backed by evidence,
+4. **They send it for review, naming who should approve it.** The application
+   refuses while any task is open, if no lever and hypothesis have been given,
+   or if the person named is the one who asked for the work or did it.
+5. **That named reviewer approves it** against a checklist — claims backed by evidence,
    brand and disclosure right, links working, tracking in place — or rejects it,
    or sends it back for rework.
-6. **Once its measurement window has passed, it is closed.** Someone records
+6. **Once its measurement window has passed, it is closed.** The same reviewer records
    what actually changed and **how sure they are**: proven by a holdout test,
    seen before and after, or merely correlated. The application then computes
    the return it actually delivered.
@@ -82,7 +83,9 @@ when, and the note they left.**
 
 **The rule at the centre of the design:** the person who asked for the work and
 the person who did it never sign it off — not when it is approved, and not
-when its result is recorded. Nobody grades their own homework.
+when its result is recorded. Nobody grades their own homework. And only the
+one reviewer named on an action can sign it off, so an approval link that gets
+forwarded does not hand the decision to whoever clicks it.
 
 That rule has a cost: in a three-person team it can leave nobody eligible.
 Whether an administrator may make a logged exception is **still an open
@@ -116,20 +119,24 @@ before-and-after comparison is labelled as one.
 ## The four automations around it
 
 Built in **Make**, a tool that connects services through a sequence of steps.
-They form the 40% portfolio and are built across the term, not at the end.
+They form the 40% portfolio and are built across the term, not at the end. The
+course brief asks for three kinds — one that runs on a schedule, one that
+reacts to an event, and one with a person's approval in it — and these four
+cover all three.
 
-| Automation | In everyday terms | Week |
-|---|---|---|
-| **Spend and revenue intake** | Every Monday, last week's figures from the platforms arrive on their own, instead of being copied into a sheet by hand. | 4 |
-| **Daily digest** | Each morning: are the numbers on target, and what is waiting on whom — including work that finished and was never measured. | 5 |
-| **Drift alert** | If a measure falls off target, it opens an action for someone to take on — or adds to the one already open, rather than raising a second alarm. | 7 |
-| **Weekly ROI report** | An AI turns the week's calculated figures into a readable summary, keeping the certainty labels. | 8–11 |
+| Automation | In everyday terms | Kind | Week |
+|---|---|---|---|
+| **Spend and revenue intake** | Every Monday, last week's figures from the platforms arrive on their own, instead of being copied into a sheet by hand. | On a schedule | 4 |
+| **Drift alert** | The moment a new figure lands off target, it opens an action for someone to take on — or adds to the one already open, rather than raising a second alarm. | Reacts to an event | 5 |
+| **Approval routing** | When work is ready for review, the one person named to approve it is asked, reminded if they forget, and everyone hears the outcome. The decision itself is made in the application, by that person. | A person approves | 7 |
+| **Weekly ROI report** | An AI turns the week's calculated figures into a readable summary, keeping the certainty labels. | On a schedule | 8–11 |
 
-Three rules apply to all of them. They go **only through the application's own
+Four rules apply to all of them. They go **only through the application's own
 door**, never straight into its database. **Sending the same thing twice
-changes nothing.** And **they never do the maths** — the application computes
+changes nothing.** **They never do the maths** — the application computes
 every return, where it can be tested; the automations only move figures in and
-reports out.
+messages out. And **they never decide**: an automation can ask for an approval,
+but only the named person, signed in, can give it.
 
 The AI in the weekly report sees **only the calculated numbers**, never the
 actions themselves: titles and hypotheses are typed by people, and text typed
@@ -164,10 +171,12 @@ customers, no real figures.
 [`lifecycle.py`](../lifecycle.py), the return calculations in
 [`roi.py`](../roi.py), and the database design in
 [`schema/001_initial.sql`](../schema/001_initial.sql) — all three run, and the
-example above comes out exactly as described. The full application is generated
-from the specification in the Week 3 lab on 28 October 2026, and each week after
-that adds a layer: the database, the interface, tests, a security review,
-packaging, deployment, and governance.
+example above comes out exactly as described. The design the course brief asks
+for — data model, roles, data flows, threats and data protection — is in
+[`design/`](design/README.md). The Week 3 lab on 28 October 2026 generates a
+first small slice from the specification, and each week after that adds a
+layer: the database, the interface, tests, a security review, packaging,
+deployment, and governance.
 
 **The finished demonstration** should let someone propose an action, take it
 through review, close it with its real result, and watch the project's return
