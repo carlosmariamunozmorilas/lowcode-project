@@ -77,6 +77,27 @@ Each piece of work is an **action**.
 Every step adds a line to the action's history: **who acted, what changed,
 when, and the note they left.**
 
+## Before committing to an action
+
+Anyone can fill in the form for an action they are considering and press
+**Preview**, without saving anything. The application then shows three things:
+
+- **What the action itself would return** — its ROI, its net gain, and how much
+  extra revenue it must bring in just to pay for itself.
+- **What it would do to the whole project's return.** An action can make money
+  and still lower the project's ROI, because it earns less per euro than the
+  project already does. A free-shipping test returning 0.13, in a project
+  running at 0.19, brings the project down to 0.18 — worth knowing before
+  spending the budget.
+- **How far to trust the estimate** — how past actions on the same lever did
+  against what they promised: *"checkout fixes have delivered 60% of what
+  they expected, over four actions."*
+
+None of this is a prediction. The application cannot know the future; it adds
+up the team's own assumptions and sets them against the team's own history.
+That is exactly why it also measures what happens afterwards: each closed
+action makes the next estimate easier to trust.
+
 ## Who uses it
 
 | Person | Their part |

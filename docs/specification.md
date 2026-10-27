@@ -224,11 +224,12 @@ Written in the same transaction as the change it announces. Not part of the reco
 | POST | `/logout` | signed in | session end |
 | GET | `/projects` | signed in | list |
 | POST | `/projects` | admin | create |
-| GET | `/projects/<id>` | signed in | the KPI tree, KPIs against target, actions with expected and realised ROI |
+| GET | `/projects/<id>` | signed in | the KPI tree, KPIs against target, actions with expected and realised ROI, the project's planned ROI |
 | POST | `/projects/<id>/targets` | admin | a new target version — never an edit |
 | POST | `/projects/<id>/measurements` | owner, admin | a weekly measurement or a correction — never an edit |
 | GET | `/requests` | signed in | my queue: owned actions + assigned tasks, by due date |
 | GET | `/requests/new` | signed in | the form |
+| POST | `/requests/preview` | signed in | re-renders the form with its **before-action preview** — the action's own ROI, net gain and break-even, the project's planned ROI without and with it, and the lever's track record. **Writes nothing** |
 | POST | `/requests` | signed in | create → `submitted`, writes transition #1 |
 | GET | `/requests/<id>` | signed in | detail, permitted actions, expected and actual results, timeline |
 | POST | `/requests/<id>/assign` | owner, admin | set `owner_id` → `assigned` |
@@ -293,9 +294,9 @@ After the commit, the dispatcher posts every undelivered row, oldest first, to `
 |---|---|
 | `base.html` | nav, flash region, skip link, landmarks |
 | `login.html` | email + password, labelled inputs |
-| `project_detail.html` | the KPI tree; each KPI against target, as text *and* a chart; actions with expected and realised ROI; project ROI against `roi_target` |
+| `project_detail.html` | the KPI tree; each KPI against target, as text *and* a chart; actions with expected and realised ROI; planned and realised project ROI against `roi_target`; each lever's track record |
 | `requests_list.html` | my queue; status as text *and* colour, never colour alone |
-| `request_new.html` | title, type, priority, due date, description, lever, hypothesis, expected change, cost in euros and hours, measurement window |
+| `request_new.html` | title, type, priority, due date, description, lever, hypothesis, expected change, cost in euros and hours, measurement window; a **Preview** button and, once pressed, the before-action panel (below) |
 | `request_detail.html` | fields; expected ROI, net gain and **break-even revenue** — *"this action must add €X of revenue to break even"*; the named reviewer; once closed, actual result, confidence, decision and realised ROI; the action buttons the viewer is actually allowed; tasks; checks. Sending to review asks the owner to pick a reviewer from the eligible ones |
 | `_timeline.html` | every transition: who, from, to, when, note |
 | `_flash.html` | success and error messages |
@@ -363,7 +364,13 @@ Week 7 asks for at least eight covering valid, invalid, empty and boundary input
 34. An action cannot be closed without a decision
 35. A decision outside `scale`, `hold`, `redesign`, `retire` is refused
 
-Thirty-five. Deliberately more than eight, and 1–7, 16–20, 24–28 and 31–35 run in milliseconds. The AI fields (§3) bring their own tests when they are built.
+**`test_roi.py`, continued — the before-action preview**
+36. Proposing D in the worked example moves the project's planned ROI from 0.19 to 0.18: an action with its own positive ROI (0.13) lowers the project's, because it earns less per euro than the project already does
+37. A track record divides totals, not ratios: expected 0.003 and 0.002, actual 0.003 and 0.0005, is a realisation of 0.70 — not the 0.63 an average of the two ratios would give
+38. A lever with no closed actions, or whose expected changes sum to zero, has no realisation (`None`), not zero
+39. The preview route writes nothing: after `POST /requests/preview` the requests, transitions and outbound tables are unchanged
+
+Thirty-nine. Deliberately more than eight, and 1–7, 16–20, 24–28 and 31–38 run in milliseconds. The AI fields (§3) bring their own tests when they are built.
 
 ### The worked example — the numbers the tests use
 
@@ -388,6 +395,21 @@ Stated so nobody, human or generated code, quietly adds them back:
 - **ROAS or platform-attributed revenue as a result.** Only the measured change in the store's own KPIs is a result.
 - **ROI percentages added together.** A project's ROI is total profit change against total investment, never a sum or average of the actions' ratios.
 - **A result as more certain than it is.** Every realised figure carries its confidence label.
+
+### The before-action preview
+
+Anyone signed in can fill in the action form and press **Preview** — before saving anything, before any approval — and see what the action would mean:
+
+> **D · Free-shipping threshold** — free-shipping lever → AOV +€2.00, €500 + 6 hours
+> Its own ROI **0.13** · net gain €90 · must add **€1,775** of revenue to break even (expects €2,000)
+> **Project planned ROI: 0.19 → 0.18 with this action**
+> Free-shipping actions so far: **too few closed to say** (fewer than 3)
+
+**The project's planned ROI** counts every action that is not rejected or cancelled and has an expected change: closed actions with their *realised* result, all others with their *expected* one. It is labelled *planned*, never *forecast*: it restates the team's own assumptions, added up.
+
+**The lever's track record** is total actual change over total expected change across that lever's closed actions — *"checkout-friction actions have delivered 60% of what they expected (4 closed)"*. Below three closed actions it says *too few to say* instead of a number. It is the reality check on the estimate the person is typing: the history of their own team, not a model.
+
+The arithmetic is `project_impact()` and `track_record()` in `roi.py`, pure functions like the rest; the route only gathers the rows. The preview **writes nothing** (test 39) — it is a question, not a commitment.
 
 ---
 
