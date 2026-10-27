@@ -41,6 +41,7 @@ class Request:
     hypothesis: str | None = None
     actual_delta: float | None = None
     confidence: str | None = None
+    reviewer_id: int | None = None
 
 
 @dataclass(frozen=True)
@@ -53,7 +54,8 @@ def check_transition(request: Request, to_status: Status, actor: User) -> None:
     """Validate a proposed status change. Raises TransitionError if refused.
 
     Separate gates, deliberately kept separate so each fails its own test: the
-    status graph, what review needs, the approval policy, and what closing needs.
+    status graph, what review needs (including a named reviewer), the approval
+    policy, and what closing needs.
     """
     if to_status not in ALLOWED.get(request.status, frozenset()):
         raise TransitionError(
@@ -67,6 +69,14 @@ def check_transition(request: Request, to_status: Status, actor: User) -> None:
             raise TransitionError(
                 "an action cannot enter review without a lever and a hypothesis"
             )
+        # Named now, so the approval goes to one accountable person and the
+        # automation that asks for it knows whom to ask.
+        if request.reviewer_id is None:
+            raise TransitionError("an action cannot enter review without a reviewer")
+        if request.reviewer_id in {request.requester_id, request.owner_id}:
+            raise TransitionError(
+                "the reviewer must be neither the requester nor the owner"
+            )
 
     # The rule the Week 8 security audit should go looking for. Closing is
     # certifying a result, so it is held to the same independence as approving.
@@ -79,6 +89,11 @@ def check_transition(request: Request, to_status: Status, actor: User) -> None:
             raise TransitionError("a requester may not sign off their own request")
         if actor.id == request.owner_id:
             raise TransitionError("the owner who did the work may not sign it off")
+        # A forwarded approval link must not let someone else decide.
+        if actor.id != request.reviewer_id:
+            raise TransitionError(
+                "only the reviewer named on this action may sign it off"
+            )
 
     if to_status == "closed":
         if request.actual_delta is None:

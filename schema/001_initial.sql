@@ -1,6 +1,7 @@
 -- Initial schema for MarketingOps with the ROI layer.
--- Drafted Week 2, reshaped 22 October for the ROI layer, finalised in Week 5
--- after the paper data model. The delete rule is still an open decision.
+-- Drafted Week 2, reshaped 22 October for the ROI layer, given a named
+-- reviewer and an outbox on 27 October for the project brief, finalised in
+-- Week 5 after the paper data model. The delete rule is still an open decision.
 
 -- Marketing operations workflow — Week 5 schema (SQLite)
 -- Dates stored as ISO 8601 text (YYYY-MM-DD HH:MM:SS), UTC.
@@ -10,7 +11,9 @@ CREATE TABLE users (
     id         INTEGER PRIMARY KEY,
     email      TEXT    NOT NULL UNIQUE,
     full_name  TEXT    NOT NULL,
-    role       TEXT    NOT NULL CHECK (role IN ('requester', 'owner', 'reviewer', 'admin')),
+    -- 'service' is one account per automation: no password, cannot sign in,
+    -- and check_transition() refuses it every approval and close.
+    role       TEXT    NOT NULL CHECK (role IN ('requester', 'owner', 'reviewer', 'admin', 'service')),
     is_active  INTEGER NOT NULL DEFAULT 1,
     created_at TEXT    NOT NULL DEFAULT (datetime('now'))
 );
@@ -58,6 +61,7 @@ CREATE TABLE requests (
     priority       TEXT    NOT NULL DEFAULT 'normal' CHECK (priority IN ('low', 'normal', 'high')),
     requester_id   INTEGER NOT NULL REFERENCES users(id),
     owner_id       INTEGER          REFERENCES users(id),
+    reviewer_id    INTEGER          REFERENCES users(id),
     due_date       TEXT,
     lever_id       INTEGER          REFERENCES levers(id),
     hypothesis     TEXT    NOT NULL DEFAULT '',
@@ -71,12 +75,17 @@ CREATE TABLE requests (
     created_at     TEXT    NOT NULL DEFAULT (datetime('now')),
     -- An unowned request cannot be past the submitted stage.
     CHECK (status = 'submitted' OR status = 'cancelled' OR owner_id IS NOT NULL),
+    -- From review on, one named reviewer signs off, and it is not the person
+    -- who asked for the work or the person who did it.
+    CHECK (status NOT IN ('in_review', 'approved', 'closed') OR reviewer_id IS NOT NULL),
+    CHECK (reviewer_id IS NULL OR (reviewer_id <> requester_id AND reviewer_id IS NOT owner_id)),
     -- Nothing is closed without its result and how sure we are of it.
     CHECK (status <> 'closed' OR (actual_delta IS NOT NULL AND confidence IS NOT NULL))
 );
 
 CREATE INDEX idx_requests_status  ON requests(status);
 CREATE INDEX idx_requests_owner   ON requests(owner_id);
+CREATE INDEX idx_requests_reviewer ON requests(reviewer_id);
 CREATE INDEX idx_requests_project ON requests(project_id);
 
 -- Append-only. Every status change writes exactly one row. Never UPDATE or DELETE.
@@ -171,6 +180,23 @@ CREATE TABLE automation_events (
     received_at TEXT    NOT NULL DEFAULT (datetime('now')),
     UNIQUE (source, external_id)
 );
+
+-- The outbox: what the application announces to Make. Written in the same
+-- transaction as the change it announces, so an announcement exists if and
+-- only if the change committed. The payload is ids only; Make reads anything
+-- else back over a signed call. Delivery columns are updated, so this is a
+-- queue, not part of the record.
+CREATE TABLE outbound_events (
+    id           INTEGER PRIMARY KEY,
+    event_type   TEXT    NOT NULL CHECK (event_type IN ('measurement.recorded', 'action.in_review', 'action.decided')),
+    request_id   INTEGER          REFERENCES requests(id),
+    payload      TEXT    NOT NULL,
+    created_at   TEXT    NOT NULL DEFAULT (datetime('now')),
+    delivered_at TEXT,
+    attempts     INTEGER NOT NULL DEFAULT 0
+);
+
+CREATE INDEX idx_outbound_pending ON outbound_events(delivered_at, id);
 
 -- The fixed KPI tree and its levers.
 INSERT INTO kpis (key, name, unit, parent_key) VALUES

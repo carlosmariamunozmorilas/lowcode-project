@@ -1,6 +1,8 @@
 # Specification — MarketingOps, with the ROI layer
 
-**Draft.** Written for Week 3 Block A, reshaped on 22 October for the ROI layer, to be refined in the live session on 28 October. Open questions are marked ❓ and are deliberately unresolved.
+**Draft.** Written for Week 3 Block A, reshaped on 22 October for the ROI layer, aligned on 27 October with the *Low-Code/No-Code Project Brief* (a named reviewer, an outbox for event-triggered automations, a `service` role), to be refined in the live session on 28 October. Open questions are marked ❓ and are deliberately unresolved.
+
+The brief's six minimum requirements — ERD, role table, data flow diagram, STRIDE, GDPR and the three automation types — are answered in [`design/`](design/README.md). What the 28 October lab generates first is a deliberately small slice: [`week03-slice.md`](week03-slice.md).
 
 > **The pitch:** every piece of marketing work has to justify itself, and the record shows whether it did.
 
@@ -52,7 +54,8 @@ lowcode-project/
 │   ├── measurements.py       # append-only weekly values; latest per KPI and week
 │   ├── tasks.py              # add, complete, count open per action
 │   ├── checks.py             # mark passed, list required-by-type, all-passed test
-│   └── events.py             # automation_events insert with idempotency
+│   ├── events.py             # automation_events insert with idempotency
+│   └── outbound.py           # outbox writes; dispatcher posts pending announcements to Make, signed
 │
 ├── routes/
 │   ├── auth_routes.py        # /login, /logout
@@ -95,7 +98,7 @@ Roughly twenty-five source files. That is "a real multi-file application" withou
 | `email` | TEXT | NOT NULL, UNIQUE |
 | `full_name` | TEXT | NOT NULL |
 | `password_hash` | TEXT | NOT NULL ❓ *added at Week 3; Week 8 will check the algorithm* |
-| `role` | TEXT | NOT NULL, CHECK in (`requester`,`owner`,`reviewer`,`admin`) |
+| `role` | TEXT | NOT NULL, CHECK in (`requester`,`owner`,`reviewer`,`admin`,`service`) — `service` is one account per writing automation: no password, cannot sign in, never signs anything off |
 | `is_active` | INTEGER | NOT NULL DEFAULT 1 |
 | `created_at` | TEXT | ISO 8601 UTC |
 
@@ -143,6 +146,7 @@ A request is now an **action**: marketing work that names the lever it pulls and
 | `priority` | TEXT | DEFAULT `normal`, CHECK in (`low`,`normal`,`high`) |
 | `requester_id` | INTEGER | FK → users |
 | `owner_id` | INTEGER | FK → users, nullable |
+| `reviewer_id` | INTEGER | FK → users, nullable — named by the owner when sending to review; must have role `reviewer` or `admin` (checked by the route) and be neither requester nor owner (checked by the table) |
 | `due_date` | TEXT | nullable |
 | `lever_id` | INTEGER | FK → levers — required before review |
 | `hypothesis` | TEXT | required before review — *"removing forced sign-up lifts conversion by 0.3 points"* |
@@ -154,7 +158,7 @@ A request is now an **action**: marketing work that names the lever it pulls and
 | `confidence` | TEXT | required to close, CHECK in (`holdout`,`before_after`,`correlated`) |
 | `created_at` | TEXT | |
 
-Table-level CHECKs: a request may only be `submitted` or `cancelled` while `owner_id IS NULL`; a request may only be `closed` with `actual_delta` and `confidence` set.
+Table-level CHECKs: a request may only be `submitted` or `cancelled` while `owner_id IS NULL`; from `in_review` on it must have a `reviewer_id`, who is neither its requester nor its owner; a request may only be `closed` with `actual_delta` and `confidence` set.
 
 ### `request_transitions` — the heart
 
@@ -201,6 +205,12 @@ Check keys, taken from the governance layer of the AI-Era influence model rather
 
 `id` · `source` CHECK in (`spend_revenue`,`performance`,`assistant`) · `external_id` TEXT · `payload` TEXT (JSON) · `request_id` FK nullable · `received_at` · **UNIQUE `(source, external_id)`**
 
+### `outbound_events` — the outbox
+
+`id` · `event_type` CHECK in (`measurement.recorded`,`action.in_review`,`action.decided`) · `request_id` FK nullable · `payload` TEXT (JSON, **ids only**) · `created_at` · `delivered_at` nullable · `attempts`
+
+Written in the same transaction as the change it announces. Not part of the record: the delivery columns are updated, and delivered rows are deleted after 90 days ❓ ([`design/gdpr.md`](design/gdpr.md)).
+
 ---
 
 ## 4 · Routes
@@ -219,20 +229,20 @@ Check keys, taken from the governance layer of the AI-Era influence model rather
 | POST | `/requests` | signed in | create → `submitted`, writes transition #1 |
 | GET | `/requests/<id>` | signed in | detail, permitted actions, expected and actual results, timeline |
 | POST | `/requests/<id>/assign` | owner, admin | set `owner_id` → `assigned` |
-| POST | `/requests/<id>/review` | owner, admin | → `in_review`, **refused if open tasks, or no lever and hypothesis** |
-| POST | `/requests/<id>/approve` | reviewer, admin | → `approved`, **refused if requester or owner, or checks unpassed** |
-| POST | `/requests/<id>/reject` | reviewer, admin | → `rejected` |
-| POST | `/requests/<id>/close` | reviewer, admin | → `closed` with `actual_delta` and `confidence`, **refused if requester or owner** |
+| POST | `/requests/<id>/review` | owner, admin | → `in_review` with a named `reviewer_id`, **refused if open tasks, no lever and hypothesis, or no eligible reviewer**; announces `action.in_review` |
+| POST | `/requests/<id>/approve` | named reviewer | → `approved`, **refused unless the actor is the reviewer named on this action, or if checks unpassed**; announces `action.decided` |
+| POST | `/requests/<id>/reject` | named reviewer | → `rejected`; announces `action.decided` |
+| POST | `/requests/<id>/close` | named reviewer | → `closed` with `actual_delta` and `confidence`, **refused unless the named reviewer** |
 | POST | `/requests/<id>/cancel` | requester, admin | → `cancelled` |
 | POST | `/requests/<id>/tasks` | owner, admin | add task |
 | POST | `/tasks/<id>/complete` | assignee, owner, admin | mark done |
 | POST | `/requests/<id>/checks/<key>` | reviewer, admin | mark check passed |
 | POST | `/api/events` | HMAC signature | automation intake, idempotent |
-| GET | `/api/metrics` | HMAC signature | aggregates: KPIs against target, ROI, cycle times |
+| GET | `/api/metrics` | HMAC signature | aggregates: KPIs against target with an `off_target` flag the app computes, ROI, cycle times; with `awaiting_review`, the actions in review, their named reviewer's email and days waiting |
 
 Every lifecycle route goes through `check_transition()` before writing. No route writes a status directly.
 
-**Every status change is one transaction.** The route updates `requests.status` and inserts the matching `request_transitions` row inside a single database transaction: both are written, or neither is. Without that, a failure between the two writes leaves a request whose status says one thing and whose history says another — an approval with no record of who approved it, which is the one thing this application exists to prevent. Test 10 checks the result; the transaction is what guarantees it. Closing writes `actual_delta`, `confidence` and the transition in the same transaction.
+**Every status change is one transaction.** The route updates `requests.status` and inserts the matching `request_transitions` row inside a single database transaction: both are written, or neither is. Without that, a failure between the two writes leaves a request whose status says one thing and whose history says another — an approval with no record of who approved it, which is the one thing this application exists to prevent. Test 10 checks the result; the transaction is what guarantees it. Closing writes `actual_delta`, `confidence` and the transition in the same transaction. A change that is announced to Make writes its `outbound_events` row in that same transaction too (test 29).
 
 **Mass assignment.** Status, `actual_delta` and `confidence` are never read from a general edit form. They change only through the lifecycle routes, which check who is acting.
 
@@ -258,6 +268,20 @@ Header `X-Signature`: HMAC-SHA256 of the raw body with a shared secret from the 
 
 For `spend_revenue`, `external_id` is `"{kpi}:{iso_week}:{short hash of the value}"`. The same value delivered twice is a no-op; a **corrected** value has a different hash, so it is recorded as a correction instead of being ignored ❓.
 
+### Outbound announcements — the application's only outward call
+
+Three events, each written to `outbound_events` in the transaction that causes it:
+
+| Event | Written when | Payload | Drives |
+|---|---|---|---|
+| `measurement.recorded` | a measurement or correction is recorded, by hand or by automation 1 | `project_id`, `kpi_key`, `period_week`, `measurement_id` | automation 2, drift alert |
+| `action.in_review` | an action enters review | `request_id`, `reviewer_id` | automation 3, approval routing |
+| `action.decided` | an action is approved or rejected | `request_id`, `decision` | automation 3, approval routing |
+
+After the commit, the dispatcher posts every undelivered row, oldest first, to `MAKE_WEBHOOK_URL` with an `X-Signature` HMAC header. A `2xx` sets `delivered_at`; anything else increments `attempts` and leaves the row for the next delivery. `flask deliver-events` retries by hand.
+
+**Ids only, never content** — no title, hypothesis, figure or name (test 30). Make reads what it needs back through the signed `GET /api/metrics`. So a forged announcement achieves nothing but a read of the true state, and no action content sits in Make's execution history ([`design/stride.md`](design/stride.md), T11–T12).
+
 ---
 
 ## 5 · Templates
@@ -269,7 +293,7 @@ For `spend_revenue`, `external_id` is `"{kpi}:{iso_week}:{short hash of the valu
 | `project_detail.html` | the KPI tree; each KPI against target, as text *and* a chart; actions with expected and realised ROI; project ROI against `roi_target` |
 | `requests_list.html` | my queue; status as text *and* colour, never colour alone |
 | `request_new.html` | title, type, priority, due date, description, lever, hypothesis, expected change, cost in euros and hours, measurement window |
-| `request_detail.html` | fields; expected ROI; once closed, actual result, confidence and realised ROI; the action buttons the viewer is actually allowed; tasks; checks |
+| `request_detail.html` | fields; expected ROI; the named reviewer; once closed, actual result, confidence and realised ROI; the action buttons the viewer is actually allowed; tasks; checks. Sending to review asks the owner to pick a reviewer from the eligible ones |
 | `_timeline.html` | every transition: who, from, to, when, note |
 | `_flash.html` | success and error messages |
 
@@ -318,7 +342,18 @@ Week 7 asks for at least eight covering valid, invalid, empty and boundary input
 22. The owner cannot close their own action
 23. A corrected measurement does not overwrite: the old row stays, the latest wins
 
-Twenty-three. Deliberately more than eight, and 1–7 and 16–20 run in milliseconds.
+**`test_lifecycle.py`, continued — the named reviewer** (added 27 October for the brief)
+24. An action cannot enter review without a named reviewer
+25. The named reviewer cannot be the requester or the owner
+26. A reviewer who is not the one named on the action cannot approve, reject or close it — the forwarded-link case
+27. The named reviewer can approve, and later close
+28. A `service` account cannot approve or close anything
+
+**`test_outbound.py`**
+29. Sending an action to review writes its status, its transition and its `action.in_review` announcement together — and if the announcement insert fails, none of the three is written
+30. An announcement payload contains ids only — no title, hypothesis, figure, name or email
+
+Thirty. Deliberately more than eight, and 1–7, 16–20 and 24–28 run in milliseconds.
 
 ### The worked example — the numbers the tests use
 
@@ -337,14 +372,14 @@ Already verified against `roi.py`. B looks healthy on ROAS and loses money; A co
 
 ## 7 · The portfolio components — 40%
 
-All four built in **Make**. All four reach the app only through its own API, never its database: the two that create something (1 and 3) send events with `POST /api/events`, and the two that report (2 and 4) read aggregates with `GET /api/metrics`. Make moves data; **the app computes ROI**. No formula lives in a Make scenario, where it would be untested and unaudited.
+All four built in **Make**, covering the brief's three required types — scheduled, triggered by an event, and with a human approval step. All four reach the app only through its own API, never its database: the two that create something (1 and 2) send events with `POST /api/events`, and 2, 3 and 4 read with `GET /api/metrics`. The app announces changes to Make through the outbox (§4). Make moves data and messages; **the app computes ROI and enforces every rule**. No formula and no decision lives in a Make scenario, where it would be untested and unaudited.
 
-| | Make modules | `external_id` | On duplicate | On partial failure |
-|---|---|---|---|---|
-| **1 · Spend and revenue intake** W4 | Schedule Monday → Google Sheets rows for the week → Iterator per KPI → HTTP POST | `"{kpi}:{iso_week}:{value hash}"` | same value: no-op · corrected value: recorded as a correction | re-run is safe: recorded KPIs no-op, missing ones land |
-| **2 · Daily digest** W5 | Schedule 08:00 → HTTP GET `/api/metrics` → Formatter → Email | n/a (read-only) | two identical emails, nothing written | no write, so a failure loses nothing |
-| **3 · KPI drift alert** W7 | Schedule Monday, after #1 → GET `/api/metrics` → Router (off target only) → HTTP POST | `"{kpi}:{iso_week}"` | one alert per KPI per week; an open drift action gets a task, not a twin | logged, retried next run |
-| **4 · Weekly ROI narrative** W8, written up W11 | Schedule Monday → GET aggregates → AI module → Email or Slack | `"weekly:{iso_week}"`, kept in a Make data store | one report per week | report regenerates, no state lost |
+| | Brief type | Make modules | `external_id` | On duplicate | On partial failure |
+|---|---|---|---|---|---|
+| **1 · Spend and revenue intake** W4 | Scheduled | Schedule Monday → Google Sheets rows for the week → Iterator per KPI → HTTP POST | `"{kpi}:{iso_week}:{value hash}"` | same value: no-op · corrected value: recorded as a correction | re-run is safe: recorded KPIs no-op, missing ones land |
+| **2 · KPI drift alert** W5 | Event-triggered | Webhook `measurement.recorded` → signed GET (`off_target`) → Router → HTTP POST | `"{kpi}:{iso_week}"` | one alert per KPI per week; an open drift action gets a task, not a twin | announcement stays in the outbox until Make accepts it; the next measurement re-checks |
+| **3 · Approval routing** W7 | Human approval | Webhook `action.in_review` → signed GET → message to the **named reviewer**, who decides signed in to the app · webhook `action.decided` → outcome to requester and owner · weekday schedule → reminders after 48 h | n/a — decisions are made once, in the app | a second request is harmless; a second approval is refused | the next morning's reminder covers a lost message |
+| **4 · Weekly ROI narrative** W8, written up W11 | Scheduled, AI | Schedule Monday → GET aggregates → AI module → Email or Slack | `"weekly:{iso_week}"`, kept in a Make data store | one report per week | report regenerates, no state lost |
 
 Each gets `docs/portfolio/automation-0N.md` with the business problem (who, how often, how long by hand), the architecture diagram, the verbatim prompts, run screenshots in `docs/portfolio/img/`, and the three failure answers. Detail in [`portfolio/portfolio-plan.md`](portfolio/portfolio-plan.md).
 
@@ -371,7 +406,7 @@ A test that depends on demo data breaks every time the demo changes. The seed mu
 
 **One project:** a fictional online store, one quarter, budget €20,000, `roi_target` 3.0, margin 40%, €35/hour.
 
-**8 users:** 2 requesters, 3 owners, 2 reviewers, 1 admin. Enough that "the owner cannot sign off their own work" has someone left to sign it off.
+**8 users:** 2 requesters, 3 owners, 2 reviewers, 1 admin. Enough that "the owner cannot sign off their own work" has someone left to sign it off. Plus **2 `service` accounts**, one for each writing automation (intake, drift alert), with no password. One account per human role is also what the brief's submission needs: test accounts shared with the lecturer.
 
 **13 weeks of measurements** for sessions, conversion rate and AOV — the full quarter, with realistic week-to-week noise and a visible lift after the actions that worked.
 
@@ -395,6 +430,7 @@ Not decoration — each one makes a rule or a metric demonstrable:
 8. **A corrected measurement** — the original row and the correction both present
 9. **A target revised mid-quarter** — so the history of targets is visible
 10. **Two automation events sharing an `external_id`** — one measurement recorded, proving idempotency
+11. **An action in review for three days whose named reviewer has not decided** — gives automation 3's reminder something to send
 
 ### Content rules
 
@@ -419,8 +455,11 @@ Authorisation is what AI-generated CRUD code gets wrong most reliably, because t
 | 3 | **Client-side-only enforcement** | The Close button is hidden for owners — is the route still open to anyone who curls it? |
 | 4 | **Race condition** | Two reviewers closing simultaneously: two audit rows and two different actuals? |
 | 5 | **Rewriting history** | Can a measurement or a target be edited in place instead of superseded? The triggers say no; does any route try? |
+| 6 | **The forwarded approval** | Automation 3 emails the named reviewer a link. If it is forwarded, can the person who clicks it approve? Test 26 says no — does the route actually call `check_transition()` with the signed-in user? |
 
-Finding 3 is the most common output of the five, and it is why test 15 exists: curl `/approve` as the requester and expect a refusal, not a redirect.
+Finding 3 is the most common output of the six, and it is why test 15 exists: curl `/approve` as the requester and expect a refusal, not a redirect.
+
+The full threat model — STRIDE on every flow that crosses a trust boundary, as the brief requires — is [`design/stride.md`](design/stride.md). This section is the subset Week 8 should go looking for in the code.
 
 Scanners will not find most of these. Bandit and Semgrep catch injection, hardcoded secrets and unsafe deserialisation; they do not know who is allowed to certify a result. That is the point of Week 8 — the report is triage and judgement, not a tool dump.
 
@@ -438,6 +477,9 @@ Scanners will not find most of these. Bandit and Semgrep catch injection, hardco
 6. **Password storage.** Flask has no built-in. `werkzeug.security` is already a dependency — likely the answer, but Week 8 should confirm the algorithm is current.
 7. **The delete rule.** The Week 5 sheet asks it directly: *"If you delete a project, what should happen to its tasks?"* Here nothing is ever deleted — actions are cancelled, numbers are superseded. Is "the question does not arise" defensible, or should a project be archivable?
 8. **Scale of seed data.** Enough realistic rows to make the Week 10 demo convincing without implying real customer data.
+9. **Retention periods.** Proposed in [`design/gdpr.md`](design/gdpr.md): the record for the project period plus 24 months, a departed user pseudonymised after 12 months, delivery queues purged after 90 days. To be confirmed in the Week 11 governance document.
+10. **The real user group.** The brief asks for a named group with a real problem. Which team this is drawn from is the owner of the project's to say, not the specification's.
+11. **Lecturer agreement.** An own idea must be agreed before building starts — before the 28 October lab generates anything.
 
 ---
 
@@ -452,4 +494,5 @@ Stated so the generated code does not acquire them:
 - **No pricing or discount levers** — margin is a fixed project setting
 - **No multiple currencies, no multi-tenancy** — one store, one team, one database
 - No Gantt or dependencies, no timesheets — an action records its total hours as a cost, nothing finer
-- No chat or threaded comments, no file attachments, no email sent by the app itself, no auto-assignment beyond a default owner per type, no public API beyond the two machine routes, no mobile app
+- No chat or threaded comments, no file attachments, no email sent by the app itself — its only outward call is the signed, ids-only announcement to Make — no auto-assignment beyond a default owner per type, no public API beyond the two machine routes, no mobile app
+- No approve or reject buttons in emails: approval is always made signed in to the app, by the named reviewer
