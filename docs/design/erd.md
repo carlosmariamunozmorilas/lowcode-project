@@ -70,8 +70,11 @@ erDiagram
         real expected_delta
         real cost_eur
         real cost_hours
+        text window_start
+        text window_end
         real actual_delta
         text confidence
+        text decision
     }
     request_transitions {
         int id PK

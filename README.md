@@ -29,8 +29,25 @@ margin and it ignores people's time. Three actions in one store, at 40% margin:
 | Two product bundles — €800 and 8 hours | 3.75 | **0.11** |
 
 The campaign that looks healthy on ROAS loses money. The fix that never appears
-on a ROAS report returns the most. These figures come from
+on a ROAS report returns the most. And the application can say so before a
+euro is spent: the campaign needs €13,375 of extra revenue to break even, while
+its own hypothesis only claims €9,600. These figures come from
 [`roi.py`](roi.py), not from a spreadsheet.
+
+## What it never counts
+
+- **Saved hours as money.** People's time is a cost. Hours an action "frees up"
+  become a saving only when spending actually falls.
+- **ROAS or platform-attributed revenue as a result.** Only the measured change
+  in the store's own figures is.
+- **ROI percentages added together.** A project's return is total profit change
+  against total investment.
+- **A result as more certain than it is.** Every realised figure says whether it
+  rests on a holdout test, a before-and-after comparison or a correlation.
+
+The rules around the return — fix the prediction before the result, close every
+action with a decision, show the break-even point, never count saved hours as
+money — follow my own *ROI AI Influence Model* series.
 
 ## Against the project brief
 

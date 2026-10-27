@@ -1,6 +1,6 @@
 # Specification — MarketingOps, with the ROI layer
 
-**Draft.** Written for Week 3 Block A, reshaped on 22 October for the ROI layer, aligned on 27 October with the *Low-Code/No-Code Project Brief* (a named reviewer, an outbox for event-triggered automations, a `service` role), to be refined in the live session on 28 October. Open questions are marked ❓ and are deliberately unresolved.
+**Draft.** Written for Week 3 Block A, reshaped on 22 October for the ROI layer, aligned on 27 October with the *Low-Code/No-Code Project Brief* (a named reviewer, an outbox for event-triggered automations, a `service` role), then given rules drawn from my *ROI AI Influence Model* series (a prediction fixed before review, a decision at close, net gain and break-even, an AI cost line), to be refined in the live session on 28 October. Open questions are marked ❓ and are deliberately unresolved.
 
 The brief's six minimum requirements — ERD, role table, data flow diagram, STRIDE, GDPR and the three automation types — are answered in [`design/`](design/README.md). What the 28 October lab generates first is a deliberately small slice: [`week03-slice.md`](week03-slice.md).
 
@@ -150,15 +150,18 @@ A request is now an **action**: marketing work that names the lever it pulls and
 | `due_date` | TEXT | nullable |
 | `lever_id` | INTEGER | FK → levers — required before review |
 | `hypothesis` | TEXT | required before review — *"removing forced sign-up lifts conversion by 0.3 points"* |
-| `expected_delta` | REAL | in the lever's KPI unit — sessions +8000 · conversion +0.003 · AOV +3.00 |
+| `expected_delta` | REAL | in the lever's KPI unit — sessions +8000 · conversion +0.003 · AOV +3.00 — **required before review**, so the prediction is fixed before any result exists |
 | `cost_eur` | REAL | cash, ≥ 0, default 0 |
 | `cost_hours` | REAL | people time, ≥ 0, default 0 |
-| `window_start`, `window_end` | TEXT | the measurement window |
+| `window_start`, `window_end` | TEXT | the measurement window — **required before review**, end after start |
 | `actual_delta` | REAL | required to close |
 | `confidence` | TEXT | required to close, CHECK in (`holdout`,`before_after`,`correlated`) |
+| `decision` | TEXT | required to close, CHECK in (`scale`,`hold`,`redesign`,`retire`) — what the team does next with what it learned |
+| `ai_assisted` | INTEGER | 0 or 1 — was AI used to do the work? **Planned for Weeks 5–6, not yet in the schema** |
+| `ai_cost_eur` | REAL | ≥ 0, default 0 — AI tools and usage for this action, counted in its investment. **Planned for Weeks 5–6** |
 | `created_at` | TEXT | |
 
-Table-level CHECKs: a request may only be `submitted` or `cancelled` while `owner_id IS NULL`; from `in_review` on it must have a `reviewer_id`, who is neither its requester nor its owner; a request may only be `closed` with `actual_delta` and `confidence` set.
+Table-level CHECKs: a request may only be `submitted` or `cancelled` while `owner_id IS NULL`; from `in_review` on it must have a `reviewer_id`, who is neither its requester nor its owner, and its `expected_delta` and measurement window; a request may only be `closed` with `actual_delta`, `confidence` and `decision` set.
 
 ### `request_transitions` — the heart
 
@@ -229,10 +232,10 @@ Written in the same transaction as the change it announces. Not part of the reco
 | POST | `/requests` | signed in | create → `submitted`, writes transition #1 |
 | GET | `/requests/<id>` | signed in | detail, permitted actions, expected and actual results, timeline |
 | POST | `/requests/<id>/assign` | owner, admin | set `owner_id` → `assigned` |
-| POST | `/requests/<id>/review` | owner, admin | → `in_review` with a named `reviewer_id`, **refused if open tasks, no lever and hypothesis, or no eligible reviewer**; announces `action.in_review` |
+| POST | `/requests/<id>/review` | owner, admin | → `in_review` with a named `reviewer_id`, **refused if open tasks, no lever and hypothesis, no expected change and window, or no eligible reviewer**; announces `action.in_review` |
 | POST | `/requests/<id>/approve` | named reviewer | → `approved`, **refused unless the actor is the reviewer named on this action, or if checks unpassed**; announces `action.decided` |
 | POST | `/requests/<id>/reject` | named reviewer | → `rejected`; announces `action.decided` |
-| POST | `/requests/<id>/close` | named reviewer | → `closed` with `actual_delta` and `confidence`, **refused unless the named reviewer** |
+| POST | `/requests/<id>/close` | named reviewer | → `closed` with `actual_delta`, `confidence` and `decision`, **refused unless the named reviewer** |
 | POST | `/requests/<id>/cancel` | requester, admin | → `cancelled` |
 | POST | `/requests/<id>/tasks` | owner, admin | add task |
 | POST | `/tasks/<id>/complete` | assignee, owner, admin | mark done |
@@ -293,11 +296,11 @@ After the commit, the dispatcher posts every undelivered row, oldest first, to `
 | `project_detail.html` | the KPI tree; each KPI against target, as text *and* a chart; actions with expected and realised ROI; project ROI against `roi_target` |
 | `requests_list.html` | my queue; status as text *and* colour, never colour alone |
 | `request_new.html` | title, type, priority, due date, description, lever, hypothesis, expected change, cost in euros and hours, measurement window |
-| `request_detail.html` | fields; expected ROI; the named reviewer; once closed, actual result, confidence and realised ROI; the action buttons the viewer is actually allowed; tasks; checks. Sending to review asks the owner to pick a reviewer from the eligible ones |
+| `request_detail.html` | fields; expected ROI, net gain and **break-even revenue** — *"this action must add €X of revenue to break even"*; the named reviewer; once closed, actual result, confidence, decision and realised ROI; the action buttons the viewer is actually allowed; tasks; checks. Sending to review asks the owner to pick a reviewer from the eligible ones |
 | `_timeline.html` | every transition: who, from, to, when, note |
 | `_flash.html` | success and error messages |
 
-**ROI is shown with its basis.** Every ROI figure on screen says whether it is expected or realised and, if realised, its confidence label. A `correlated` result is never displayed as if it were proven.
+**ROI is shown with its basis.** Every ROI figure on screen says whether it is expected or realised and, if realised, its confidence label. A `correlated` result is never displayed as if it were proven. Next to every ratio sits the net gain in euros, so a loss reads as a loss and an action with no investment — no ROI — still shows what it returned.
 
 **Week 8 trap to avoid:** `request_detail.html` hides buttons the viewer may not use. Hiding a button is not authorisation. Every route re-checks server-side, and there will be tests that curl `/approve` and `/close` as the requester and expect a refusal.
 
@@ -353,20 +356,38 @@ Week 7 asks for at least eight covering valid, invalid, empty and boundary input
 29. Sending an action to review writes its status, its transition and its `action.in_review` announcement together — and if the announcement insert fails, none of the three is written
 30. An announcement payload contains ids only — no title, hypothesis, figure, name or email
 
-Thirty. Deliberately more than eight, and 1–7, 16–20 and 24–28 run in milliseconds.
+**`test_roi.py` and `test_lifecycle.py`, continued — fixed predictions and decisions**
+31. Net gain and break-even revenue for the worked example: B must add €13,375 of revenue to break even, against the €9,600 it was expected to bring
+32. A loss is reported as computed: €500 of lost profit on €200 invested is an ROI of −3.5, never clipped to −1 or to zero
+33. An action cannot enter review without its expected change and a measurement window that ends after it starts
+34. An action cannot be closed without a decision
+35. A decision outside `scale`, `hold`, `redesign`, `retire` is refused
+
+Thirty-five. Deliberately more than eight, and 1–7, 16–20, 24–28 and 31–35 run in milliseconds. The AI fields (§3) bring their own tests when they are built.
 
 ### The worked example — the numbers the tests use
 
 Baseline for one 30-day window: 50,000 sessions · 2.0% conversion · €60 AOV = €60,000 revenue. Margin 40%. People time €35/hour.
 
-| Action | Lever → KPI | Expected change | Revenue | Gross profit | Investment | ROI | ROAS |
-|---|---|---|---|---|---|---|---|
-| A · Remove forced sign-up | checkout friction → conversion | +0.3 points | €9,000 | €3,600 | €840 (24 h) | **3.29** | n/a |
-| B · Meta prospecting | paid prospecting → sessions | +8,000 | €9,600 | €3,840 | €5,350 (€5,000 + 10 h) | **−0.28** | 1.92 |
-| C · Two bundles | bundles → AOV | +€3.00 | €3,000 | €1,200 | €1,080 (€800 + 8 h) | **0.11** | 3.75 |
-| **Project** | | | €21,600 | €8,640 | €7,270 | **0.19** | |
+| Action | Lever → KPI | Expected change | Revenue | Gross profit | Investment | Net gain | Break-even revenue | ROI | ROAS |
+|---|---|---|---|---|---|---|---|---|---|
+| A · Remove forced sign-up | checkout friction → conversion | +0.3 points | €9,000 | €3,600 | €840 (24 h) | €2,760 | €2,100 | **3.29** | n/a |
+| B · Meta prospecting | paid prospecting → sessions | +8,000 | €9,600 | €3,840 | €5,350 (€5,000 + 10 h) | −€1,510 | €13,375 | **−0.28** | 1.92 |
+| C · Two bundles | bundles → AOV | +€3.00 | €3,000 | €1,200 | €1,080 (€800 + 8 h) | €120 | €2,700 | **0.11** | 3.75 |
+| **Project** | | | €21,600 | €8,640 | €7,270 | €1,370 | | **0.19** | |
 
-Already verified against `roi.py`. B looks healthy on ROAS and loses money; A costs no cash and returns the most. That contrast is the argument of the whole application.
+Already verified against `roi.py`. B looks healthy on ROAS and loses money; A costs no cash and returns the most. That contrast is the argument of the whole application. Break-even makes it visible before anything is spent: B needs €13,375 of extra revenue to cover its cost, and its own hypothesis only claims €9,600.
+
+**ROI divides by the full investment of the action** — cash plus people time, and from Weeks 5–6 its AI cost. The same gain over a different denominator gives a different ratio, so the denominator is stated wherever ROI is.
+
+### What the app never counts
+
+Stated so nobody, human or generated code, quietly adds them back:
+
+- **Saved hours as a benefit.** Time is counted as a cost. Hours an action "frees up" become money only when spending actually falls, and the app has no way to know that.
+- **ROAS or platform-attributed revenue as a result.** Only the measured change in the store's own KPIs is a result.
+- **ROI percentages added together.** A project's ROI is total profit change against total investment, never a sum or average of the actions' ratios.
+- **A result as more certain than it is.** Every realised figure carries its confidence label.
 
 ---
 

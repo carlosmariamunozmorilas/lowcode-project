@@ -60,14 +60,19 @@ Each piece of work is an **action**.
    tools; MarketingOps records its progress.
 4. **They send it for review, naming who should approve it.** The application
    refuses while any task is open, if no lever and hypothesis have been given,
-   or if the person named is the one who asked for the work or did it.
+   if the expected change and the dates it will be measured over are missing,
+   or if the person named is the one who asked for the work or did it. The
+   prediction is fixed here, before any result exists, so nobody can write it
+   afterwards to fit what happened.
 5. **That named reviewer approves it** against a checklist — claims backed by evidence,
    brand and disclosure right, links working, tracking in place — or rejects it,
    or sends it back for rework.
 6. **Once its measurement window has passed, it is closed.** The same reviewer records
    what actually changed and **how sure they are**: proven by a holdout test,
-   seen before and after, or merely correlated. The application then computes
-   the return it actually delivered.
+   seen before and after, or merely correlated — and **what the team will do
+   next**: scale it, hold, redesign it or retire it. The application then
+   computes the return it actually delivered, next to the one that was
+   expected.
 
 Every step adds a line to the action's history: **who acted, what changed,
 when, and the note they left.**
@@ -144,12 +149,15 @@ by people should not be fed into a prompt unchecked.
 
 ## Where the ideas come from
 
-Two places. The return calculation comes from revenue-operations practice:
+Three places. The return calculation comes from revenue-operations practice:
 margin-aware, with people's time counted as a cost — more honest than the
 dashboards most marketing teams use. The review checklist comes from the
 governance layer of my earlier research, the *AI-Era Influence Model*: evidence
 for every claim, permitted use of data, audience eligibility, human oversight.
-Here both stop being frameworks and become things the software checks.
+And the rules around the return — fix the prediction before the result, close
+every action with a decision, show the break-even point, never count saved
+hours as money — come from my own *ROI AI Influence Model* series. Here all
+three stop being frameworks and become things the software checks.
 
 ## What it deliberately does not do
 
