@@ -159,6 +159,10 @@ every action with a decision, show the break-even point, never count saved
 hours as money — come from my own *ROI AI Influence Model* series. Here all
 three stop being frameworks and become things the software checks.
 
+How the influence models started, how they grew into three generations, and
+exactly what this application takes from each — and leaves out — is told in
+[`influence-models.md`](influence-models.md).
+
 ## What it deliberately does not do
 
 It does not connect live to ad platforms, build its own formulas, forecast, or
