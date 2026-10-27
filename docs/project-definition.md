@@ -132,7 +132,7 @@ The brief requires one scheduled automation, one triggered by an event and one w
 | 4 | 4 Nov | the `POST /api/events` handler for spend and revenue · `docs/portfolio/automation-01.md` · `docs/portfolio/img/` |
 | 5 | 11 Nov | `schema/001_initial.sql` final · `docs/design/erd.md` checked against the real schema, with the delete rule · CRUD with parameterised queries · string-formatted SQL removed · the outbox · `automation-02.md` |
 | 6 | 18 Nov | Templates: responsive, accessible, Tailwind; the project page with KPI charts · `docs/week06-ui-review.md` · before/after screenshots |
-| 7 | 25 Nov | `ruff.toml` · `tests/` with the 35 tests · `docs/week07-bugs.md` · `automation-03.md` |
+| 7 | 25 Nov | `ruff.toml` · `tests/` with the 39 tests · `docs/week07-bugs.md` · `automation-03.md` |
 | 8 | 2 Dec | `security/` scan evidence · `docs/security-report.md` with before/after table · dependencies upgraded · automation 4 built |
 | 9 | 9 Dec | `Dockerfile` multi-stage, non-root, under 250 MB · `.dockerignore` · `docker-compose.yml` with Postgres |
 | 10 | 16 Dec | `docs/deployment.md` including teardown · live HTTPS URL in `README.md` |
