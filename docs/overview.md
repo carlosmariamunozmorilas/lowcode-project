@@ -26,6 +26,30 @@ MarketingOps asks a question up front and answers it at the end. Before work
 starts: *what is this meant to move, by how much, and what will it cost?* After:
 *what did it actually move, how sure are we, and did it pay?*
 
+## What it is — and what it is not
+
+**Project management for return on investment.** It looks like a project tool —
+pieces of work with an owner, tasks, stages and an approval — but it judges
+success differently. A normal project tool asks *was it delivered?* This one
+asks **was it worth it?** The closest everyday comparison is a helpdesk
+system, but for marketing bets: instead of tickets, actions; instead of
+*solved*, *did it pay?*
+
+| Like a project tool | Not like a project tool |
+|---|---|
+| Work with an owner, tasks and due dates | No Gantt charts, dependencies or timesheets |
+| Stages, and an approval before the work | Success means profit, not "done on time" |
+| A view of what is waiting on whom | Every action has to justify itself in money |
+
+**Plan against actual — not prediction.** The application does not guess the
+future. The person proposing an action states what they expect, and the
+application turns that expectation into money: two product bundles expected to
+lift order value by €3 should return 0.11. When the measurement window closes,
+the real result goes next to it: the bundles lifted order value by €2.40, so
+they actually returned −0.11. The value is in that comparison, action after
+action — which bets paid, which did not, and how good the team is at
+estimating.
+
 ## One example, start to finish
 
 An online store over one quarter, at 40% margin. Three ideas:
@@ -100,16 +124,40 @@ action makes the next estimate easier to trust.
 
 ## Who uses it
 
-| Person | Their part |
-|---|---|
-| **Requester** | Proposes work. Can cancel their own. |
-| **Owner** | Takes the work on, chooses the lever, writes the hypothesis, does it, records the numbers. |
-| **Reviewer** | Approves or rejects the work — and, at the end, certifies its result. |
-| **Administrator** | Manages the projects, targets and users. |
+The whole marketing team, each person for a different reason.
+
+| Person | In a real team | Their part |
+|---|---|---|
+| **Requester** | Founder, sales, product | Proposes work — *"let's try bundles"* — and later sees whether it paid. Can cancel their own. |
+| **Owner** | Marketing specialist | Takes the work on, states the bet (lever, expected change, cost), does it, records the numbers. |
+| **Reviewer** | Head of marketing, finance | Approves the action before the money is spent — and, at the end, certifies what it really achieved. |
+| **Administrator** | Marketing operations | Sets up the project — period, budget, margin, targets — and manages users. |
+
+### One action, through the team
+
+1. **The founder** suggests: *"Let's create two product bundles."*
+2. **The specialist** takes it on and states the bet: order value +€3, €800 and
+   8 hours of work, measured over November. Before saving, they press
+   **Preview** and see its expected return and its effect on the whole project.
+3. **The head of marketing** approves it — the only person who can, because
+   they are the reviewer named on it.
+4. **The specialist** does the work.
+5. In December, **the head of marketing** records what really happened —
+   order value +€2.40, seen before and after — and decides: **redesign it**,
+   because at that lift the bundles cost more than they earned.
+6. **The founder** opens the project page and sees which actions carried the
+   quarter and which dragged it down.
+
+The question the team is answering is not *"did my colleague do their job?"*
+It is **"which of our marketing bets are actually worth the money?"** The
+review step exists only so that answer can be trusted.
 
 **The rule at the centre of the design:** the person who asked for the work and
 the person who did it never sign it off — not when it is approved, and not
-when its result is recorded. Nobody grades their own homework. And only the
+when its result is recorded. Nobody grades their own homework — the same reason
+nobody approves their own expense claim. If the specialist who ran the bundles
+could also record their result, every action would look like a success. And
+only the
 one reviewer named on an action can sign it off, so an approval link that gets
 forwarded does not hand the decision to whoever clicks it.
 
