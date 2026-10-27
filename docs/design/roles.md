@@ -49,7 +49,7 @@ next.
 | Layer | What it enforces | Where |
 |---|---|---|
 | 1 · Sign-in and role | Is this person signed in, and does their role allow this kind of action at all? | `@role_required` on every route (`auth.py`) |
-| 2 · The lifecycle rule | May *this* person move *this* action to *that* stage? The named reviewer is neither the requester nor the owner; only the named reviewer signs off; review needs a lever, a hypothesis and a named reviewer; closing needs a result and a confidence label | `check_transition()` in [`lifecycle.py`](../../lifecycle.py), called by every lifecycle route before it writes — **already written and running** |
+| 2 · The lifecycle rule | May *this* person move *this* action to *that* stage? The named reviewer is neither the requester nor the owner; only the named reviewer signs off; review needs a lever, a hypothesis, the expected change and its window, and a named reviewer; closing needs a result, a confidence label and a decision | `check_transition()` in [`lifecycle.py`](../../lifecycle.py), called by every lifecycle route before it writes — **already written and running** |
 | 3 · Fields | Status, `actual_delta` and `confidence` are never read from a general edit form, so an owner cannot post `status=closed` and grade their own work | the lifecycle routes are the only writers of those columns (`routes/request_routes.py`) |
 | 4 · The database | An action past `submitted` must have an owner; one in review or beyond must have a named reviewer who is neither its requester nor its owner; a closed action must have its result; history, targets and measurements cannot be edited or deleted | `CHECK` constraints and triggers in [`schema/001_initial.sql`](../../schema/001_initial.sql) — **already written and loading** |
 
