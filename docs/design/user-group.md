@@ -30,7 +30,7 @@ fulfilment and customer service and are outside the initial user group.
 
 | Person | Side | What they do today | Role in the app |
 |---|---|---|---|
-| **Founder** | Client | Sets commercial priorities and the monthly spending limit; approves budget increases and projects above €500 | `admin` + `reviewer`: sets up the project, manages users, can create actions; named reviewer for the ecommerce manager's requests |
+| **Founder** | Client | Sets commercial priorities and the monthly spending limit; approves budget increases and projects above €500, except ones they requested or own (those stay blocked) | `admin` + `reviewer`: sets up the project, manages users, can create actions; named reviewer for the ecommerce manager's requests |
 | **Ecommerce manager** | Client | Requests campaigns and website improvements | `requester` + `reviewer`: requests actions; named reviewer for the founder's requests |
 | **Account manager** | Agency | Coordinates requests and reporting; prepares the results review | `requester` + `owner`: creates coordinated tasks and owns reporting work |
 | **Paid media specialist** | Agency | Runs Google Ads and Meta Ads | `owner` |
@@ -109,12 +109,17 @@ people-time rate of **€35/hour**, that is about **€455 a month**
 - **If no eligible reviewer exists, the action stays blocked.** There is no
   override, and silence never counts as approval.
 - One designated approver per approval stage.
+- **The named reviewer certifies results** and closes the action, under the
+  same identity rule. `admin` status alone never authorises closing. The
+  account manager prepares the results analysis but does not certify it.
 
 **Agreed future requirements**, recorded now and built in their planned weeks:
 
 - **Amount-based routing.** Projects above **€500**, and any budget increase,
   need the founder's approval. This is a separate requirement from the monthly
-  limit.
+  limit. **If the founder requested or owns such an action, it stays
+  blocked**: approving it would break the identity rule, and the ecommerce
+  manager cannot stand in for the founder's mandatory approval.
 - **Monthly budget.** About **€5,000 a month**, covering advertising, agency
   labour and creative/development work. Budget being available never
   overrides the reviewer rules.
