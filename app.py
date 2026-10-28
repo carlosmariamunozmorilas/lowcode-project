@@ -1,5 +1,6 @@
 import math
 import os
+import secrets
 import sqlite3
 
 from flask import (
@@ -31,8 +32,17 @@ LEVERS = (
 )
 
 app = Flask(__name__)
+
+# Never a known default: anyone who knows the key can forge the session
+# cookie. Without one, a random key lasts until the process stops, which is
+# enough for this week's flash messages and fails safe if a deploy forgets it.
+secret_key = os.environ.get("SECRET_KEY")
+if not secret_key:
+    secret_key = secrets.token_hex(32)
+    app.logger.warning("SECRET_KEY is not set; using a random key for this run")
+
 app.config.from_mapping(
-    SECRET_KEY=os.environ.get("SECRET_KEY", "dev"),
+    SECRET_KEY=secret_key,
     DATABASE=os.environ.get(
         "DATABASE_PATH", os.path.join(app.root_path, "marketingops.db")
     ),
