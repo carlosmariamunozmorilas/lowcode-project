@@ -1,164 +1,82 @@
-# Week 3 — review of the generated slice
+# Week 3 — review of the first working version
 
-The Session 3 brief asks for four things: the findings, what I fixed and why,
-what I am knowingly leaving and why, and what the reviewer got wrong. This page
-covers the [Week 3 slice](week03-slice.md): one table, five routes, no login.
+This review covers the [Week 3 slice](week03-slice.md) of MarketingOps: one table, five routes and no login. It records the findings, the fixes, the limitations left for later and the mistakes in the AI review.
 
-## How it was made
+MarketingOps is intended to help an ecommerce marketing team assess the return from its work. This first version only records actions, costs, investment and status changes. It does not yet implement the complete ROI and approval workflow.
 
-| Step | What happened | Where |
-|---|---|---|
-| Branch | `feature/week03-slice`, cut from `main` before any code was generated | — |
-| Generate | **Claude**, from the slice specification and its prompt, in one pass | commit `74369c5` |
-| Run | `sqlite3 marketingops.db < schema.sql`, then every route through Flask's test client. It worked first time, so nothing was changed before committing | — |
-| Review | **Gemini 3.5 Flash-Lite**, signed out. The other models need an account | [raw output](../experiments/week03/gemini-review.md) |
-| Verify | Every claim the reviewer made, and my own checks, run against the code, not just read | below |
-| Fix | Six fixes, one commit each | `d6752f2` … `6250de1` |
+## How the code was generated and checked
 
-Two things limit how far this comparison goes, and they should be said
-before the results.
+The branch `feature/week03-slice` was created before generating the code. Claude Code generated the scaffold from the slice specification in one pass. The database was initialised with `sqlite3 marketingops.db < schema.sql`, and the routes were exercised through Flask's test client. The scaffold ran successfully and was committed unchanged as `74369c5`.
 
-- **The generator was not blind.** Claude produced the scaffold inside the
-  repository session (Claude Code), where it could read `lifecycle.py` and
-  `roi.py`, rather than in a fresh chat with only the pasted specification. The
-  same model then helped verify and fix it. The raw commit is a genuine single
-  pass, but it is not the output of a tool that knew nothing about the project.
-- **The reviewer was the smallest Gemini model.** Without an account, Gemini
-  offers only Flash-Lite. A stronger model might have found more, so this
-  review measures Flash-Lite, not Gemini as a whole.
+Gemini 3.5 Flash-Lite then reviewed it in a signed-out session. The [original response](../experiments/week03/gemini-review.md) is preserved. Its claims were checked against the code, and additional checks were carried out with Claude's assistance. Six fixes followed, each in its own commit.
 
-## The two checks this project cares about
+There are two important limits to this exercise:
 
-[`week03-slice.md`](week03-slice.md) named two failures to look for before
-the generic ones. **Neither happened.**
+- **The generator was not blind.** Claude worked inside the existing repository, where it could read `lifecycle.py` and `roi.py`. It also helped verify and fix the generated code.
+- **The reviewer was Flash-Lite.** This was the model available in the signed-out session. These results should not be treated as a judgement of every Gemini model.
 
-- The status route asks `ALLOWED` from `lifecycle.py` which moves are legal.
-  The transitions were not copied into the route (raw `app.py` lines 135 and
-  150).
-- The investment comes from `roi.investment()`. The formula was not rewritten
-  inline (lines 82 and 139).
+The findings labelled “additional checks” below correspond to the original review's “mine” category. They were separate from Gemini's review, but were checked with Claude's assistance; they should not be read as unaided discoveries.
 
-So the assistant imported the rules it was told to import. The bugs it did
-write are in the code around those rules, not in the rules.
+## Reusing the existing project rules
+
+Two project-specific checks passed:
+
+- The status route uses `ALLOWED` from `lifecycle.py`, rather than copying the transition rules into the route: raw `app.py` lines 135 and 150.
+- Investment uses `roi.investment()`, rather than repeating the formula: raw `app.py` lines 82 and 139.
+
+The scaffold therefore reused the existing rules as requested. The problems below were in the surrounding implementation.
 
 ## 1. Findings
 
-Line numbers refer to the raw scaffold, commit `74369c5`. **Source** says who
-raised the finding; **Verified** says what running it showed.
+All line references refer to the original scaffold, commit `74369c5`.
 
-| # | Finding | File : line | Source | Verified |
+| ID | Finding | Reference | Source | Recorded verification |
 |---|---|---|---|---|
-| F1 | A hardcoded fallback secret key, `"dev"` | `app.py:34` | Gemini | True. The key is readable in the repository, so anyone could forge the session cookie |
-| F2 | No way to set up the database; a missing file becomes an empty one | `app.py:41-45` | Gemini (in part) | True, and worse than reported: `sqlite3.connect` silently creates an empty file, then every page returns 500 with *no such table: actions*. The lab's setup step needs the `sqlite3` command-line tool, which Git Bash does not ship |
-| F3 | `"inf"` and `"nan"` accepted as costs | `app.py:64-71` | mine | True. `inf` was stored and shown as **€inf**. `nan` passed the `< 0` check, reached SQLite as NULL and crashed with a 500 |
-| F4 | The status check and the status write are separate steps | `app.py:147-158` | mine | True. When an action was cancelled between the read and the write, the stale request moved it back to `assigned`: a cancelled action brought back to life |
-| F5 | "Newest first" is wrong within the same second | `app.py:77` | mine | True. Three actions created in a row listed as 3, 1, 2 |
-| F6 | `requirements.txt` replaced with one loose line | `requirements.txt:1` | mine | True. `Flask>=3.0,<4.0` drops every pin, including the transitive ones. The old pins carried six `pip-audit` advisories |
-| F7 | No CSRF protection on any form | `templates/detail.html:28`, `templates/new.html:5` | mine | True. A POST from another origin is accepted |
-| F8 | Anyone can approve and close any action | `app.py:150` | Gemini (as F9's consequence) | True: an action walked from `submitted` to `closed` with no checks. Known and in scope, see §3 |
-| F9 | The route uses `ALLOWED`, not `check_transition()` | `app.py:135, 150` | Gemini | Misread, see §4 |
-| F10 | An empty cost is stored as `None` and crashes on NOT NULL | `app.py:64-71, 125` | Gemini | **False**, see §4 |
-| F11 | Title and description need server-side sanitisation against XSS | `templates/detail.html:8` | Gemini | **False**, see §4 |
-| F12 | After a failed submit, empty cost fields come back empty, not `0` | `templates/new.html:23, 27` | Gemini | True, and cosmetic: an empty cost is read as 0 anyway |
+| F1 | Predictable fallback secret key, `"dev"` | `app.py:34` | Gemini | Confirmed. A known key allows session cookies to be forged. |
+| F2 | Database setup is inconvenient, and a missing database becomes an empty file | `app.py:41-45` | Gemini, partly; additional checks | Confirmed. The empty file causes a 500 error with `no such table: actions`. The original setup also requires the SQLite command-line tool, which Git Bash does not include. |
+| F3 | Infinite and NaN costs are accepted | `app.py:64-71` | Additional checks | Confirmed. `inf` displays as €inf; `nan` reaches SQLite as NULL and causes a 500 error. |
+| F4 | Checking and updating status are separate operations | `app.py:147-158` | Additional checks | Confirmed. A concurrent cancellation can be overwritten, moving the action back to `assigned`. |
+| F5 | Newest-first ordering is unreliable within the same second | `app.py:77` | Additional checks | Confirmed. Three actions appeared in the order 3, 1, 2. |
+| F6 | Exact dependency versions were replaced with a broad version range | `requirements.txt:1` | Additional checks | Confirmed. `Flask>=3.0,<4.0` removed the pins. The previous pinned versions also had six reported security advisories. |
+| F7 | Forms have no CSRF tokens | `templates/detail.html:28`, `templates/new.html:5` | Additional checks | Confirmed. A POST from another origin is accepted. |
+| F8 | Anyone can approve or close actions | `app.py:150` | Gemini, through F9; additional verification | Confirmed. There is no authentication or role enforcement in this slice. |
+| F9 | Using `ALLOWED` instead of `check_transition()` violates the requirements | `app.py:135, 150` | Gemini | Misreads the scope. See section 4. |
+| F10 | Empty costs are inserted as `None` and crash the database | `app.py:64-71, 125` | Gemini | Incorrect. Empty costs become zero. |
+| F11 | Title and description are displayed without protection against XSS | `templates/detail.html:8` | Gemini | Incorrect for the tested templates. Jinja2 escapes the output. |
+| F12 | Empty cost fields remain empty after a validation error | `templates/new.html:23, 27` | Gemini | Confirmed, but cosmetic. Empty costs are interpreted as zero. |
 
-The scaffold got the brief's own checklist right. Every query is
-parameterised, `debug` is off unless `FLASK_DEBUG=1`, the server binds to
-`127.0.0.1`, both text fields are length-checked on the server and in the
-schema, and Jinja2 autoescaping is on.
+The original scaffold also passed several basic checks: parameterised queries, debugging off unless `FLASK_DEBUG=1`, binding to `127.0.0.1`, text-length checks in the application and schema, and Jinja2 autoescaping.
 
-## 2. What I fixed, and why
+## 2. What was fixed, and why
 
-One commit per fix, in this order.
+Claude assisted with all six fixes.
 
-1. **F3 — reject infinite and NaN costs** (`d6752f2`). A cost is a finite
-   number of zero or more, and `math.isfinite` says so in one line. I fixed
-   this first because it was a reachable crash *and* a nonsense number on the
-   screen, which matters in an app whose purpose is to make its numbers
-   trustworthy.
-2. **F4 — make the status change a single check-and-write** (`ed1086e`). The
-   UPDATE now also matches the status that was checked; if nothing matches,
-   the user is told and nothing is written. This is the rule the full
-   specification already sets for Week 7 (a status change and its history row
-   in one transaction), so it is cheaper to have it right in the slice than to
-   unlearn it later. A cancelled action coming back is exactly the kind of
-   record an audit trail exists to prevent.
-3. **F1 — no known secret key** (`9eeb1b3`). Without `SECRET_KEY`, the app now
-   generates a random key for the life of the process and logs a warning. I
-   chose this over refusing to start: this week the session holds only flash
-   messages, the clean-clone test should work with no setup, and a deploy that
-   forgets the variable now fails safe instead of running on a published key.
-   Week 10 must set it for real.
-4. **F5 — newest first, ties broken by id** (`55fdc08`). One clause,
-   `id DESC`. The specification says newest first, and ids only grow.
-5. **F2 — `flask --app app init-db`, and no silently created databases**
-   (`ac037cf`). The command runs `schema.sql`, so the clean clone needs nothing
-   beyond Python. The app now opens the file read-write without creating it,
-   and a missing database is an error that names the command to run. Tables are
-   still not created at import, as the specification requires. The README gains
-   the run steps.
-6. **F6 — every dependency pinned again** (`6250de1`). Flask 3.1.0 → 3.1.3 and
-   Werkzeug 3.1.3 → 3.1.9. `pip-audit` reported six advisories on the old pins
-   and none on the new ones. This was the upgrade recorded in Week 2 as due when
-   this lab regenerated the dependencies. `click` 8.5 no longer pulls in
-   `colorama` on Windows, so the Week 2 `colorama` gap is gone, not merely
-   pinned.
+- **Reject invalid costs — F3, `d6752f2`.** Costs must be finite numbers of zero or more. `math.isfinite()` rejects infinity and NaN. This removes a crash and prevents meaningless investment figures.
+- **Protect concurrent status changes — F4, `ed1086e`.** The update now checks that the action still has the status previously read. If another request changed it, nothing is overwritten and the user is asked to try again. This protects the status update; the complete transactional history remains part of the wider design.
+- **Remove the predictable secret key — F1, `9eeb1b3`.** If `SECRET_KEY` is missing, the app generates a random key for that process and logs a warning. This keeps local setup straightforward while removing the published fallback key. A stable, securely configured key is still required for deployment in Week 10.
+- **Resolve ordering ties — F5, `55fdc08`.** Adding `id DESC` puts newer actions first when their creation timestamps match.
+- **Add database initialisation — F2, `ac037cf`.** `flask --app app init-db` creates the tables from `schema.sql` without requiring a separate SQLite command-line installation. Normal database access no longer silently creates a missing file. The README explains the setup, and tables are not created when the module is imported.
+- **Restore and update dependency pins — F6, `6250de1`.** Flask moved from 3.1.0 to 3.1.3 and Werkzeug from 3.1.3 to 3.1.9, with exact versions recorded for all dependencies. The recorded `pip-audit` check on 28 October reported no advisories, compared with six on the previous pins. With click 8.5, `colorama` was no longer pulled in on Windows.
 
-## 3. What I am knowingly leaving, and why
+## 3. What remains, and why
 
-- **F8, anyone can approve or close (no login, no roles).** The slice is
-  specified without authentication, and `check_transition()` needs a requester,
-  owner, reviewer and acting user that this one-table slice does not have. When
-  login arrives, the status route must call `check_transition()`, not `ALLOWED`
-  alone. Until then, nobody should put real work into this app.
-- **F7, no CSRF tokens.** With no login, a forged request can do nothing that
-  a visitor could not do directly, so a token would protect nothing yet. It
-  arrives with login, in the same change as F8.
-- **F12, empty fields re-render empty.** Cosmetic, and an empty cost already
-  means 0.
-- **Two schemas.** `schema.sql` (this slice) and `schema/001_initial.sql` (the
-  target design, with `requests`, the history table and the append-only audit
-  log) describe the same object differently. They are merged in Week 5, when
-  persistence becomes that week's subject.
-- **`created_at` is UTC and is shown without saying so.** It is acceptable for
-  one team in Dublin for now. Times should be labelled when the weekly reports
-  start reading them.
-- **No test files yet.** Every claim on this page was checked by a throwaway
-  script, not by a committed test. The test suite is Week 7. F3, F4 and F5 are
-  its first three cases, because each was a real bug.
-- **Flask's development server.** It is fine on `127.0.0.1`. Running the app
-  in production is the subject of Weeks 9 and 10.
+- **No login or permissions — F8.** This slice deliberately excludes users and roles. The full `check_transition()` function requires information that the one-table version does not have. Authentication and server-side permission checks must be added before using it for real work.
+- **No CSRF tokens — F7.** These are deferred to the authentication work. Because all visitors can already change actions, the slice has a broader access-control limitation. The absence of login does not make CSRF protection unnecessary for the finished application.
+- **Empty fields stay empty — F12.** This is a display issue; empty costs are still processed as zero.
+- **Two schemas.** `schema.sql` runs this slice. `schema/001_initial.sql` describes the fuller design, including history and audit records. They are scheduled to be reconciled in Week 5.
+- **Unlabelled UTC timestamps.** `created_at` is UTC, but the interface does not say so. The display should identify the timezone.
+- **No committed test suite.** Verification used temporary scripts. The suite is planned for Week 7, with F3, F4 and F5 providing concrete regression cases.
+- **Development server only.** This version runs locally on `127.0.0.1`. Production packaging and deployment belong to Weeks 9 and 10.
 
 ## 4. What the reviewer got wrong
 
-Flash-Lite produced seven findings. Two were right (F1 and F2), one was right
-but cosmetic (F12), and four were wrong or misread the scope.
+Gemini produced seven findings: two held, one was cosmetic, and four were incorrect or misread the scope. F9 appeared twice, under correctness and structure.
 
-- **F10, the empty-cost crash, does not exist.** `parse_cost` reads an empty
-  field as `float("" or 0)`, which is `0.0`. And `None` can never reach the
-  INSERT, because any invalid cost stops the request before it does. Tested: an
-  action submitted with both costs empty is stored as `(0.0, 0.0)`. The real
-  crash on that line was `"nan"` (F3), which it did not find.
-- **F9, "call `check_transition()`", misreads the specification.** The slice
-  says the next stages come from `ALLOWED`, and lists roles and named
-  reviewers as out of scope. `check_transition()` cannot be called without an
-  owner, a reviewer and an acting user, and the slice has none of them. Its
-  supporting claim, that illegal moves "fail silently or cause unhandled
-  exceptions", is also false: tested, an illegal move is refused with a message
-  and nothing is written. Gemini counted this finding twice, once under
-  correctness and once under structure.
-- **F11, input sanitisation for XSS, recommends the wrong control.** The
-  defence against stored XSS is escaping on output, which Jinja2 does.
-  "Sanitising" input would corrupt what people typed. Its claim that
-  descriptions are "rendered raw" is false: tested, a `<script>` title and an
-  `<img onerror>` description both come out escaped.
-- **F2 was half right.** No technical constraint was violated: the
-  specification says `schema.sql` creates the table, and the slice document
-  says how to run it. The real problem, an empty database created behind the
-  user's back, it did not see.
+- **Empty costs did not cause the claimed crash — F10.** The expression `float("" or 0)` produces `0.0`. Submitting both costs empty stored `(0.0, 0.0)`. Invalid parsed costs were stopped before insertion. The actual crash involved `"nan"`, which Gemini missed.
+- **`ALLOWED` matched the slice specification — F9.** This version was explicitly required to use the transition graph without implementing roles or named reviewers. The fuller permission function needs those details. Illegal transitions were also refused with a message and no database change, rather than failing silently as the review suggested.
+- **The tested output was escaped — F11.** A `<script>` title and an `<img onerror>` description were rendered as escaped text. The claim that descriptions were displayed raw was incorrect. Escaping output in these templates was the relevant protection.
+- **The database finding was only partly explained — F2.** Setup instructions already existed, so the absence of automatic table creation was not itself a specification violation. The additional checks exposed the more useful problem: a missing database was silently created empty.
 
-What it missed matters more than what it got wrong. It found none of the
-three bugs that change data (F3, F4, F5) and none of the dependency problem
-(F6). And it named "CSRF protection" as something the secret key protects, in
-an app that has no CSRF protection at all (F7). **Fixes 1, 2, 4 and 6 come
-from my own checks, not from the review.** The lesson for Week 7 is the same
-one Week 2 taught: a review is a list of claims to test, not a list of facts.
+Gemini missed F3, F4, F5 and F6, which led to four of the six fixes. It also referred to CSRF protection when discussing the secret key, although the application had no CSRF tokens.
+
+The practical lesson is to check an AI review against the specification and reproduce its claims. A convincing explanation can still describe a bug that does not exist, while missing one that does.
