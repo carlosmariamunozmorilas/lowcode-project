@@ -1,0 +1,122 @@
+body {
+    font-family: system-ui, -apple-system, "Segoe UI", sans-serif;
+    margin: 0;
+    color: #1f2933;
+    background: #f7f8fa;
+}
+
+header {
+    background: #1f2933;
+    padding: 0.75rem 1rem;
+}
+
+nav a {
+    color: #fff;
+    margin-right: 1rem;
+    text-decoration: none;
+}
+
+nav .brand {
+    font-weight: 700;
+}
+
+main {
+    max-width: 960px;
+    margin: 0 auto;
+    padding: 1rem;
+}
+
+table {
+    width: 100%;
+    border-collapse: collapse;
+    background: #fff;
+}
+
+th, td {
+    padding: 0.5rem;
+    border-bottom: 1px solid #e4e7eb;
+    text-align: left;
+}
+
+.num {
+    text-align: right;
+}
+
+form label {
+    display: block;
+    margin-top: 0.75rem;
+    font-weight: 600;
+}
+
+form input[type="text"],
+form input[type="number"],
+form textarea,
+form select {
+    width: 100%;
+    max-width: 480px;
+    padding: 0.4rem;
+    box-sizing: border-box;
+}
+
+button {
+    margin-top: 1rem;
+    padding: 0.5rem 1rem;
+    cursor: pointer;
+}
+
+.actions {
+    display: flex;
+    gap: 0.5rem;
+    flex-wrap: wrap;
+}
+
+.actions form button {
+    margin-top: 0;
+}
+
+.flashes {
+    list-style: none;
+    padding: 0;
+}
+
+.flash {
+    padding: 0.5rem 0.75rem;
+    margin-bottom: 0.5rem;
+    border-radius: 4px;
+}
+
+.flash-error {
+    background: #fde8e8;
+    color: #9b1c1c;
+}
+
+.flash-success {
+    background: #e3f9e5;
+    color: #1f6f2b;
+}
+
+.status {
+    display: inline-block;
+    padding: 0.1rem 0.5rem;
+    border-radius: 999px;
+    background: #e4e7eb;
+    font-size: 0.85rem;
+}
+
+.description {
+    white-space: pre-wrap;
+}
+
+dl {
+    display: grid;
+    grid-template-columns: max-content 1fr;
+    gap: 0.25rem 1rem;
+}
+
+dt {
+    font-weight: 600;
+}
+
+dd {
+    margin: 0;
+}

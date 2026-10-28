@@ -1,0 +1,31 @@
+{% extends "base.html" %}
+{% block title %}Actions{% endblock %}
+{% block content %}
+<h1>Actions</h1>
+{% if actions %}
+<table>
+    <thead>
+        <tr>
+            <th>Title</th>
+            <th>Lever</th>
+            <th>Status</th>
+            <th class="num">Investment</th>
+            <th>Created</th>
+        </tr>
+    </thead>
+    <tbody>
+        {% for action in actions %}
+        <tr>
+            <td><a href="{{ url_for('show_action', action_id=action.id) }}">{{ action.title }}</a></td>
+            <td>{{ action.lever|replace('_', ' ') }}</td>
+            <td><span class="status status-{{ action.status }}">{{ action.status|replace('_', ' ') }}</span></td>
+            <td class="num">€{{ '%.2f'|format(action.investment) }}</td>
+            <td>{{ action.created_at }}</td>
+        </tr>
+        {% endfor %}
+    </tbody>
+</table>
+{% else %}
+<p>No actions yet. <a href="{{ url_for('new_action') }}">Log the first one</a>.</p>
+{% endif %}
+{% endblock %}
