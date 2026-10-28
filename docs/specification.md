@@ -98,9 +98,21 @@ Roughly twenty-five source files. That is "a real multi-file application" withou
 | `email` | TEXT | NOT NULL, UNIQUE |
 | `full_name` | TEXT | NOT NULL |
 | `password_hash` | TEXT | NOT NULL ❓ *added at Week 3; Week 8 will check the algorithm* |
-| `role` | TEXT | NOT NULL, CHECK in (`requester`,`owner`,`reviewer`,`admin`,`service`) — `service` is one account per writing automation: no password, cannot sign in, never signs anything off |
+| `role` | TEXT | NOT NULL, CHECK in (`requester`,`owner`,`reviewer`,`admin`,`service`) — `service` is one account per writing automation: no password, cannot sign in, never signs anything off. ⚠️ *Decided 28 October 2026 to allow **several roles per person**; this single column is the current design and is **not yet changed** — see "Multiple roles per user" below.* |
 | `is_active` | INTEGER | NOT NULL DEFAULT 1 |
 | `created_at` | TEXT | ISO 8601 UTC |
+
+#### Multiple roles per user — decided, not yet built
+
+**Decided 28 October 2026.** A person may hold more than one role, using the existing role names. What they may do is the union of their roles' permissions ([`design/roles.md`](design/roles.md)). The approval restriction is applied **by identity, not by role**: nobody may review, approve, reject or close an action they requested or own, whatever roles they hold, and `admin` never bypasses it. With no eligible reviewer, the action stays blocked. `service` stays an account type of its own, never combined with a human's roles, as in the current design.
+
+**Implementation work this adds** (none of it exists yet; it is built with authentication):
+
+- **Schema:** replace `users.role` with a `user_roles` table (`user_id`, `role`; primary key on both; the same CHECK on `role`), and migrate existing rows.
+- **`lifecycle.py`:** `User.role: str` becomes `User.roles: frozenset[str]`, and the sign-off check asks whether the actor holds `reviewer` or `admin` rather than comparing one role. The identity checks (requester, owner, named reviewer) are already by user id and stay as they are.
+- **Route authorisation:** every server-side permission check tests membership of the actor's roles; the interface shows the union of what those roles allow.
+- **Tests:** tests 3–6, 15, 22 and 25–27 are restated for multi-role users, plus new cases — a person who is both requester and reviewer cannot review their own request; an `admin` who owns or requested an action cannot sign it off.
+- **Seed:** one `user_roles` row per role a person holds (§8).
 
 ### `projects`
 
@@ -112,7 +124,7 @@ One store over one period, usually a quarter.
 | `name` | TEXT | NOT NULL |
 | `period_start`, `period_end` | TEXT | NOT NULL, end after start |
 | `budget_eur` | REAL | ≥ 0 |
-| `roi_target` | REAL | e.g. 3.0 — €3 net per €1 invested |
+| `roi_target` | REAL | e.g. 0.20, the Luna Home seed — €0.20 net per €1 invested |
 | `gross_margin` | REAL | > 0 and ≤ 1 — a project setting, not a lever |
 | `hourly_rate_eur` | REAL | ≥ 0 — the cost of an hour of people time |
 
@@ -374,6 +386,8 @@ Thirty-nine. Deliberately more than eight, and 1–7, 16–20, 24–28 and 31–
 
 ### The worked example — the numbers the tests use
 
+**A test fixture, independent of the seed data.** This example has its own store, a 40% margin and its own actions A, B, C and D; the tests above depend on these exact figures, so they do not change. It is **not** the Luna Home scenario that seeds the demo (§8), and the two sets of numbers are not meant to match.
+
 Baseline for one 30-day window: 50,000 sessions · 2.0% conversion · €60 AOV = €60,000 revenue. Margin 40%. People time €35/hour.
 
 | Action | Lever → KPI | Expected change | Revenue | Gross profit | Investment | Net gain | Break-even revenue | ROI | ROAS |
@@ -421,7 +435,7 @@ All four built in **Make**, covering the brief's three required types — schedu
 |---|---|---|---|---|---|
 | **1 · Spend and revenue intake** W4 | Scheduled | Schedule Monday → Google Sheets rows for the week → Iterator per KPI → HTTP POST | `"{kpi}:{iso_week}:{value hash}"` | same value: no-op · corrected value: recorded as a correction | re-run is safe: recorded KPIs no-op, missing ones land |
 | **2 · KPI drift alert** W5 | Event-triggered | Webhook `measurement.recorded` → signed GET (`off_target`) → Router → HTTP POST | `"{kpi}:{iso_week}"` | one alert per KPI per week; an open drift action gets a task, not a twin | announcement stays in the outbox until Make accepts it; the next measurement re-checks |
-| **3 · Approval routing** W7 | Human approval | Webhook `action.in_review` → signed GET → message to the **named reviewer**, who decides signed in to the app · webhook `action.decided` → outcome to requester and owner · weekday schedule → reminders after 48 h | n/a — decisions are made once, in the app | a second request is harmless; a second approval is refused | the next morning's reminder covers a lost message |
+| **3 · Approval routing** W7 | Human approval | Webhook `action.in_review` → signed GET → message to the **named reviewer**, who decides signed in to the app · webhook `action.decided` → outcome to requester and owner · weekday schedule → a reminder after 2 business days, escalation after 5 (to the founder, or flagged for the admin when the founder is already the reviewer; never an approval) | n/a — decisions are made once, in the app | a second request is harmless; a second approval is refused | the next morning's reminder covers a lost message |
 | **4 · Weekly ROI narrative** W8, written up W11 | Scheduled, AI | Schedule Monday → GET aggregates → AI module → Email or Slack | `"weekly:{iso_week}"`, kept in a Make data store | one report per week | report regenerates, no state lost |
 
 Each gets `docs/portfolio/automation-0N.md` with the business problem (who, how often, how long by hand), the architecture diagram, the verbatim prompts, run screenshots in `docs/portfolio/img/`, and the three failure answers. Detail in [`portfolio/portfolio-plan.md`](portfolio/portfolio-plan.md).
@@ -447,13 +461,25 @@ A test that depends on demo data breaks every time the demo changes. The seed mu
 
 ### Shape
 
-**One project:** a fictional online store, one quarter, budget €20,000, `roi_target` 3.0, margin 40%, €35/hour.
+The seed follows the **hypothetical** Luna Home scenario in [`design/user-group.md`](design/user-group.md): a fictional Spanish homeware store and its agency. It is labelled hypothetical in the data and on screen wherever its origin matters. The worked example in §6 keeps its own store and 40% margin, because it is a test fixture, not seed data.
 
-**8 users:** 2 requesters, 3 owners, 2 reviewers, 1 admin. Enough that "the owner cannot sign off their own work" has someone left to sign it off. Plus **2 `service` accounts**, one for each writing automation (intake, drift alert), with no password. One account per human role is also what the brief's submission needs: test accounts shared with the lecturer.
+**One project:** Luna Home, one quarter, budget €15,000 (≈ €5,000 a month, covering advertising, agency labour and creative/development work), `roi_target` **0.20** — a 20% net return on total marketing costs under the existing ROI formula; a hypothetical business target, not an industry benchmark — **contribution margin 35%** (after product costs, discounts, payment fees and fulfilment), €35/hour. The amount the margin produces is labelled **"contribution before marketing costs"**, not "gross profit"; advertising and agency/creative costs are then subtracted once, as the action's investment.
 
-**13 weeks of measurements** for sessions, conversion rate and AOV — the full quarter, with realistic week-to-week noise and a visible lift after the actions that worked.
+**5 users**, the five people in the scenario, several holding more than one role (§3, "Multiple roles per user" — decided, not yet built):
 
-**~24 actions**, spread across every status, every lever and every request type, including the three in the worked example (§6), closed, so the project page shows A, B and C with their realised ROI on day one.
+| Person | Roles |
+|---|---|
+| Founder | `admin`, `reviewer` — and, as admin, can create actions |
+| Ecommerce manager | `requester`, `reviewer` |
+| Account manager | `requester`, `owner` — creates coordinated tasks and owns reporting work |
+| Paid media specialist | `owner` |
+| Freelance designer/developer | `owner` |
+
+Nobody reviews an action they requested or own, whatever their roles, so the founder reviews the ecommerce manager's actions and the ecommerce manager reviews the founder's; with no eligible reviewer, an action stays blocked. Every human role is held by at least one scenario person, so the brief's test account per role comes from the scenario; single-role test accounts may be added to test enforcement, labelled as test-only. Plus **2 `service` accounts**, one for each writing automation (intake, drift alert), with no password.
+
+**13 weeks of measurements** for sessions, conversion rate and AOV — the full quarter, around a baseline of **12,300 sessions a week, 1.8% conversion, €65 AOV** (≈ 221 orders and ≈ €14,400 revenue a week, ≈ €748,000 a year), with realistic week-to-week noise and a visible lift after the actions that worked.
+
+**~24 actions**, spread across every status, every lever and every request type, including three closed ones, so the project page shows realised ROI on day one.
 
 ### Timestamps must be backdated — this is the part people get wrong
 
@@ -468,12 +494,13 @@ Not decoration — each one makes a rule or a metric demonstrable:
 3. **An action sitting in `in_review` for 14+ days** — gives the "stuck beyond N days" metric something to report
 4. **A rework loop** — `in_review → assigned → in_review`
 5. **A rejected action with a note explaining why**
-6. **Actions A, B and C closed**, by a reviewer who is neither requester nor owner — the happy path and the ROAS-versus-ROI contrast
-7. **A closed action labelled `correlated`** — so the interface has to show a weak result honestly
+6. **Three actions closed** by a reviewer who is neither requester nor owner — the happy path. One of them is the scenario's **promotional campaign**: €1,500 of advertising plus €400 of creative and agency work, €4,500 of attributed revenue (ROAS 3.0), €1,575 of contribution at 35%, an estimated loss of €325 and ROI −0.17 — the ROAS-versus-ROI contrast. It stays below the project's 0.20 target: a lower target changes no action's result
+7. **A closed action labelled `correlated`** — so the interface has to show a weak result honestly. The promotional campaign is a natural candidate: its revenue is attributed, not shown to be incremental
 8. **A corrected measurement** — the original row and the correction both present
 9. **A target revised mid-quarter** — so the history of targets is visible
 10. **Two automation events sharing an `external_id`** — one measurement recorded, proving idempotency
-11. **An action in review for three days whose named reviewer has not decided** — gives automation 3's reminder something to send
+11. **An action in review for three business days whose named reviewer has not decided** — gives automation 3's reminder something to send
+12. **An action in review for six business days whose named reviewer is the founder** — once escalation is built, it is flagged for the admin and stays pending; nothing approves it
 
 ### Content rules
 
@@ -512,17 +539,20 @@ Scanners will not find most of these. Bandit and Semgrep catch injection, hardco
 
 ## 10 · Open questions for the session ❓
 
-1. **The approval deadlock.** The owner cannot approve or close their own work. In a three-person team, nobody may be eligible. Admin override that logs loudly, or drop the rule? It now applies to closing as well as approving.
+1. **The approval deadlock.** ✅ *Decided 28 October 2026:* the rule stays — the named reviewer is neither the requester nor the owner, for approving and for closing. In the hypothetical scenario the founder reviews the ecommerce manager's actions and the ecommerce manager reviews the founder's. **If no eligible reviewer exists, the action stays blocked**: no admin override, no auto-approval, and silence never counts as approval. An overdue decision is reminded and escalated (automation 3), never bypassed. The question was also put to the lecturer on the forum; his answer may reopen it.
 2. **Who closes an action.** Drafted as reviewer or admin, independent of the work. Should the requester — who asked for the result — sign it off instead?
 3. **Measurement granularity.** Weekly is the recommendation: thirteen points a quarter is enough, and daily entry is a chore nobody keeps up.
 4. **Corrections through the intake.** A corrected value from the Sheet is recorded as a correction because its `external_id` carries a hash of the value. Is that the right behaviour, or should corrections only ever be made by hand?
 5. **ROI on screen.** A ratio (3.29) or a percentage (329%)?
 6. **Password storage.** Flask has no built-in. `werkzeug.security` is already a dependency — likely the answer, but Week 8 should confirm the algorithm is current.
 7. **The delete rule.** The Week 5 sheet asks it directly: *"If you delete a project, what should happen to its tasks?"* Here nothing is ever deleted — actions are cancelled, numbers are superseded. Is "the question does not arise" defensible, or should a project be archivable?
-8. **Scale of seed data.** Enough realistic rows to make the Week 10 demo convincing without implying real customer data.
+8. **Scale of seed data.** ✅ *Decided 28 October 2026:* one quarter of the hypothetical Luna Home scenario, as designed in §8 — five people, 13 weeks of measurements, ~24 actions. Fictional throughout, so it implies no real customer data.
 9. **Retention periods.** Proposed in [`design/gdpr.md`](design/gdpr.md): the record for the project period plus 24 months, a departed user pseudonymised after 12 months, delivery queues purged after 90 days. To be confirmed in the Week 11 governance document.
-10. **The real user group.** The brief asks for a named group with a real problem. Which team this is drawn from is the owner of the project's to say, not the specification's.
+10. **The real user group.** The brief asks for a named group with a real problem. The design now uses a **hypothetical** agency–client scenario, described in [`design/user-group.md`](design/user-group.md). It supports the prototype; it is **not evidence from real users** and is not validated research. Real-user evidence remains **outstanding**, and whether a hypothetical scenario is acceptable is a question for the lecturer.
 11. **Lecturer agreement.** An own idea must be agreed before building starts — before the 28 October lab generates anything.
+12. **One role per person.** ✅ *Decided 28 October 2026:* a person may hold several roles (§3, "Multiple roles per user"), and the approval restriction applies by identity — nobody reviews an action they requested or own, `admin` included. In the hypothetical scenario: founder `admin` + `reviewer`; ecommerce manager `requester` + `reviewer`; account manager `requester` + `owner`; paid media specialist and designer/developer `owner`. **Not yet built:** the schema, `lifecycle.py`, route checks and tests listed in §3 change when authentication is built.
+
+**Agreed future requirements** (28 October 2026), recorded now and built in their planned weeks: actions **above €500**, and any budget increase, need the founder's approval (amount-based routing, a separate rule from the monthly budget); a **monthly budget of about €5,000** never overrides the reviewer rules; and automation 3 **reminds after 2 business days and escalates after 5**, to the founder, or flags the action for the admin when the founder is already its reviewer. Nothing is ever auto-approved.
 
 ---
 

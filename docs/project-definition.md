@@ -143,7 +143,7 @@ The brief requires one scheduled automation, one triggered by an event and one w
 
 ## 4 · Decisions still owed
 
-1. **The approval deadlock.** The owner who did the work cannot approve or close it. In a three-person team that can leave nobody eligible. Resolve as an admin override that logs loudly, or drop the rule — and write the reasoning into the governance document either way.
+1. **The approval deadlock.** ✅ *Decided 28 October 2026:* keep the rule; an action with no eligible reviewer stays blocked — no override, no auto-approval, escalation but never a bypass ([`specification.md` §10](specification.md)). The reasoning still goes into the governance document.
 2. **Who certifies results.** Reviewer, as drafted, or the requester who asked for them?
 3. **The delete rule.** Week 5 requires this to be decided by hand, on paper, not by an AI — and the sheet asks it about projects directly. Nothing is ever deleted here; is "the question does not arise" defensible, or should a project be archivable?
 4. **The problem statement.** The 150 words in the README must describe something actually lived. Week 12 asks what is in the repository that could not be explained in an interview.

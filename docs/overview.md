@@ -124,29 +124,38 @@ action makes the next estimate easier to trust.
 
 ## Who uses it
 
-The whole marketing team, each person for a different reason.
+The whole marketing team, each person for a different reason. The people below
+come from a **hypothetical** scenario: Luna Home, a fictional Spanish homeware
+store, and its agency ([user group](design/user-group.md)). It is a design
+assumption, not evidence from real users; that evidence is still outstanding.
+Some people hold more than one role, a decided change that is not built yet.
 
-| Person | In a real team | Their part |
+| Person | In the hypothetical scenario | Their part |
 |---|---|---|
-| **Requester** | Founder, sales, product | Proposes work — *"let's try bundles"* — and later sees whether it paid. Can cancel their own. |
-| **Owner** | Marketing specialist | Takes the work on, states the bet (lever, expected change, cost), does it, records the numbers. |
-| **Reviewer** | Head of marketing, finance | Approves the action before the money is spent — and, at the end, certifies what it really achieved. |
-| **Administrator** | Marketing operations | Sets up the project — period, budget, margin, targets — and manages users. |
+| **Requester** | The client's ecommerce manager, the agency's account manager, and at times the founder | Proposes work — *"let's try bundles"* — and later sees whether it paid. Can cancel their own. |
+| **Owner** | The agency's paid media specialist, the freelance designer/developer, and the account manager for reporting and coordination | Takes the work on, states the bet (lever, expected change, cost), does it, records the numbers. |
+| **Reviewer** | The founder for the ecommerce manager's requests; the ecommerce manager for the founder's | Approves the action before the money is spent — and, at the end, certifies what it really achieved. |
+| **Administrator** | The client's founder | Sets up the project — period, budget, margin, targets — and manages users. |
 
 ### One action, through the team
 
-1. **The founder** suggests: *"Let's create two product bundles."*
-2. **The specialist** takes it on and states the bet: order value +€3, €800 and
-   8 hours of work, measured over November. Before saving, they press
-   **Preview** and see its expected return and its effect on the whole project.
-3. **The head of marketing** approves it — the only person who can, because
-   they are the reviewer named on it.
-4. **The specialist** does the work.
-5. In December, **the head of marketing** records what really happened —
-   order value +€2.40, seen before and after — and decides: **redesign it**,
-   because at that lift the bundles cost more than they earned.
-6. **The founder** opens the project page and sees which actions carried the
-   quarter and which dragged it down.
+1. **The ecommerce manager** suggests: *"Let's create two product bundles."*
+2. **The freelance designer/developer** takes it on and states the bet: order
+   value +€3, €800 and 8 hours of work, measured over November. Before saving,
+   they press **Preview** and see its expected return and its effect on the
+   whole project.
+3. **The founder** approves it — the only person who can, because they are the
+   reviewer named on it, and the request came from the ecommerce manager.
+4. **The designer/developer** does the work.
+5. In December, **the account manager** prepares the results review, and **the
+   founder** records what really happened — order value +€2.40, seen before
+   and after — and decides: **redesign it**, because at that lift the bundles
+   cost more than they earned.
+6. **The ecommerce manager and the founder** open the project page and see
+   which actions carried the quarter and which dragged it down.
+
+*The figures in this walk-through come from the specification's worked
+example, not from Luna Home's seed data.*
 
 The question the team is answering is not *"did my colleague do their job?"*
 It is **"which of our marketing bets are actually worth the money?"** The
@@ -155,15 +164,15 @@ review step exists only so that answer can be trusted.
 **The rule at the centre of the design:** the person who asked for the work and
 the person who did it never sign it off — not when it is approved, and not
 when its result is recorded. Nobody grades their own homework — the same reason
-nobody approves their own expense claim. If the specialist who ran the bundles
+nobody approves their own expense claim. If the developer who built the bundles
 could also record their result, every action would look like a success. And
 only the
 one reviewer named on an action can sign it off, so an approval link that gets
 forwarded does not hand the decision to whoever clicks it.
 
-That rule has a cost: in a three-person team it can leave nobody eligible.
-Whether an administrator may make a logged exception is **still an open
-decision**.
+That rule has a cost: in a small team it can leave nobody eligible. **Decided:**
+the action then stays blocked. There is no override, silence never counts as
+approval, and an overdue decision is reminded and escalated, never bypassed.
 
 ## Where the numbers come from
 

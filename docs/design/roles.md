@@ -19,6 +19,21 @@ directly as the wrong person and expect a refusal.
 On top of the role, **three relationships** decide what a person may do to one
 particular action: being its requester, its owner, or its **named reviewer**.
 
+**Several roles per person — decided 28 October 2026, not yet built.** A person
+may hold more than one of these roles, and may do what any of them allows. The
+approval restriction is applied **by identity, not by role**: nobody reviews,
+approves, rejects or closes an action they requested or own, whatever roles they
+hold, and `admin` never bypasses it. With no eligible reviewer, the action stays
+blocked. `service` is never combined with a human's roles. Today's design still
+has one role per user; the schema, `lifecycle.py`, route checks and tests that
+change are listed in spec §3, "Multiple roles per user".
+
+**In the hypothetical scenario** ([user-group.md](user-group.md)): the founder
+is `admin` + `reviewer`; the ecommerce manager is `requester` + `reviewer`; the
+account manager is `requester` + `owner`; the paid media specialist and the
+freelance designer/developer are `owner`s. The founder reviews the ecommerce
+manager's actions, and the ecommerce manager reviews the founder's.
+
 ## What each role can create, read, update and delete
 
 C = create · R = read · U = update · D = delete · — = nothing.
@@ -65,11 +80,16 @@ person or wrong role cannot approve), 15 (calling `/approve` directly as the
 requester returns 403), 22 (the owner cannot close their own action), 24–27
 (the named reviewer rule) and 28 (a service account cannot sign anything off).
 
-## Still open ❓
+## The approval deadlock — decided
 
-**The approval deadlock.** In a three-person team, the rule that the reviewer
-must be someone other than both the requester and the owner can leave nobody
-eligible.
-The options are an admin override that is logged loudly, or relaxing the rule
-for small teams. It is decided in the session and argued in the Week 11
+In a small team, the rule that the reviewer must be someone other than both the
+requester and the owner can leave nobody eligible. **Decided on 28 October
+2026:** the rule stays, and such an action **stays blocked**. There is no admin
+override, silence never counts as approval, and an overdue decision is reminded
+and escalated, never bypassed. The reasoning is argued in the Week 11
 governance policy ([`specification.md` §10](../specification.md#10--open-questions-for-the-session-)).
+
+## Still to build
+
+**Several roles per person** — decided, with the implementation work listed in
+spec §3. Until it is built, each user holds one role.
