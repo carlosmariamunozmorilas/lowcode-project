@@ -153,11 +153,17 @@ def change_status(action_id):
         flash(f"Cannot move from {action['status']} to {new_status}.", "error")
         return redirect(url_for("show_action", action_id=action_id))
 
+    # The WHERE on the old status makes check and write one step: if someone
+    # else moved the action since it was read, nothing is written.
     db = get_db()
-    db.execute(
-        "UPDATE actions SET status = ? WHERE id = ?", (new_status, action_id)
+    cursor = db.execute(
+        "UPDATE actions SET status = ? WHERE id = ? AND status = ?",
+        (new_status, action_id, action["status"]),
     )
     db.commit()
+    if cursor.rowcount == 0:
+        flash("This action changed while you were looking at it. Try again.", "error")
+        return redirect(url_for("show_action", action_id=action_id))
     flash(f"Status changed to {new_status}.", "success")
     return redirect(url_for("show_action", action_id=action_id))
 
