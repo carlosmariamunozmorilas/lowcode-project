@@ -86,7 +86,7 @@ def parse_cost(value):
 @app.route("/")
 def index():
     rows = get_db().execute(
-        "SELECT * FROM actions ORDER BY created_at DESC"
+        "SELECT * FROM actions ORDER BY created_at DESC, id DESC"
     ).fetchall()
     actions = [
         {
