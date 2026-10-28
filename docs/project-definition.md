@@ -23,7 +23,7 @@ Most marketing dashboards report ROAS: revenue divided by ad spend. It flatters.
 | `requester` | Founder, sales, product | Open actions, view their own, cancel their own |
 | `owner` | Marketing specialist | Own an action, add and complete tasks, record measurements, send to review naming a reviewer |
 | `reviewer` | Marketing lead, finance, brand | Approve, reject or close — only the actions they are **named** on, and never one they raised or worked on |
-| `admin` | Ops | Projects, targets, users — and bound by the same rule: signs off only when named, never their own work. Whether admins get a logged override for small teams is an **open decision** (`specification.md` §10) |
+| `admin` | Ops | Projects, targets, users — and bound by the same rule: signs off only when named, never their own work. **Decided 28 October 2026:** no override for small teams; with no eligible reviewer, an action stays blocked (`specification.md` §10) |
 | `service` | One per writing automation | Opens drift actions and records measurements through the API; no password, never signs anything off |
 
 What each role can create, read, update and delete, and the four layers that enforce it, is in [`design/roles.md`](design/roles.md).
@@ -143,8 +143,8 @@ The brief requires one scheduled automation, one triggered by an event and one w
 
 ## 4 · Decisions still owed
 
-1. **The approval deadlock.** The owner who did the work cannot approve or close it. In a three-person team that can leave nobody eligible. Resolve as an admin override that logs loudly, or drop the rule — and write the reasoning into the governance document either way.
-2. **Who certifies results.** Reviewer, as drafted, or the requester who asked for them?
+1. **The approval deadlock.** ✅ *Decided 28 October 2026:* keep the rule; an action with no eligible reviewer stays blocked — no override, no auto-approval, escalation but never a bypass ([`specification.md` §10](specification.md)). The reasoning still goes into the governance document.
+2. **Who certifies results.** ✅ *Decided 28 October 2026:* the named reviewer, provided they are neither requester nor owner; `admin` status alone does not authorise closing. Others may prepare the analysis without certifying it ([`specification.md` §10](specification.md)).
 3. **The delete rule.** Week 5 requires this to be decided by hand, on paper, not by an AI — and the sheet asks it about projects directly. Nothing is ever deleted here; is "the question does not arise" defensible, or should a project be archivable?
 4. **The problem statement.** The 150 words in the README must describe something actually lived. Week 12 asks what is in the repository that could not be explained in an interview.
 5. **The real manual process for automation 1.** The Week 4 sheet: *"Bring a real one. Contrived scenarios are obvious and they mark badly."* Who copies platform numbers by hand, how often, and how long it takes — yours to supply.

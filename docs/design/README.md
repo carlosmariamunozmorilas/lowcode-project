@@ -9,12 +9,16 @@ in [`../specification.md`](../specification.md).
 
 | Project | Users | Core app | Scheduled automation | Triggered automation | Approval step |
 |---|---|---|---|---|---|
-| **MarketingOps** — ROI for marketing work | An ecommerce marketing team: people who ask for work, specialists who do it, a lead who signs it off, an ops admin ❓ | Marketing actions that state their expected return and cost, are approved before the work and closed with what they achieved; realised ROI on gross profit, people's time counted as a cost; a record that cannot be rewritten | Monday intake of last week's spend and revenue figures | A new measurement that is off target opens an action for someone to take on | A named reviewer approves each action before the work starts, and separately certifies its result |
+| **MarketingOps** — ROI for marketing work | **Hypothetical:** the five people around Luna Home, a fictional Spanish homeware store, and its agency — founder, ecommerce manager, account manager, paid media specialist, freelance designer/developer ([user group](user-group.md)) ⚠️ | Marketing actions that state their expected return and cost, are approved before the work and closed with what they achieved; realised ROI on gross profit, people's time counted as a cost; a record that cannot be rewritten | Monday intake of last week's spend and revenue figures | A new measurement that is off target opens an action for someone to take on | A named reviewer approves each action before the work starts, and separately certifies its result |
 
-❓ **The user group has to be a real one.** The brief asks for "a real problem for
-a named group of users", and the Week 4 sheet warns that contrived scenarios
-mark badly. Which team, how many people, and what they do today by hand is
-Carlos's to name — it is not something the design can supply.
+⚠️ **The user group is hypothetical, and that is a known gap.** The brief asks
+for "a real problem for a named group of users", and the Week 4 sheet warns that
+contrived scenarios mark badly. The design uses a fictional but realistic
+agency–client scenario, described in [user-group.md](user-group.md): it is
+enough to design, seed and demonstrate a prototype, but it is not evidence from
+real users and must not be read as validated research. Real-user evidence is
+still outstanding, and whether a hypothetical scenario is acceptable is a
+question for the lecturer.
 
 The application is generated with an AI assistant from a written specification
 (the Session 3 method) and the automations are built in **Make**, the course's
