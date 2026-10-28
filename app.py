@@ -2,7 +2,10 @@ import math
 import os
 import secrets
 import sqlite3
+from contextlib import closing
+from pathlib import Path
 
+import click
 from flask import (
     Flask,
     abort,
@@ -51,9 +54,26 @@ app.config.from_mapping(
 
 def get_db():
     if "db" not in g:
-        g.db = sqlite3.connect(app.config["DATABASE"])
+        # mode=rw: a missing file is an error that says what to do, not a new
+        # empty database on which every page fails with "no such table".
+        path = Path(app.config["DATABASE"]).resolve()
+        try:
+            g.db = sqlite3.connect(f"{path.as_uri()}?mode=rw", uri=True)
+        except sqlite3.OperationalError as error:
+            raise RuntimeError(
+                f"No database at {path}. Create it with: flask --app app init-db"
+            ) from error
         g.db.row_factory = sqlite3.Row
     return g.db
+
+
+@app.cli.command("init-db")
+def init_db():
+    """Create the tables from schema.sql. Safe to run again."""
+    schema = Path(app.root_path, "schema.sql").read_text(encoding="utf-8")
+    with closing(sqlite3.connect(app.config["DATABASE"])) as db:
+        db.executescript(schema)
+    click.echo(f"Database ready at {app.config['DATABASE']}")
 
 
 @app.teardown_appcontext

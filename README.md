@@ -63,6 +63,23 @@ answered:
 | STRIDE threat analysis | 18 threats on 11 boundary-crossing flows — [STRIDE](docs/design/stride.md) |
 | Data protection | staff data only, no customer data — [GDPR](docs/design/gdpr.md) |
 
+## Run it
+
+In Git Bash on Windows (on macOS or Linux the activate script is
+`.venv/bin/activate`):
+
+```bash
+python3 -m venv .venv
+source .venv/Scripts/activate
+pip install -r requirements.txt
+flask --app app init-db
+python app.py
+```
+
+Then open <http://127.0.0.1:5000>. `SECRET_KEY` and `DATABASE_PATH` are read
+from the environment; without a `SECRET_KEY` the app makes a random one for
+each run and says so.
+
 ## What is where
 
 | | |
