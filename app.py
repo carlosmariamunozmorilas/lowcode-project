@@ -1,3 +1,4 @@
+import math
 import os
 import sqlite3
 
@@ -66,7 +67,8 @@ def parse_cost(value):
         cost = float(value or 0)
     except ValueError:
         return None
-    if cost < 0:
+    # float() also accepts "inf" and "nan"; neither is a cost.
+    if not math.isfinite(cost) or cost < 0:
         return None
     return cost
 
