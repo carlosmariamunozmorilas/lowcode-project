@@ -1,0 +1,39 @@
+{% extends "base.html" %}
+{% block title %}{{ action.title }}{% endblock %}
+{% block content %}
+<h1>{{ action.title }}</h1>
+<p><span class="status status-{{ action.status }}">{{ action.status|replace('_', ' ') }}</span></p>
+
+{% if action.description %}
+<p class="description">{{ action.description }}</p>
+{% endif %}
+
+<dl>
+    <dt>Lever</dt>
+    <dd>{{ action.lever|replace('_', ' ') }}</dd>
+    <dt>Cash cost</dt>
+    <dd>€{{ '%.2f'|format(action.cost_eur) }}</dd>
+    <dt>People time</dt>
+    <dd>{{ action.cost_hours }} h at €{{ '%.2f'|format(hourly_rate) }}/h</dd>
+    <dt>Investment</dt>
+    <dd><strong>€{{ '%.2f'|format(investment) }}</strong></dd>
+    <dt>Created</dt>
+    <dd>{{ action.created_at }}</dd>
+</dl>
+
+<h2>Move to</h2>
+{% if next_stages %}
+<div class="actions">
+    {% for stage in next_stages %}
+    <form method="post" action="{{ url_for('change_status', action_id=action.id) }}">
+        <input type="hidden" name="status" value="{{ stage }}">
+        <button type="submit">{{ stage|replace('_', ' ') }}</button>
+    </form>
+    {% endfor %}
+</div>
+{% else %}
+<p>This action is {{ action.status }}; it cannot move any further.</p>
+{% endif %}
+
+<p><a href="{{ url_for('index') }}">Back to all actions</a></p>
+{% endblock %}
