@@ -89,6 +89,8 @@ each run and says so.
 | [`docs/design/`](docs/design/README.md) | the design pack against the brief: ERD, roles, DFD, STRIDE, GDPR |
 | [`docs/specification.md`](docs/specification.md) | the technical design: entities, routes, tests, security |
 | [`docs/week03-slice.md`](docs/week03-slice.md) | the first small slice the Week 3 lab generates |
+| [`docs/week03-review.md`](docs/week03-review.md) | that slice reviewed by a second assistant: findings, fixes, what was left and what the reviewer got wrong |
+| [`app.py`](app.py), [`templates/`](templates/), [`schema.sql`](schema.sql) | the running slice: one table, five routes |
 | [`docs/project-definition.md`](docs/project-definition.md) | scope, invariants and the week-by-week plan |
 | [`docs/portfolio/portfolio-plan.md`](docs/portfolio/portfolio-plan.md) | the four automations — the 40% portfolio |
 | [`lifecycle.py`](lifecycle.py) | who may move an action to which stage, and what each stage requires |
@@ -124,7 +126,7 @@ and the append-only record all remain; the ROI layer sits on top.
 
 ## Status
 
-Week 3, as of 27 October 2026.
+Week 3, as of 28 October 2026.
 
 - **Week 1** — repository, a minimal Flask application, and the project idea above.
 - **Week 2** — Claude, Gemini and ChatGPT compared on the same prompt, with the
@@ -132,8 +134,9 @@ Week 3, as of 27 October 2026.
   [`docs/week02-tool-comparison.md`](docs/week02-tool-comparison.md).
 - **Week 3** — the specification is rewritten for the ROI layer and aligned
   with the project brief, and its core rules already run: `lifecycle.py`,
-  `roi.py` and the schema. A first slice of the application is generated from
-  the specification in the lab on 28 October.
+  `roi.py` and the schema. On 28 October the first slice of the application
+  was generated from the specification by Claude, reviewed by Gemini, and
+  fixed in six separate commits: [`docs/week03-review.md`](docs/week03-review.md).
 
 **Dependencies.** `requirements.txt` pins every package, transitive ones
 included. The Week 3 lab moved Flask 3.1.0 → 3.1.3 and Werkzeug 3.1.3 → 3.1.9,
