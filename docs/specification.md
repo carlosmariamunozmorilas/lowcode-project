@@ -97,7 +97,7 @@ Roughly twenty-five source files. That is "a real multi-file application" withou
 | `id` | INTEGER | PK |
 | `email` | TEXT | NOT NULL, UNIQUE |
 | `full_name` | TEXT | NOT NULL |
-| `password_hash` | TEXT | NOT NULL ❓ *added at Week 3; Week 8 will check the algorithm* |
+| `password_hash` | TEXT | NOT NULL — Werkzeug scrypt hash, never the password (§10, question 6). *Not yet in `schema/001_initial.sql`; added when the schema is finalised.* |
 | `role` | TEXT | NOT NULL, CHECK in (`requester`,`owner`,`reviewer`,`admin`,`service`) — `service` is one account per writing automation: no password, cannot sign in, never signs anything off. ⚠️ *Decided 28 October 2026 to allow **several roles per person**; this single column is the current design and is **not yet changed** — see "Multiple roles per user" below.* |
 | `is_active` | INTEGER | NOT NULL DEFAULT 1 |
 | `created_at` | TEXT | ISO 8601 UTC |
@@ -544,7 +544,11 @@ Scanners will not find most of these. Bandit and Semgrep catch injection, hardco
 3. **Measurement granularity.** Weekly is the recommendation: thirteen points a quarter is enough, and daily entry is a chore nobody keeps up.
 4. **Corrections through the intake.** A corrected value from the Sheet is recorded as a correction because its `external_id` carries a hash of the value. Is that the right behaviour, or should corrections only ever be made by hand?
 5. **ROI on screen.** A ratio (3.29) or a percentage (329%)?
-6. **Password storage.** Flask has no built-in. `werkzeug.security` is already a dependency — likely the answer, but Week 8 should confirm the algorithm is current.
+6. **Password storage.** ✅ *Decided 28 October 2026 — my project design decision, not a requirement set by the lecturer:* neither the Session 8 slides nor the Week 8 Directed Learning sheet mandates scrypt, Argon2id or any other algorithm. Passwords are stored with **Werkzeug's scrypt**, chosen because Werkzeug is already a pinned dependency, so no new package is added.
+   - **Intended use:** `werkzeug.security.generate_password_hash(password)` when a password is set, storing only the result in `users.password_hash`; `check_password_hash(stored_hash, attempt)` at sign-in. The password itself is never stored or logged.
+   - **Verify when authentication is implemented:** the method and parameters the installed Werkzeug actually produces. On 28 October, Werkzeug 3.1.9 in this project's environment produced `scrypt:32768:8:1` (N = 32,768, r = 8, p = 1). If the version or the default changes, the spec records the new method string.
+   - **Review in the Week 8 security audit:** compare those parameters with the current OWASP Password Storage Cheat Sheet, and either raise them (by passing an explicit `method`) or record why the default is kept. Argon2id (`argon2-cffi`) stays the alternative if the audit finds scrypt's settings inadequate.
+   - **Not built yet:** no authentication code exists; this records the design only.
 7. **The delete rule.** The Week 5 sheet asks it directly: *"If you delete a project, what should happen to its tasks?"* Here nothing is ever deleted — actions are cancelled, numbers are superseded. Is "the question does not arise" defensible, or should a project be archivable?
 8. **Scale of seed data.** ✅ *Decided 28 October 2026:* one quarter of the hypothetical Luna Home scenario, as designed in §8 — five people, 13 weeks of measurements, ~24 actions. Fictional throughout, so it implies no real customer data.
 9. **Retention periods.** Proposed in [`design/gdpr.md`](design/gdpr.md): the record for the project period plus 24 months, a departed user pseudonymised after 12 months, delivery queues purged after 90 days. To be confirmed in the Week 11 governance document.
