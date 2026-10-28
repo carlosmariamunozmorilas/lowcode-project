@@ -135,6 +135,7 @@ Week 3, as of 27 October 2026.
   `roi.py` and the schema. A first slice of the application is generated from
   the specification in the lab on 28 October.
 
-**Known issue.** `requirements.txt` pins Flask 3.1.0 and Werkzeug 3.1.3, which
-carry six known advisories (`pip-audit`, 21 October 2026). The upgrade is due
-when the Week 3 lab regenerates the dependencies.
+**Dependencies.** `requirements.txt` pins every package, transitive ones
+included. The Week 3 lab moved Flask 3.1.0 → 3.1.3 and Werkzeug 3.1.3 → 3.1.9,
+clearing the six advisories `pip-audit` reported on 21 October; on 28 October
+it reports none.
