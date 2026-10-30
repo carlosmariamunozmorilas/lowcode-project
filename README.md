@@ -60,16 +60,17 @@ money — follow my own *ROI AI Influence Model* series.
 ## Against the project brief
 
 The course's project brief sets six minimum requirements. Where each one is
-answered:
+answered, for product v2. Pages marked *v1* are being revised for v2 in the
+week shown.
 
 | Requirement | Here |
 |---|---|
-| Data model, ≥ 3 related tables | 12 tables — [ERD](docs/design/erd.md) |
-| Automations: scheduled, event-triggered, human approval | Monday intake · drift alert on each new figure · approval routing to a named reviewer, plus an AI weekly report — [portfolio plan](docs/portfolio/portfolio-plan.md) |
-| ≥ 2 roles, enforced on the data | 5 roles, four layers of enforcement — [roles](docs/design/roles.md) |
-| Level-1 data flow diagram | [DFD](docs/design/dfd.md) |
-| STRIDE threat analysis | 18 threats on 11 boundary-crossing flows — [STRIDE](docs/design/stride.md) |
-| Data protection | staff data only, no customer data — [GDPR](docs/design/gdpr.md) |
+| Data model, ≥ 3 related tables | 10 tables in the v2 MVP — [product definition v2](docs/product-definition-v2.md); [ERD](docs/design/erd.md) *v1, revised for Week 5* |
+| Automations: scheduled, event-triggered, human approval | Daily shop-data intake · below-target alert when a client's new data lands · approval routing to a named lead, plus a monthly client report drafted by a read-only AI — [portfolio plan](docs/portfolio/portfolio-plan.md) |
+| ≥ 2 roles, enforced on the data | Consultant, lead and admin; each consultant sees only their assigned clients, and nobody approves their own work — [roles](docs/design/roles.md) *v1, revised for Week 5* |
+| Level-1 data flow diagram | [DFD](docs/design/dfd.md) *v1, revised for Week 8* |
+| STRIDE threat analysis | [STRIDE](docs/design/stride.md) *v1, revised for Week 8 — adds one consultant reaching another's clients* |
+| Data protection | Staff data only; the fictional orders hold no customer names or contact details — [GDPR](docs/design/gdpr.md) *v1, revised for Week 11* |
 
 ## Run it
 
