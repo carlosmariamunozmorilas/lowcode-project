@@ -10,6 +10,14 @@ be quietly rewritten.
 > Every piece of marketing work has to justify itself, and the record shows
 > whether it did.
 
+**Version 2 (30 October 2026):** the application is becoming a growth
+consultancy tool for a marketing agency that advises several online stores and
+builds growth systems for them — marketing, growth, automations and AI agents —
+judged on real return. Growth is the method; ROI is the scoreboard. The client
+stores and their data are fictional. See
+[`docs/product-definition-v2.md`](docs/product-definition-v2.md); nothing of v2
+is built yet.
+
 **New here?** [`docs/overview.md`](docs/overview.md) explains the whole
 application in plain English, around one example.
 
@@ -89,6 +97,7 @@ each run and says so.
 | [`docs/design/`](docs/design/README.md) | the design pack against the brief: ERD, roles, DFD, STRIDE, GDPR |
 | [`docs/specification.md`](docs/specification.md) | the technical design: entities, routes, tests, security |
 | [`docs/week03-slice.md`](docs/week03-slice.md) | the first small slice the Week 3 lab generates |
+| [`docs/product-definition-v2.md`](docs/product-definition-v2.md) | **the current direction (30 October 2026):** a growth consultancy tool for an agency serving several online stores |
 | [`docs/week03-review.md`](docs/week03-review.md) | that slice reviewed by a second assistant: findings, fixes, what was left and what the reviewer got wrong |
 | [`app.py`](app.py), [`templates/`](templates/), [`schema.sql`](schema.sql) | the running slice: one table, five routes |
 | [`docs/project-definition.md`](docs/project-definition.md) | scope, invariants and the week-by-week plan |
