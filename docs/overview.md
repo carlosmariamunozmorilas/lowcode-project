@@ -1,5 +1,16 @@
 # MarketingOps — the application in plain English
 
+> **Direction updated on 30 October 2026 — version 2.** MarketingOps is now an
+> app for a **marketing agency** whose team advises several online stores and
+> builds **growth systems** for them: marketing, growth, automations and AI
+> agents, all judged on real return. Growth is the method; ROI is the
+> scoreboard. Each client store has its own profile, and the central screen is
+> that client's growth system, with its ROI and KPIs. The stores and their data
+> are fictional. The full v2 description is
+> [`product-definition-v2.md`](product-definition-v2.md). The sections below
+> describe the v1 design. The action workflow, the approval rules and the ROI
+> rules still hold; the team and the single store they describe are superseded.
+
 A shared workspace where a marketing team plans its work, gets it approved,
 does it, and then records what it actually achieved — so the return on every
 euro and every hour is on the record, not in someone's memory.

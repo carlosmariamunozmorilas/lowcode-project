@@ -10,7 +10,9 @@ Drafted 2026-10-21, reshaped 2026-10-22 for the ROI layer, aligned 2026-10-27 wi
 
 ### What it is, in one sentence
 
-A system of record for marketing work in which every action has to say which KPI it is meant to move, by how much and at what cost — and is closed with what it actually achieved, so the project's real ROI is on the record rather than in someone's memory.
+**Version 2 (30 October 2026):** an app for a marketing agency whose team advises several online stores and builds growth systems for them — marketing, growth, automations and AI agents — judged on real return, not on ROAS. Scope, data model, automations and open decisions for v2 are in [`product-definition-v2.md`](product-definition-v2.md), which supersedes this page wherever they disagree. In particular, "no multi-tenancy" below is replaced by a limited version: one agency team, about three fictional client stores, no client logins.
+
+*Version 1, kept for the record:* a system of record for marketing work in which every action has to say which KPI it is meant to move, by how much and at what cost — and is closed with what it actually achieved, so the project's real ROI is on the record rather than in someone's memory.
 
 ### Why ROI, and why it is not ROAS
 
