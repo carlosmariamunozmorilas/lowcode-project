@@ -33,9 +33,10 @@ occasional purchases), a natural-cosmetics subscription (about €30, monthly
 repeat) and a furniture store (about €600, rare purchases).
 
 **The user group.** The structure — an agency team managing several online
-stores — is the kind of work I have done; the stores and their figures are
-invented. Real-user evidence and the lecturer's agreement remain open
-([§ Open decisions](#open-decisions)).
+stores — is a real way marketing work is organised; the agency, its people,
+the stores and their figures are invented
+([`design/user-group.md`](design/user-group.md)). Real-user evidence and the
+lecturer's agreement remain open ([§ Open decisions](#open-decisions)).
 
 ## The growth loop — the same for every initiative
 

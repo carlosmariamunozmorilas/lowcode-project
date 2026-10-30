@@ -9,16 +9,16 @@ in [`../specification.md`](../specification.md).
 
 | Project | Users | Core app | Scheduled automation | Triggered automation | Approval step |
 |---|---|---|---|---|---|
-| **MarketingOps** — ROI for marketing work | **Hypothetical:** the five people around Luna Home, a fictional Spanish homeware store, and its agency — founder, ecommerce manager, account manager, paid media specialist, freelance designer/developer ([user group](user-group.md)) ⚠️ | Marketing actions that state their expected return and cost, are approved before the work and closed with what they achieved; realised ROI on gross profit, people's time counted as a cost; a record that cannot be rewritten | Monday intake of last week's spend and revenue figures | A new measurement that is off target opens an action for someone to take on | A named reviewer approves each action before the work starts, and separately certifies its result |
+| **MarketingOps v2** — a growth consultancy tool for online stores | A marketing agency's team — consultants, leads and an admin — advising several online stores; the client stores are fictional, with contrasting profiles ([user group](user-group.md)) ⚠️ | Each client's growth system — every running marketing, growth, automation and AI component — with its ROI against the client's target; new initiatives enter as actions with a prediction and a cost, are approved by an independent lead, and are measured from the store's own data ([product definition v2](../product-definition-v2.md)) | Daily intake of each client's new orders, sessions and ad spend | A client's new data lands and part of its growth system is below target, or a pilot's window has ended: the consultant is told | A named lead approves each action before the work starts, and separately certifies its result |
 
-⚠️ **The user group is hypothetical, and that is a known gap.** The brief asks
-for "a real problem for a named group of users", and the Week 4 sheet warns that
-contrived scenarios mark badly. The design uses a fictional but realistic
-agency–client scenario, described in [user-group.md](user-group.md): it is
-enough to design, seed and demonstrate a prototype, but it is not evidence from
-real users and must not be read as validated research. Real-user evidence is
-still outstanding, and whether a hypothetical scenario is acceptable is a
-question for the lecturer.
+⚠️ **The users are real roles; the clients are fictional.** The brief asks for
+"a real problem for a named group of users", and the Week 4 sheet warns that
+contrived scenarios mark badly. The users are an agency team managing several
+online stores — a real structure of work — while the stores and their data are
+invented, as [user-group.md](user-group.md) explains. That is enough to design,
+seed and demonstrate a prototype; it is not evidence from real users or real
+stores. Real-user evidence is still outstanding, and whether this scenario is
+acceptable is a question for the lecturer.
 
 The application is generated with an AI assistant from a written specification
 (the Session 3 method) and the automations are built in **Make**, the course's
@@ -30,11 +30,14 @@ approval and an audit trail.
 
 ## The six minimum requirements
 
+For product v2. The pages for requirements 1, 3, 4, 5 and 6 still describe v1
+and are revised in the weeks shown; the v2 answer is summarised here.
+
 | # | Requirement | Minimum | Evidence | Page |
 |---|---|---|---|---|
-| 1 | Data model | ≥ 3 related tables, PKs and FKs | 12 tables; the action table links to users three times — requester, owner, named reviewer | [`erd.md`](erd.md) |
-| 2 | Automations | ≥ 3: one scheduled, one event-triggered, one with a human approval step | 4: intake (scheduled) · drift alert (event) · approval routing (approval) · weekly ROI narrative (scheduled, AI) | [`../portfolio/portfolio-plan.md`](../portfolio/portfolio-plan.md) |
-| 3 | Role-based access | ≥ 2 roles, enforced on the data | 5 roles; every write passes a server-side check, and the record tables are protected by database triggers | [`roles.md`](roles.md) |
+| 1 | Data model | ≥ 3 related tables, PKs and FKs | v2 MVP: 10 tables — clients, assignments, actions, history, growth-system components and their monthly records, users, and the fictional shop data | [`../product-definition-v2.md`](../product-definition-v2.md); [`erd.md`](erd.md) *v1, revised for Week 5* |
+| 2 | Automations | ≥ 3: one scheduled, one event-triggered, one with a human approval step | 4: shop-data intake (scheduled) · below-target alert (event) · approval routing (approval) · monthly client report (scheduled, read-only AI) | [`../portfolio/portfolio-plan.md`](../portfolio/portfolio-plan.md) |
+| 3 | Role-based access | ≥ 2 roles, enforced on the data | Consultant, lead, admin and service; each consultant sees only their assigned clients, enforced on every query; nobody approves their own work; record tables protected by database triggers | [`roles.md`](roles.md) *v1, revised for Week 5* |
 | 4 | Data flow diagram | Level 1, trust boundaries | 7 processes, 2 data stores, 4 external entities, 15 numbered flows, 11 crossing a boundary | [`dfd.md`](dfd.md) |
 | 5 | Threat analysis | STRIDE on every boundary-crossing flow | 18 threats, each with a mitigation and the test or week that proves it | [`stride.md`](stride.md) |
 | 6 | Data protection | Lawful basis, minimisation, retention, access | Staff names and emails only; no customer data by design; erasure without breaking the audit trail | [`gdpr.md`](gdpr.md) |
@@ -50,11 +53,13 @@ approval and an audit trail.
 | Level-1 DFD | [`dfd.md`](dfd.md) |
 | STRIDE table with the mitigations actually built | [`stride.md`](stride.md) — the *Status* column is updated as each one is built and tested |
 | GDPR write-up | [`gdpr.md`](gdpr.md) |
-| Short demo video of the main user journey | Week 12: an action raised, approved by its named reviewer, closed with its result, and its ROI on the project page |
+| Short demo video of the main user journey | Week 12: a consultant proposes an action for one client, its named lead approves it, the result is measured from the store's data, and the client's growth-system dashboard shows its ROI |
 
-## Honest status, 27 October
+## Honest status, 30 October
 
-Designed, not built. Two pure-Python modules exist and run — `lifecycle.py`
-(who may move an action where) and `roi.py` (the return calculation) — and the
-schema loads. Everything else on these pages is the plan the weekly labs build
-towards, and each page says which week delivers which part.
+Designed, mostly not built. The Week 3 slice runs (one table, five routes), and
+two pure-Python modules exist — `lifecycle.py` (who may move an action where)
+and `roi.py` (the return calculation). On 30 October the product moved to v2
+([`../product-definition-v2.md`](../product-definition-v2.md)); this page and
+the portfolio plan reflect v2, while the ERD, roles, DFD, STRIDE and GDPR pages
+still describe v1 and are revised in the weeks shown above.
