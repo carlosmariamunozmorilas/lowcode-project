@@ -6,7 +6,7 @@ The brief's six minimum requirements — ERD, role table, data flow diagram, STR
 
 > **The pitch:** every piece of marketing work has to justify itself, and the record shows whether it did.
 
-> **Version 2 (30 October 2026):** the product is now a growth consultancy tool for an agency serving several online stores, with fictional shop data and a growth-system dashboard per client — see [`product-definition-v2.md`](product-definition-v2.md). This specification remains the detailed reference for what v2 keeps (the action workflow, approval rules, ROI formulas, the append-only record); where the two disagree, v2 wins, and this document will be revised to match.
+> **Version 2 (30 October 2026):** the product is now a growth consultancy tool for an agency serving several online stores, with fictional shop data and a growth-system dashboard per client — see [`product-definition-v2.md`](product-definition-v2.md). **The v2 technical specification is [`specification-v2.md`](specification-v2.md) (31 October 2026); this document is kept as the record of the v1 design.** Where they disagree, v2 wins.
 
 Companion documents: [`overview.md`](overview.md) explains the application in plain English; [`project-definition.md`](project-definition.md) covers the why, the scope boundaries and the weekly plan. This one is the technical surface.
 

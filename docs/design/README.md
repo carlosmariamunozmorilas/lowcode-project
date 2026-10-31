@@ -35,7 +35,7 @@ and are revised in the weeks shown; the v2 answer is summarised here.
 
 | # | Requirement | Minimum | Evidence | Page |
 |---|---|---|---|---|
-| 1 | Data model | ≥ 3 related tables, PKs and FKs | v2 MVP: 10 tables — clients, assignments, actions, history, growth-system components and their monthly records, users, and the fictional shop data | [`../product-definition-v2.md`](../product-definition-v2.md); [`erd.md`](erd.md) *v1, revised for Week 5* |
+| 1 | Data model | ≥ 3 related tables, PKs and FKs | v2 MVP: 16 tables — clients, assignments, actions, history, growth-system components and their monthly records, users and roles, report drafts, automation events, and the fictional shop data | [`../specification-v2.md`](../specification-v2.md); [`erd.md`](erd.md) *v1, revised for Week 5* |
 | 2 | Automations | ≥ 3: one scheduled, one event-triggered, one with a human approval step | 4: shop-data intake (scheduled) · below-target alert (event) · approval routing (approval) · monthly client report (scheduled, read-only AI) | [`../portfolio/portfolio-plan.md`](../portfolio/portfolio-plan.md) |
 | 3 | Role-based access | ≥ 2 roles, enforced on the data | Consultant, lead, admin and service; each consultant sees only their assigned clients, enforced on every query; nobody approves their own work; record tables protected by database triggers | [`roles.md`](roles.md) *v1, revised for Week 5* |
 | 4 | Data flow diagram | Level 1, trust boundaries | 7 processes, 2 data stores, 4 external entities, 15 numbered flows, 11 crossing a boundary | [`dfd.md`](dfd.md) |

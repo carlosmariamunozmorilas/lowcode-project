@@ -65,7 +65,7 @@ week shown.
 
 | Requirement | Here |
 |---|---|
-| Data model, ≥ 3 related tables | 10 tables in the v2 MVP — [product definition v2](docs/product-definition-v2.md); [ERD](docs/design/erd.md) *v1, revised for Week 5* |
+| Data model, ≥ 3 related tables | 16 tables in the v2 MVP — [specification v2](docs/specification-v2.md); [ERD](docs/design/erd.md) *v1, revised for Week 5* |
 | Automations: scheduled, event-triggered, human approval | Daily shop-data intake · below-target alert when a client's new data lands · approval routing to a named lead, plus a monthly client report drafted by a read-only AI — [portfolio plan](docs/portfolio/portfolio-plan.md) |
 | ≥ 2 roles, enforced on the data | Consultant, lead and admin; each consultant sees only their assigned clients, and nobody approves their own work — [roles](docs/design/roles.md) *v1, revised for Week 5* |
 | Level-1 data flow diagram | [DFD](docs/design/dfd.md) *v1, revised for Week 8* |
@@ -96,7 +96,8 @@ each run and says so.
 | [`docs/overview.md`](docs/overview.md) | the application in plain English |
 | [`docs/influence-models.md`](docs/influence-models.md) | where the ideas come from: my influence models, and what the application takes from them |
 | [`docs/design/`](docs/design/README.md) | the design pack against the brief: ERD, roles, DFD, STRIDE, GDPR |
-| [`docs/specification.md`](docs/specification.md) | the technical design: entities, routes, tests, security |
+| [`docs/specification-v2.md`](docs/specification-v2.md) | **the v2 technical specification (31 October 2026):** tables, measurement and ROI formulas, roles and client isolation, routes, fictional data, tests, security |
+| [`docs/specification.md`](docs/specification.md) | the v1 technical design, kept as the record |
 | [`docs/week03-slice.md`](docs/week03-slice.md) | the first small slice the Week 3 lab generates |
 | [`docs/product-definition-v2.md`](docs/product-definition-v2.md) | **the current direction (30 October 2026):** a growth consultancy tool for an agency serving several online stores |
 | [`docs/week03-review.md`](docs/week03-review.md) | that slice reviewed by a second assistant: findings, fixes, what was left and what the reviewer got wrong |
