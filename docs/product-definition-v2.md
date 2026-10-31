@@ -78,7 +78,14 @@ growth initiatives such as retention or referral.
 
 ## The central screen: one client's growth system
 
-Six classes of metric, each with one job — only the outcome decides:
+At the top, the store's **Growth P&L**: sessions × conversion × average order
+gives net revenue; minus refunds, product, shipping and payment costs gives
+contribution before marketing; minus ad spend, contribution after marketing. It
+shows the store's health — it is not the agency's result, which is only ever
+the measured, incremental benefit of its work. A missing cost is shown as
+*incomplete*, never as zero.
+
+Then six classes of metric, each with one job — only the outcome decides:
 
 | Class | What it shows | Role |
 |---|---|---|
@@ -169,7 +176,11 @@ the append-only history with database triggers, and Werkzeug scrypt passwords.
   result as more certain than its evidence.
 - Automations and AI never decide: they read, notify and draft; people approve.
   An AI agent never calculates ROI or forecasts results — the code does, and the
-  agent may only explain those figures.
+  agent may only explain those figures. The AI client report is sent only after
+  a person approves, corrects or rejects it, and carries an "AI-assisted" label.
+- Every pilot names one primary metric and its guardrails before it starts, and
+  cannot be closed early because the numbers look good.
+- A shop-data batch that does not match its control totals is rejected whole.
 
 ## Automations (the 40% portfolio)
 
@@ -194,7 +205,8 @@ the append-only history with database triggers, and Werkzeug scrypt passwords.
 Client logins or a client portal · live connections to Shopify, GA4 or ad
 platforms inside the app · loading all 72 plans or the 179 influence-model
 layers · autonomous AI actions · marketing-mix models, LTV or NPV forecasting ·
-real customer data · payments.
+real customer data · payments · incremental ROAS, a customer data platform or
+data warehouse, headless commerce, and agents that move budgets or prices.
 
 ## Open decisions
 

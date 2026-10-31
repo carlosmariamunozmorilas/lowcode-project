@@ -14,8 +14,13 @@ and 72 were read in full and the rest by title; the *Integrated ROI Influence
 Model for Ecommerce, Digital Marketing, Growth, Performance, AI Agents and
 Automation* (31 October 2026 — my own AI-assisted research, English translation,
 not independently verified), from which the six metric classes, the lifecycle
-stages and the business-model field come; and the rules already in
-`lifecycle.py` and `roi.py`.
+stages and the business-model field come; *The Integrated Ecommerce Growth
+System* (31 October 2026 — my own AI-assisted research, 16 pages, English
+edition) and a second AI assistant's review that narrowed it to this MVP, from
+which the Growth P&L, the experiment controls, the intake control totals and the
+report quality measures come — the report's citations are unresolved
+placeholders and its investment figures illustrative, so neither is treated as
+independently verified; and the rules already in `lifecycle.py` and `roi.py`.
 
 > **Growth is the method, ROI is the scoreboard.** Every initiative goes through
 > the same loop and is judged on contribution, or on paid cost genuinely
@@ -46,12 +51,12 @@ orphaned.
 
 ```
 app.py                  Flask factory, blueprints, error pages
-config.py               settings from environment (SECRET_KEY, DATABASE_PATH, API secret)
+config.py               settings from environment (SECRET_KEY, DATABASE_PATH, one API secret per automation)
 db.py                   connection per request, PRAGMA foreign_keys, init-db command
 auth.py                 login, logout, session, role and client-access checks
 lifecycle.py            action stage rules and the identity rule for sign-off (exists)
 roi.py                  investment, net gain, ROI, break-even (exists; extended)
-measure.py              contribution from orders, an action's measured benefit, system and KPI figures
+measure.py              contribution from orders, the Growth P&L, an action's measured benefit, system and KPI figures
 routes/                 clients, actions, components, reports, review, api
 templates/              see §7
 schema/002_v2.sql       the v2 schema
@@ -119,7 +124,9 @@ CHECK in (`ecommerce`, `digital_marketing`, `performance_marketing`,
 | `plan_template_id` | INTEGER | FK → plan_templates, nullable |
 | `discipline` | TEXT | same CHECK as templates — `digital_growth` labels growth initiatives such as retention or referral; growth is also the loop every action follows |
 | `lifecycle_stage` | TEXT | CHECK in (`acquisition`, `activation`, `conversion`, `engagement`, `retention`, `repeat`, `expansion`, `referral`, `reactivation`) — required before review; shows where in the customer lifecycle a client's growth system is strong or weak |
-| `title`, `hypothesis` | TEXT | title NOT NULL; hypothesis required before review |
+| `title`, `hypothesis` | TEXT | title NOT NULL; hypothesis required before review — written as *if [change], then [primary metric] will [move], because [mechanism], without worsening [guardrails]* |
+| `primary_metric` | TEXT | exactly one, required before review: CHECK in (`contribution`, `revenue`, `orders`, `conversion`, `average_order_value`, `repeat_rate`, `cac`, `cpa`, `refund_rate`, `avoided_cost`) — what the action is expected to move; adoption is still decided on net benefit |
+| `guardrail_metrics` | TEXT | at least one, required before review: a comma-separated list from (`margin_pct`, `refund_rate`, `refund_value`, `cpa`), validated in code; default `margin_pct,refund_rate` |
 | `benefit_type` | TEXT | CHECK in (`contribution`, `avoided_cost`, `enabler`) — see §4 |
 | `expected_benefit_eur` | REAL | required before review, except for `enabler` |
 | `setup_cost_eur`, `setup_hours` | REAL | ≥ 0 — one-off |
@@ -132,6 +139,8 @@ CHECK in (`ecommerce`, `digital_marketing`, `performance_marketing`,
 | `measured_benefit_eur` | REAL | required to close, except for `enabler` |
 | `confidence` | TEXT | CHECK in (`holdout`, `before_after`, `correlated`, `documented`) ❓ — `documented` is new: an avoided cost evidenced by invoices |
 | `decision` | TEXT | CHECK in (`adopt`, `revise`, `reject`, `inconclusive`) — required to close |
+| `decision_note` | TEXT | required when adopting despite a breached guardrail |
+| `early_stop_reason` | TEXT | CHECK in (`data_quality_failure`, `technical_failure`, `customer_harm`, `financial_risk`, `legal_risk`), nullable — required to close before the measurement period ends |
 | `benefit_key` | TEXT | the benefit this action claims — see §4 |
 | `created_at` | TEXT | |
 
@@ -155,8 +164,13 @@ capacity and never enters any benefit** · `supersedes_id` FK → component_mont
 correction is a new row that supersedes the old one.
 
 **`client_reports`** — `id` PK · `client_id` FK · `month` · `draft_text` (from
-automation 4) · `final_text` · `status` CHECK in (`draft`, `sent`) ·
-`reviewed_by` FK → users · UNIQUE (`client_id`, `month`).
+automation 4) · `final_text` · `status` CHECK in (`draft`, `rejected`, `sent`)
+· `was_corrected` 0/1 (the reviewer made a substantive correction) ·
+`rejection_reason` (required when rejected) · `model` · `prompt_version` ·
+`generation_cost_eur` · `reviewed_by` FK → users (a person, never a service
+account; required to send or reject) · `reviewed_at`. A partial unique index
+allows at most one report per client and month that is not `rejected`, so a
+rejected draft stays on record and a new one can be drafted.
 
 ### Fictional shop data
 
@@ -183,8 +197,12 @@ stock returns). The original order is never edited.
 **`automation_events`** — what the automations write: `id`, `source`,
 `client_id`, `external_id`, `payload`, `status` CHECK in (`accepted`,
 `rejected`, `duplicate`), `reason`, `received_at`, UNIQUE (`source`,
-`external_id`). Rejected rows are kept, so data-quality problems are counted, not
-lost. **`outbound_events`** — the outbox of ids-only announcements to
+`external_id`); for shop-data batches also the control totals
+`expected_rows`, `parsed_rows`, `expected_revenue_eur` and
+`parsed_revenue_eur`. **A batch is all or nothing:** if the row count differs,
+the revenue totals differ once rounded to the cent, or any row
+fails validation, the whole batch is rejected, no row of it is written, and the
+event is kept with its reason — so data-quality problems are counted, not lost. **`outbound_events`** — the outbox of ids-only announcements to
 Make, written in the same transaction as the change they announce, as in v1.
 
 ## 4 · Measurement and ROI
@@ -203,6 +221,32 @@ same rule as v1 and every action plan.
 **Contribution of one order** = net revenue − product cost − shipping cost −
 payment fee − refunds + restocked product cost. Discounts are already inside net
 revenue and are **never subtracted again**.
+
+**The Growth P&L** — the store's health for one client and month, built from the
+same order formula and placed at the top of the dashboard:
+
+| Line | Calculation |
+|---|---|
+| Sessions × conversion × average order value | = net revenue — an identity (conversion = orders ÷ sessions, average order = net revenue ÷ orders) used to show which factor moved |
+| Discounts | shown for information; already inside net revenue |
+| **Net revenue** | Σ order net revenue (after discounts, excluding tax) |
+| − Refunds | Σ refund amounts in the month |
+| − Product cost | Σ product cost − Σ restocked product cost |
+| − Shipping and payment fees | Σ shipping cost + Σ payment fee |
+| **= Contribution before marketing** | |
+| − Ad spend | Σ `ad_spend` in the month |
+| **= Contribution after marketing** | |
+| Contribution margin % | contribution before marketing ÷ (net revenue − refunds) — the guardrail figure, comparable with the client's profile margin |
+
+**The Growth P&L is not the agency's result.** It is the context the drivers,
+efficiency and guardrail metrics hang from. Store contribution moves for reasons
+the agency did not cause, so it is never shown as, or added into, an action's
+benefit or the system ROI; those come only from measured, incremental results.
+
+**A missing cost is never zero.** An order whose product, shipping or payment
+cost is missing makes every Growth P&L line that depends on it show as
+*incomplete* rather than computed. A contribution result built from incomplete
+orders cannot close an action.
 
 **An action's measured benefit** (`benefit_type = contribution`), over the
 window plus the template's post-period:
@@ -240,8 +284,8 @@ the key; one carries the benefit, the other records cost only.
 | **Driver** | Explains the outcome | Revenue, orders, conversion (orders ÷ sessions), average order value, repeat-purchase rate (customers with two or more orders in the trailing 90 days ÷ customers with one or more) |
 | **Efficiency** | Cost of the result | CAC (paid acquisition spend ÷ new customers), CPA by channel (spend ÷ orders) |
 | **Diagnostic** | Helps find causes | ROAS by channel (channel revenue ÷ channel spend) |
-| **Guardrail** | Stops destructive optimisation | Contribution margin %, refund rate (refunded orders ÷ orders), refund value |
-| **Quality and risk** | Watches the system itself | Rejected and duplicate intake rows, failed automation and agent runs, open alerts |
+| **Guardrail** | Stops destructive optimisation | Contribution margin % (Growth P&L), refund rate (refunded orders ÷ orders), refund value |
+| **Quality and risk** | Watches the system itself | Rejected and duplicate intake batches (intake quality = accepted ÷ received batches), incomplete cost data, failed automation and agent runs, report correction and rejection rates and cost per draft (§8), open alerts |
 
 Only **outcome** metrics decide anything. A guardrail breach — margin % or
 refund rate worse than the client's average over the previous three months — is
@@ -261,11 +305,20 @@ figures the code has calculated.
 `submitted → assigned → in_review → approved → closed`, or `rejected` /
 `cancelled`.
 
-- **To enter review:** owner, hypothesis, benefit type, expected benefit (unless
-  enabler), comparison, measurement window, and a named reviewer who is a lead
-  assigned to the client and is neither requester nor owner.
+- **To enter review:** owner, hypothesis, primary metric, at least one guardrail
+  metric, lifecycle stage, benefit type, expected benefit (unless enabler),
+  comparison, measurement window, and a named reviewer who is a lead assigned to
+  the client and is neither requester nor owner.
 - **To close:** measured benefit (unless enabler), confidence and decision,
   certified by the named reviewer.
+- **No early close.** An action cannot be closed before its measurement period
+  ends (`window_end` plus the template's post-period) unless an
+  `early_stop_reason` is recorded — "the metric looks good" is not one — and an
+  action stopped early cannot be adopted.
+- **Guardrails at close.** The reviewer sees each guardrail over the window
+  against the client's previous three months. If one is breached, `inconclusive`,
+  `revise` or `reject` may be chosen even when net benefit clears the hurdle;
+  `adopt` needs a `decision_note` saying why the breach is acceptable.
 - **On `adopt`,** the reviewer is offered "add to the growth system", which
   creates a component linked to the action. Nothing becomes a component any
   other way.
@@ -314,6 +367,10 @@ reviewer the action stays blocked. `lifecycle.User` becomes multi-role
   "fictional" badge.
 - **Growth-system dashboard**, one client and month, laid out by the six metric
   classes (§4):
+  - **Store health — the Growth P&L** at the top: sessions, orders, conversion,
+    average order, net revenue, contribution before and after marketing, and
+    margin %, with *incomplete* lines marked; labelled as the store's figures,
+    not the agency's result;
   - **Outcome (the scoreboard):** monthly operating cost, benefit, net, system
     ROI against target, ROI by month, and setup payback;
   - **Drivers:** revenue, orders, conversion, average order, repeat rate;
@@ -326,10 +383,13 @@ reviewer the action stays blocked. `lifecycle.User` becomes multi-role
   - **By lifecycle stage:** investment and benefit per stage, so the consultant
     sees where the system is strong or weak.
 - **Plans** — templates that fit this client, with a "start an action" button.
-- **Action** — the plan, costs, comparison, history, measured result, net
-  benefit against the hurdle, and decision.
-- **Review queue**, **component** record, **report** draft editor, and admin
-  set-up pages.
+- **Action** — the plan, primary metric and guardrails, costs, comparison,
+  history, measured result, guardrails against baseline, net benefit against
+  the hurdle, and decision (with the early-stop reason, if any).
+- **Report** — the AI draft beside the editable final text, with approve,
+  correct or reject (with a reason), and the AI-assisted label shown as it will
+  be sent.
+- **Review queue**, **component** record, and admin set-up pages.
 
 Every figure on screen states its confidence where it has one; colour is never
 the only signal.
@@ -351,6 +411,38 @@ purpose, the data and permissions it has, where a person approves, what happens
 when it fails, how its output is checked, what it costs each month, and its main
 risk. Its runs and failed runs are recorded monthly (§3) and shown as quality
 metrics (§4).
+
+**Each automation has its own credentials and scope.** The API secret is per
+automation, and each is allowed only its own event types: the report automation
+may read `GET /api/metrics` and write `report_draft`, nothing else. No route the
+automations can reach changes ad budgets, bids or prices, publishes a report, or
+edits or deletes shop data.
+
+**The AI client report** is a draft until a person reviews it:
+
+- `draft` → `sent` (approved, with or without correction) or `rejected` (with a
+  reason); it never goes straight from the automation to the client.
+- **Quality measures** from the stored reports: correction rate = sent with
+  `was_corrected` ÷ reviewed; rejection rate = rejected ÷ reviewed; cost per
+  draft = Σ `generation_cost_eur` ÷ drafts. A draft that needs heavy correction
+  counts as lower quality, not as a success because text was produced.
+- **Every sent report carries the label** *"AI-assisted report: drafted with AI
+  assistance and reviewed by a person before it was sent."* — a product choice,
+  kept even where the law asks for less.
+
+**For the Week 11 governance document** (not settings in the app): the list of
+prohibited actions above, and a 10% change in spend as an *illustrative*
+threshold above which any future tool proposing spend changes would need a
+person's approval. In this app even a 1% change is only ever a recommendation —
+nothing executes spend.
+
+**Privacy and AI transparency (Week 11).** The GDPR page cites EU GDPR principles
+(Article 5: purpose limitation, data minimisation, storage limitation) and the
+Irish Data Protection Commission — not the Spanish regulator and law (AEPD,
+LOPDGDD) that the growth research assumed. The research and its review date
+Article 50 of the EU AI Act (transparency) from 2 August 2026, citing EUR-Lex
+and the European Commission; **legal review is required** before relying on
+that, and the label above is not a compliance conclusion.
 
 ## 9 · Fictional shop data
 
@@ -424,7 +516,16 @@ Fixtures are small and separate from the generated demo data.
 24. Every connection has `foreign_keys` on; deleting a client with actions is refused ❓ *(pending the delete rule)*
 25. An action cannot enter review without a lifecycle stage
 26. A guardrail breach is flagged on the dashboard even when the client's system ROI meets its target
-27. A rejected intake row is kept with its reason and counted in the quality metrics
+27. A shop-data batch whose row count or revenue total misses its control totals (a €0.01 difference included), or that has one invalid row, is rejected whole: no row is written, and the event is kept with its reason and counted in the quality metrics
+28. The Growth P&L for a fixture month adds up line by line, shows the discount without subtracting it again, and its identity (sessions × conversion × average order = net revenue) holds
+29. An order with a missing product cost makes the dependent Growth P&L lines *incomplete*, never computed as zero, and a contribution result built on it cannot close an action
+30. Store-level contribution never enters an action's benefit or the system ROI: changing it leaves both unchanged
+31. An action cannot enter review without a primary metric and at least one guardrail metric
+32. Closing before the measurement period ends is refused without an `early_stop_reason`, and an action stopped early cannot be adopted
+33. With a breached guardrail, `inconclusive` is accepted even when net benefit clears the hurdle, and `adopt` is refused without a `decision_note`
+34. A report cannot be sent or rejected without a person's review; a rejected report keeps its reason, and only then can a new draft for that month be stored
+35. Correction rate, rejection rate and cost per draft are computed from stored reports, and every sent report carries the AI-assisted label
+36. The report automation's credentials can read `GET /api/metrics` and write `report_draft` only; any other event type is refused
 
 ## 12 · Security surface — what Week 8 should find
 
@@ -435,6 +536,7 @@ Fixtures are small and separate from the generated demo data.
 5. **API trust:** signatures, idempotency, unknown clients, oversized batches.
 6. **Prompt injection in the report:** only aggregates reach the model, and a person reviews every draft.
 7. **Rewriting history:** do the triggers hold, and does any route try an update?
+8. **Automation scope:** can one automation's secret write another's event types, or a partial batch slip past the control totals?
 
 The full STRIDE analysis is revised for v2 in Week 8 ([`design/stride.md`](design/stride.md), still v1).
 
@@ -445,6 +547,19 @@ platforms inside the app · loading all 72 plans as active templates in the MVP 
 the 179 influence-model layers · autonomous AI actions · marketing-mix models,
 LTV, NPV or forecasting · real customer data · payments · editing plan templates
 in the app.
+
+From the growth research, excluded on purpose:
+
+| Excluded | Why |
+|---|---|
+| LTV forecasting | Not needed to measure current contribution or a pilot's result |
+| Incremental ROAS | Incremental contribution already is the causal result; another return figure adds confusion |
+| Customer data platform, data warehouse | The app's own tables are enough for three stores' data |
+| Marketing-mix modelling | Needs far more history and media variation than the MVP has |
+| Headless commerce | Unrelated to what the app does |
+| Agents that move budgets or change prices; autonomous campaign execution | Breaks the rule that people approve; the app recommends and measures, people execute |
+| The report's €30k–€800k investment figures | Illustrative, not verified |
+| A daily reconciliation job and a configurable spend threshold | More than the MVP needs; batch control totals and the governance document cover them |
 
 ## 14 · Open decisions ❓
 
