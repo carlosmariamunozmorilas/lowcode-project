@@ -95,11 +95,16 @@ Platform: **Make**. Free tier allows multi-step scenarios and 1,000 operations a
 |---|---|---|
 | 1 | Schedule — daily 06:00 | |
 | 2 | Google Sheets — search rows | yesterday's rows, per client: orders, sessions, ad spend |
-| 3 | Array aggregator | batches each client's rows into one request per data type |
+| 3 | Array aggregator | batches each client/date/type with expected row count and (for orders) net revenue total in cents |
 | 4 | HTTP · Make a request | `POST /api/events`, `source: shop_data`, signed, with `client_id` |
 | 5 | Error handler route | logs 4xx without retrying |
 
-**App behaviour:** validates each row and records it in `orders`, `sessions` or `ad_spend` for that client, `recorded_by` = the intake service user. Each row carries its own `external_id` — `"{client}:{type}:{date}:{row id}"` — so a row already loaded is skipped. A refund arrives as its own row pointing at the original order, which stays untouched. When a client's batch is loaded, the application writes a `data.loaded` announcement — which is what triggers automation 2.
+**App behaviour:** validates each row and records it in `orders`, `sessions` or `ad_spend` for that client, `recorded_by` = the intake service user. Each row carries its own `external_id` — `"{client}:{type}:{date}:{row id}"` — so a row already loaded is skipped. A refund arrives as its own row pointing at the original order, which stays untouched. The signed batch envelope includes `expected_row_count` and, for orders,
+`expected_net_revenue_eur` reconciled using integer cents. The app checks all
+rows and totals before committing any of them: a mismatch rejects the **entire**
+batch, logs a quality event and emits no `data.loaded`. A corrected batch gets
+a new versioned `external_id`; rejected ids are not silently reused. Only a
+fully accepted batch writes `data.loaded`, triggering automation 2.
 
 **Fires twice** → every row's `external_id` already exists: a no-op.
 
@@ -203,8 +208,13 @@ enforced on the data, and on the record.
 | 6 | Data store — record | marks the client's month as drafted |
 
 **Nothing goes to a client automatically.** The draft lands in the application,
-and the consultant reads, corrects and sends it. The AI drafts; a person
-decides what the client is told.
+and the consultant reads, corrects and sends it, or **rejects** it with a
+reason. `client_reports` retains the original draft, `was_corrected`, the
+reviewer and AI generation cost when known. Correction/rejection rates use
+**reviewed drafts** as the denominator; unknown provider cost is `n/a`, not
+zero. Sent reports display `AI-assisted draft; reviewed by a person before
+sending.` This is a product transparency policy, with legal applicability
+checked in Week 11. The AI drafts; a person decides what the client is told.
 
 **What the app computes, in SQL and `roi.py`, before anything leaves it:** the client's system ROI against target and by month; each component's cost, contribution and ROI; actions closed this month with their confidence labels; growth KPIs; alerts raised. The model receives those numbers and writes prose around them — it does no arithmetic of its own, following the design in ROI Action Plan 50 (analytics agents).
 
