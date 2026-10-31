@@ -10,7 +10,11 @@ design. Where they disagree, this document wins. Open points are marked ❓.
 **Sources folded in:** the product definition v2; the 72 ROI Action Plans
 (Google Drive, *ROI Unified System — 6 disciplines*, complete on 31 October
 2026, generated with an AI assistant), of which plans 03, 26–31, 38, 50, 60, 65
-and 72 were read in full and the rest by title; and the rules already in
+and 72 were read in full and the rest by title; the *Integrated ROI Influence
+Model for Ecommerce, Digital Marketing, Growth, Performance, AI Agents and
+Automation* (31 October 2026 — my own AI-assisted research, English translation,
+not independently verified), from which the six metric classes, the lifecycle
+stages and the business-model field come; and the rules already in
 `lifecycle.py` and `roi.py`.
 
 > **Growth is the method, ROI is the scoreboard.** Every initiative goes through
@@ -93,6 +97,7 @@ contradiction between "NOT NULL" and password-less service accounts.
 | `monthly_budget_eur` | REAL | ≥ 0 |
 | `roi_target` | REAL | e.g. 0.20 |
 | `hourly_rate_eur` | REAL | ≥ 0, default 35 ❓ (the action plans use 25) |
+| `business_model` | TEXT | CHECK in (`dtc`, `b2c`, `b2b`, `marketplace`, `subscription`, `omnichannel`) — helps choose which plans fit |
 | `is_fictional` | INTEGER | NOT NULL DEFAULT 1 — shown on screen |
 | `created_at` | TEXT | |
 
@@ -113,6 +118,7 @@ CHECK in (`ecommerce`, `digital_marketing`, `performance_marketing`,
 | `client_id` | INTEGER | FK → clients, NOT NULL |
 | `plan_template_id` | INTEGER | FK → plan_templates, nullable |
 | `discipline` | TEXT | same CHECK as templates — `digital_growth` labels growth initiatives such as retention or referral; growth is also the loop every action follows |
+| `lifecycle_stage` | TEXT | CHECK in (`acquisition`, `activation`, `conversion`, `engagement`, `retention`, `repeat`, `expansion`, `referral`, `reactivation`) — required before review; shows where in the customer lifecycle a client's growth system is strong or weak |
 | `title`, `hypothesis` | TEXT | title NOT NULL; hypothesis required before review |
 | `benefit_type` | TEXT | CHECK in (`contribution`, `avoided_cost`, `enabler`) — see §4 |
 | `expected_benefit_eur` | REAL | required before review, except for `enabler` |
@@ -135,16 +141,18 @@ CHECK in (`ecommerce`, `digital_marketing`, `performance_marketing`,
 
 **`components`** — a running part of a client's growth system. `id` PK ·
 `client_id` FK · `origin_action_id` FK → actions (the adopted pilot), nullable
-only for seeded history · `name` · `discipline` · `benefit_type` · `status`
-CHECK in (`running`, `review_due`, `retired`) · `started_on` · `retired_on` ·
-`benefit_key`.
+only for seeded history · `name` · `discipline` · `lifecycle_stage` ·
+`benefit_type` · `status` CHECK in (`running`, `review_due`, `retired`) ·
+`started_on` · `retired_on` · `benefit_key`.
 
 **`component_months`** — append-only monthly record. `id` PK · `component_id` FK
 · `month` (`YYYY-MM`) · `operating_cost_eur` · `operating_hours` ·
 `measured_benefit_eur` (NULL for an enabler, or when the benefit is recorded
-under another component) · `confidence` · `benefit_key` · `supersedes_id` FK →
-component_months · `recorded_by` FK → users · `created_at`. Triggers abort
-`UPDATE` and `DELETE`; a correction is a new row that supersedes the old one.
+under another component) · `confidence` · `benefit_key` · for automation and
+agent components: `runs`, `failed_runs` and `hours_freed` — **`hours_freed` is
+capacity and never enters any benefit** · `supersedes_id` FK → component_months ·
+`recorded_by` FK → users · `created_at`. Triggers abort `UPDATE` and `DELETE`; a
+correction is a new row that supersedes the old one.
 
 **`client_reports`** — `id` PK · `client_id` FK · `month` · `draft_text` (from
 automation 4) · `final_text` · `status` CHECK in (`draft`, `sent`) ·
@@ -173,8 +181,10 @@ stock returns). The original order is never edited.
 ### Automations
 
 **`automation_events`** — what the automations write: `id`, `source`,
-`client_id`, `external_id`, `payload`, `received_at`, UNIQUE (`source`,
-`external_id`). **`outbound_events`** — the outbox of ids-only announcements to
+`client_id`, `external_id`, `payload`, `status` CHECK in (`accepted`,
+`rejected`, `duplicate`), `reason`, `received_at`, UNIQUE (`source`,
+`external_id`). Rejected rows are kept, so data-quality problems are counted, not
+lost. **`outbound_events`** — the outbox of ids-only announcements to
 Make, written in the same transaction as the change they announce, as in v1.
 
 ## 4 · Measurement and ROI
@@ -222,16 +232,28 @@ carry a `measured_benefit_eur` for a given `benefit_key` — enforced with a
 partial unique index. Two components that contribute to the same outcome share
 the key; one carries the benefit, the other records cost only.
 
-**Growth KPIs** for the whole store and month: revenue, orders, conversion
-(orders ÷ sessions), average order value, and repeat-purchase rate (customers
-with two or more orders in the trailing 90 days ÷ customers with one or more).
-**ROAS** (channel revenue ÷ channel spend) is shown as a diagnostic and never
-decides anything.
+**Six classes of metric**, each with a fixed role, for one client and month:
+
+| Class | Role | Metrics in the MVP |
+|---|---|---|
+| **Outcome** | The verdict | Benefit, net benefit, system ROI against target, setup payback |
+| **Driver** | Explains the outcome | Revenue, orders, conversion (orders ÷ sessions), average order value, repeat-purchase rate (customers with two or more orders in the trailing 90 days ÷ customers with one or more) |
+| **Efficiency** | Cost of the result | CAC (paid acquisition spend ÷ new customers), CPA by channel (spend ÷ orders) |
+| **Diagnostic** | Helps find causes | ROAS by channel (channel revenue ÷ channel spend) |
+| **Guardrail** | Stops destructive optimisation | Contribution margin %, refund rate (refunded orders ÷ orders), refund value |
+| **Quality and risk** | Watches the system itself | Rejected and duplicate intake rows, failed automation and agent runs, open alerts |
+
+Only **outcome** metrics decide anything. A guardrail breach — margin % or
+refund rate worse than the client's average over the previous three months — is
+flagged next to the outcome even
+when ROI looks good. ROAS stays a diagnostic. `hours_freed` is reported as
+capacity beside quality metrics, never as money.
 
 **What the app never does:** count saved hours as money; treat ROAS or
 platform-attributed revenue as a result; add ROI percentages together; add up
 the example ROIs of the action plans; show a result as more certain than its
-evidence.
+evidence; let an AI agent calculate ROI or forecast results — agents may explain
+figures the code has calculated.
 
 ## 5 · Workflow, roles and access
 
@@ -287,15 +309,22 @@ reviewer the action stays blocked. `lifecycle.User` becomes multi-role
 
 ## 7 · Screens
 
-- **Portfolio** — each assigned client: name, profile (average order, margin,
-  frequency, budget), system ROI against its target, and a "fictional" badge.
-- **Growth-system dashboard**, one client and month:
-  - **Scoreboard:** monthly operating cost, benefit, net, system ROI against
-    target, ROI by month, and setup payback;
-  - **Growth KPIs:** revenue, orders, conversion, average order, repeat rate;
+- **Portfolio** — each assigned client: name, business model, profile (average
+  order, margin, frequency, budget), system ROI against its target, and a
+  "fictional" badge.
+- **Growth-system dashboard**, one client and month, laid out by the six metric
+  classes (§4):
+  - **Outcome (the scoreboard):** monthly operating cost, benefit, net, system
+    ROI against target, ROI by month, and setup payback;
+  - **Drivers:** revenue, orders, conversion, average order, repeat rate;
+  - **Efficiency:** CAC and CPA by channel;
   - **Diagnostics:** ROAS by channel, labelled diagnostic;
-  - **Components:** discipline, monthly cost, benefit, ROI, confidence and
-    status, with alerts and pilots in progress.
+  - **Guardrails:** margin and refunds, flagged when worse than baseline;
+  - **Quality and risk:** rejected intake rows, failed runs, open alerts;
+  - **Components:** discipline, lifecycle stage, monthly cost, benefit, ROI,
+    confidence and status, with pilots in progress;
+  - **By lifecycle stage:** investment and benefit per stage, so the consultant
+    sees where the system is strong or weak.
 - **Plans** — templates that fit this client, with a "start an action" button.
 - **Action** — the plan, costs, comparison, history, measured result, net
   benefit against the hurdle, and decision.
@@ -315,6 +344,13 @@ written up W11). The application computes every flag and figure; Make only moves
 data and messages. Design references in the action plans: 61 and 71 (intake and
 validation), 70 (alerts), 69 and 50 (the report), 72 (idempotency, bounded
 retries, unknown outcomes held for review).
+
+Every automation and AI agent component also carries a **governance checklist**,
+written in the Week 11 governance document rather than stored as fields: its
+purpose, the data and permissions it has, where a person approves, what happens
+when it fails, how its output is checked, what it costs each month, and its main
+risk. Its runs and failed runs are recorded monthly (§3) and shown as quality
+metrics (§4).
 
 ## 9 · Fictional shop data
 
@@ -371,7 +407,7 @@ Fixtures are small and separate from the generated demo data.
 7. System ROI counts each `benefit_key` once; a second benefit row for the same key and month is refused
 8. An `enabler` never shows a benefit or an ROI figure
 9. An `avoided_cost` result requires the `documented` confidence and its evidence note
-10. Saved hours never appear in any benefit
+10. Saved hours, including `hours_freed`, never appear in any benefit or ROI
 11. A requester or owner cannot approve, reject or close their own action, whatever their roles; admin included
 12. With no eligible reviewer, an action cannot enter review
 13. A consultant requesting another client's dashboard, action or component gets `404` — the IDOR test
@@ -386,6 +422,9 @@ Fixtures are small and separate from the generated demo data.
 22. The generator with the fixed seed produces identical data twice
 23. A person without a password hash, or a service account with one, is refused by the schema
 24. Every connection has `foreign_keys` on; deleting a client with actions is refused ❓ *(pending the delete rule)*
+25. An action cannot enter review without a lifecycle stage
+26. A guardrail breach is flagged on the dashboard even when the client's system ROI meets its target
+27. A rejected intake row is kept with its reason and counted in the quality metrics
 
 ## 12 · Security surface — what Week 8 should find
 

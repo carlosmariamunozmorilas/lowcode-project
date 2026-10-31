@@ -78,12 +78,22 @@ growth initiatives such as retention or referral.
 
 ## The central screen: one client's growth system
 
-| Level | What it shows | Role |
+Six classes of metric, each with one job — only the outcome decides:
+
+| Class | What it shows | Role |
 |---|---|---|
-| **Scoreboard** | Monthly investment in the system, incremental contribution, net gain, system ROI against the client's target, and ROI by month | The verdict |
-| **Growth KPIs** | Revenue, orders, conversion rate, average order value, repeat-purchase rate — for the whole store | The context: is the business growing? |
+| **Outcome** (the scoreboard) | Monthly investment in the system, incremental contribution, net gain, system ROI against the client's target, and ROI by month | The verdict |
+| **Drivers** | Revenue, orders, conversion rate, average order value, repeat-purchase rate — for the whole store | The context: is the business growing? |
+| **Efficiency** | Cost per new customer (CAC) and per order (CPA), by channel | What the result costs |
 | **Diagnostics** | ROAS and other platform figures | Kept apart, labelled diagnostic; never decide anything |
-| **Components** | Each running component with its discipline, monthly cost, contribution, ROI and status (keep, review due, pilot) | Where the consultant acts |
+| **Guardrails** | Contribution margin and refund rate | Flagged when they worsen, even if ROI looks good |
+| **Quality and risk** | Rejected intake rows, failed automation and agent runs, open alerts | Is the system itself working? |
+
+Below them, each running **component** with its discipline, lifecycle stage,
+monthly cost, contribution, ROI and status (keep, review due, pilot) — where the
+consultant acts — and a view **by lifecycle stage** (acquisition, activation,
+conversion, engagement, retention, repeat, expansion, referral, reactivation),
+showing where the client's growth system is strong or weak.
 
 The other screens: the **client portfolio** (every assigned client with its
 profile and ROI against target), the **review queue** (actions waiting for this
@@ -137,7 +147,7 @@ Sixteen tables; fields, constraints and formulas are in
 | Tables | Hold |
 |---|---|
 | `users`, `user_roles`, `client_assignments` | people, their roles, and which clients each one works on — the basis of "you see only your clients" |
-| `clients`, `plan_templates` | the store profiles, and the action-plan templates |
+| `clients`, `plan_templates` | the store profiles, each with its business model (DTC, B2C, B2B, marketplace, subscription or omnichannel), and the action-plan templates |
 | `actions`, `action_history` | the pilots — benefit type, expected benefit, setup and operating costs, hurdle, comparison, window, named reviewer, measured result, confidence, decision — and their append-only history |
 | `components`, `component_months` | a client's running growth-system components and their append-only monthly cost and benefit |
 | `client_reports` | the monthly report drafts and what was sent |
@@ -158,6 +168,8 @@ the append-only history with database triggers, and Werkzeug scrypt passwords.
   revenue as a result, never adds ROI percentages together, and never shows a
   result as more certain than its evidence.
 - Automations and AI never decide: they read, notify and draft; people approve.
+  An AI agent never calculates ROI or forecasts results — the code does, and the
+  agent may only explain those figures.
 
 ## Automations (the 40% portfolio)
 
