@@ -7,7 +7,8 @@ customers or figures — so no real personal data is processed during the course
 
 ## What personal data there is
 
-**Staff only. No customer data, by design.**
+**Real-person data in the intended workflow is staff data.** The v2 demo's
+shop orders and pseudonymous customer codes are entirely **synthetic**.
 
 | Data | About whom | Why it is needed |
 |---|---|---|
@@ -17,10 +18,13 @@ customers or figures — so no real personal data is processed during the course
 | Actor on each history row | Each team member | Who changed what, and when — the audit trail |
 
 The KPIs are store-level aggregates: sessions, conversion rate, average order
-value, spend. They describe no individual. The application never receives
-customer names, emails, orders or browsing data, and the out-of-scope list in
-the specification keeps it that way: no live connection to ad platforms or the
-shop.
+value and spend. The v2 design also stores **fictional orders** with synthetic
+pseudonymous customer codes for holdout tests; it does not receive real
+customer names, emails, addresses or browsing data. If a real store were
+connected later, pseudonymous order/customer identifiers could still be
+**personal data** under GDPR, not anonymous by default. A live connection
+would need a new data-flow, lawful-basis, retention and processor assessment.
+See [Irish DPC: anonymisation and pseudonymisation](https://www.dataprotection.ie/en/dpc-guidance/anonymisation-pseudonymisation).
 
 **One residual risk:** action titles, hypotheses and notes are free text, so a
 person could type a customer's name into one. The form says not to, and the
@@ -28,19 +32,19 @@ automations never forward free text (see [`stride.md`](stride.md), T12 and T17).
 
 ## Lawful basis
 
-**Legitimate interests** (Article 6(1)(f)): an employer recording who did,
-approved and certified which piece of work, so that marketing spend can be
-accounted for. The processing is expected by the staff involved, limited to
-work data, and gives them nothing to object to beyond what any work tracker
-records. A short legitimate-interests assessment goes in the Week 11
-governance document. Consent is not the right basis — staff cannot freely
-refuse a work tool.
+**Proposed basis: legitimate interests** (Article 6(1)(f)) for agency work
+allocation and audit records, **subject to** a documented necessity and
+balancing assessment in Week 11; it is not automatically established just
+because records concern work. Staff need an appropriate privacy notice and
+retain applicable rights. Consent is generally unsuitable for mandatory
+workplace processing. See [Irish DPC: legal bases](https://www.dataprotection.ie/en/dpc-guidance/guidance-legal-bases-processing-personal-data).
 
 ## Data minimisation
 
 - Name, work email and role — nothing else about a person: no phone, no photo,
   no personal address, no tracking.
-- No customer data at all, as above.
+- Synthetic customer codes and fictional order rows only in the MVP; no real
+  customer records. Reassess before any live store connection.
 - Outward messages carry the action number and a link, never content
   ([`stride.md`](stride.md), T12).
 - The AI provider receives aggregates only — no names
@@ -78,7 +82,7 @@ data-protection right.
 | The named reviewer | Their own approval requests by email or Slack |
 | Make (processor) | The named reviewer's email, to send approval requests; names never sent onward to the AI provider |
 | Email / Slack provider (processor) | The messages it delivers |
-| AI provider (processor) | No personal data — aggregates only |
+| AI provider (processor) | Aggregates only by design; still assess whether free-text or identifiers could leak into prompts |
 
 Make, the mail provider and the AI provider are **processors** and would need a
 data-processing agreement with a real client. Where each stores data — Make
