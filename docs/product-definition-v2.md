@@ -1,10 +1,11 @@
 # Product definition v2 — a growth consultancy tool for online stores
 
-**Status:** agreed on 30 October 2026, documentation only — nothing below is
-built yet. This page supersedes earlier documents wherever they disagree; the
-full v1 design in [`specification.md`](specification.md) stays as the detailed
-reference for the parts v2 keeps (the action workflow, the approval rules, the
-ROI formulas, the append-only record).
+**Status:** agreed on 30 October 2026, refined on 31 October with the complete
+set of 72 action plans; documentation only — nothing below is built yet. This
+page explains the product; the technical detail — tables, formulas, routes,
+tests — is in [`specification-v2.md`](specification-v2.md). Both supersede
+earlier documents wherever they disagree; the v1 design in
+[`specification.md`](specification.md) is kept as the record.
 
 ## In one sentence
 
@@ -55,9 +56,15 @@ lecturer's agreement remain open ([§ Open decisions](#open-decisions)).
 | | **Action** | **Growth-system component** |
 |---|---|---|
 | What it is | A bounded pilot or test: a free-shipping threshold for 42 days | Something that keeps running: an abandoned-cart flow, an AI agent, a campaign programme |
-| Cost | Mostly one-off | Recurring each month: tools, AI usage, media, maintenance |
-| Result | Measured once, at the end of its window | Measured **every month** |
-| Decision | Adopt, revise, reject or inconclusive ❓ | Keep, improve or retire |
+| Cost | Setup (one-off) plus operating cost for the pilot period | Operating cost every month: tools, AI usage, media, maintenance |
+| Result | Measured once, at the end of its window: net benefit after **all** costs, against a hurdle | Measured **every month**: monthly benefit against monthly operating cost — setup is already spent and not counted again |
+| Decision | Adopt, revise, reject or inconclusive | Keep, improve or retire |
+
+**What counts as a benefit** (from the action plans): extra contribution measured
+from the store's orders, or paid spending that genuinely falls. Work that others
+depend on — data, tracking, reliability — is an *enabler*, shown at cost only.
+Freed staff hours are capacity, never money. Each benefit is counted once, even
+when several components contribute to it.
 
 **Nothing joins a client's growth system without passing the loop first.** A
 new automation, agent or campaign starts as an action; if it is adopted, it
@@ -65,8 +72,9 @@ becomes a running component of that client's growth system. A client's
 **growth system** is the set of its running components.
 
 **Disciplines are labels, not sections:** ecommerce, digital marketing,
-performance marketing, automations, agentic AI. Digital growth is not a label
-— it is the loop itself.
+performance marketing, digital growth, agentic AI, automations. Digital growth
+is also the loop itself — every action follows it — and as a label it marks
+growth initiatives such as retention or referral.
 
 ## The central screen: one client's growth system
 
@@ -91,13 +99,13 @@ type it in.
 
 | Data | Fields the action plans show are needed |
 |---|---|
-| Orders | date, net revenue, product cost, discount, shipping cost, payment fee, refund, channel, new or returning customer, **assignment group** (control or test) |
+| Orders | date, net revenue, product cost, discount, shipping cost, payment fee, channel, new or returning customer, a **pseudonymous customer code** (no names or contact details), **assignment group** (control or test); refunds as separate rows |
 | Sessions | date, channel, sessions |
 | Ad spend | date, channel, spend |
 
 - **Contribution** = net revenue − product cost − shipping − payment fees −
-  refunds. Discounts are already inside net revenue and are never subtracted
-  twice.
+  refunds + product cost recovered from returned stock. Discounts are already
+  inside net revenue and are never subtracted twice.
 - An action's **result** compares its measurement window with a control group
   when the data has one (`holdout`), otherwise with the period before
   (`before_after`) — and says which.
@@ -110,9 +118,9 @@ type it in.
 
 ## The 72 ROI Action Plans
 
-My own series (Google Drive, *ROI Unified System — 6 disciplines*, 50 of 72
-written by 30 October), generated with an AI assistant. In v2 they are
-**templates and requirements, not a catalogue to load in full**:
+My own series (Google Drive, *ROI Unified System — 6 disciplines*, all 72
+written by 31 October, 12 per discipline), generated with an AI assistant. In v2
+they are **templates and requirements, not a catalogue to load in full**:
 
 - they define what the fictional data must contain (plan 03, for example,
   measures contribution per assigned visitor with a control group and a
@@ -123,16 +131,18 @@ written by 30 October), generated with an AI assistant. In v2 they are
 
 ## Data model for the MVP
 
-| Table | Holds |
+Sixteen tables; fields, constraints and formulas are in
+[`specification-v2.md`](specification-v2.md).
+
+| Tables | Hold |
 |---|---|
-| `users` | consultants, leads, admins, service accounts |
-| `clients` | the store profile: sector, products, average order value, margin, purchase frequency, monthly budget, audience, main channels, ROI target |
-| `client_assignments` | which consultant works on which client — the basis of "you see only your clients" |
-| `actions` | the pilot: client, discipline, plan template, hypothesis, expected contribution in €, cost in € and hours, measurement window, named reviewer, status, measured result, confidence, decision |
-| `action_history` | append-only: every status change, who, when |
-| `components` | a client's running growth-system components, each linked to the action it came from |
-| `component_months` | append-only monthly cost and contribution per component |
-| `orders`, `sessions`, `ad_spend` | the fictional shop data, per client |
+| `users`, `user_roles`, `client_assignments` | people, their roles, and which clients each one works on — the basis of "you see only your clients" |
+| `clients`, `plan_templates` | the store profiles, and the action-plan templates |
+| `actions`, `action_history` | the pilots — benefit type, expected benefit, setup and operating costs, hurdle, comparison, window, named reviewer, measured result, confidence, decision — and their append-only history |
+| `components`, `component_months` | a client's running growth-system components and their append-only monthly cost and benefit |
+| `client_reports` | the monthly report drafts and what was sent |
+| `orders`, `refunds`, `sessions`, `ad_spend` | the fictional shop data, per client |
+| `automation_events`, `outbound_events` | what automations write in, and the outbox of announcements to Make |
 
 Kept from v1: the approval rules in `lifecycle.py`, the formulas in `roi.py`,
 the append-only history with database triggers, and Werkzeug scrypt passwords.
@@ -162,7 +172,7 @@ the append-only history with database triggers, and Werkzeug scrypt passwords.
 
 | Requirement | v2 answer |
 |---|---|
-| ≥ 3 related tables | Ten, linked through clients, actions and components |
+| ≥ 3 related tables | Sixteen, linked through clients, actions and components |
 | ≥ 3 automations, one scheduled, one event-triggered, one with human approval | The four above |
 | ≥ 2 roles enforced on the data | Consultant, lead and admin; client isolation and reviewer independence on every query |
 | DFD, STRIDE, GDPR | To revise for v2; GDPR becomes simpler — the fictional orders hold no customer names or contact details, only staff data is personal |
