@@ -89,6 +89,13 @@ Six classes of metric, each with one job — only the outcome decides:
 | **Guardrails** | Contribution margin and refund rate | Flagged when they worsen, even if ROI looks good |
 | **Quality and risk** | Rejected intake rows, failed automation and agent runs, open alerts | Is the system itself working? |
 
+**Growth P&L above the metrics:** sessions × conversion × average order
+value (net order revenue after discounts), less product, shipping, payment and
+refund costs, gives store contribution before marketing; subtract media spend
+for contribution after marketing. It is **store health**, not agency
+attribution; separately measured incremental contribution decides action
+adoption and system ROI.
+
 Below them, each running **component** with its discipline, lifecycle stage,
 monthly cost, contribution, ROI and status (keep, review due, pilot) — where the
 consultant acts — and a view **by lifecycle stage** (acquisition, activation,
@@ -148,9 +155,9 @@ Sixteen tables; fields, constraints and formulas are in
 |---|---|
 | `users`, `user_roles`, `client_assignments` | people, their roles, and which clients each one works on — the basis of "you see only your clients" |
 | `clients`, `plan_templates` | the store profiles, each with its business model (DTC, B2C, B2B, marketplace, subscription or omnichannel), and the action-plan templates |
-| `actions`, `action_history` | the pilots — benefit type, expected benefit, setup and operating costs, hurdle, comparison, window, named reviewer, measured result, confidence, decision — and their append-only history |
+| `actions`, `action_history` | pilots — benefit type, expected benefit, primary metric, guardrails, costs, hurdle, comparison, fixed window and post-period, reviewer, result, confidence, decision — and append-only history |
 | `components`, `component_months` | a client's running growth-system components and their append-only monthly cost and benefit |
-| `client_reports` | the monthly report drafts and what was sent |
+| `client_reports` | original AI draft, human corrections/rejections, generation cost where known, reviewer and sent text |
 | `orders`, `refunds`, `sessions`, `ad_spend` | the fictional shop data, per client |
 | `automation_events`, `outbound_events` | what automations write in, and the outbox of announcements to Make |
 
@@ -179,6 +186,12 @@ the append-only history with database triggers, and Werkzeug scrypt passwords.
 | Event-triggered | When a component's monthly ROI falls below its client's target, or an action's window ends, notify the consultant | 5–7 |
 | Human approval | A submitted action is routed to its named lead, who decides **in the app** | 7 |
 | Scheduled, AI | A read-only monthly client report drafted from the dashboard figures, reviewed before sending (design from plan 50) | 8–11 |
+
+**MVP safeguards:** the scheduled intake rejects batches whose expected row
+counts or order revenue do not reconcile; the AI report is read-only and
+human-reviewed, with correction/rejection quality metrics and a transparency
+label. No agent changes spend or prices; the Week 11 governance review checks
+AI Act applicability for the specific report use case.
 
 ## Against the brief's six minimum requirements
 
