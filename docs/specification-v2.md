@@ -14,7 +14,9 @@ and 72 were read in full and the rest by title; the *Integrated ROI Influence
 Model for Ecommerce, Digital Marketing, Growth, Performance, AI Agents and
 Automation* (31 October 2026 — my own AI-assisted research, English translation,
 not independently verified), from which the six metric classes, the lifecycle
-stages and the business-model field come; and the rules already in
+stages and the business-model field come, plus five MVP-sized adaptations:
+Growth P&L, experiment contracts, intake control totals, report quality, and
+AI transparency/governance; and the rules already in
 `lifecycle.py` and `roi.py`.
 
 > **Growth is the method, ROI is the scoreboard.** Every initiative goes through
@@ -120,6 +122,8 @@ CHECK in (`ecommerce`, `digital_marketing`, `performance_marketing`,
 | `discipline` | TEXT | same CHECK as templates — `digital_growth` labels growth initiatives such as retention or referral; growth is also the loop every action follows |
 | `lifecycle_stage` | TEXT | CHECK in (`acquisition`, `activation`, `conversion`, `engagement`, `retention`, `repeat`, `expansion`, `referral`, `reactivation`) — required before review; shows where in the customer lifecycle a client's growth system is strong or weak |
 | `title`, `hypothesis` | TEXT | title NOT NULL; hypothesis required before review |
+| `primary_metric` | TEXT | metric key from the app's allowlist, required before review |
+| `guardrail_metrics` | TEXT (JSON array) | nonempty keys from the **guardrail** metric class, validated on write, required before review |
 | `benefit_type` | TEXT | CHECK in (`contribution`, `avoided_cost`, `enabler`) — see §4 |
 | `expected_benefit_eur` | REAL | required before review, except for `enabler` |
 | `setup_cost_eur`, `setup_hours` | REAL | ≥ 0 — one-off |
@@ -127,6 +131,7 @@ CHECK in (`ecommerce`, `digital_marketing`, `performance_marketing`,
 | `hurdle_eur` | REAL | the minimum net benefit that justifies adoption; default from the template (often €500) |
 | `comparison` | TEXT | CHECK in (`holdout`, `before_after`) — required before review |
 | `window_start`, `window_end` | TEXT | required before review; end after start |
+| `post_period_days` | INTEGER | NOT NULL DEFAULT 0, ≥ 0; required follow-up observation days after window end |
 | `requester_id`, `owner_id`, `reviewer_id` | INTEGER | FK → users; reviewer neither requester nor owner (`CHECK`) |
 | `status` | TEXT | CHECK in (`submitted`, `assigned`, `in_review`, `approved`, `closed`, `rejected`, `cancelled`) |
 | `measured_benefit_eur` | REAL | required to close, except for `enabler` |
@@ -154,9 +159,14 @@ capacity and never enters any benefit** · `supersedes_id` FK → component_mont
 `recorded_by` FK → users · `created_at`. Triggers abort `UPDATE` and `DELETE`; a
 correction is a new row that supersedes the old one.
 
-**`client_reports`** — `id` PK · `client_id` FK · `month` · `draft_text` (from
-automation 4) · `final_text` · `status` CHECK in (`draft`, `sent`) ·
-`reviewed_by` FK → users · UNIQUE (`client_id`, `month`).
+**`client_reports`** — `id` PK · `client_id` FK · `month` · `draft_text` (original
+AI draft) · `final_text` (human-reviewed) · `status` CHECK in (`draft`,
+`rejected`, `sent`) · `was_corrected` INTEGER NOT NULL DEFAULT 0 CHECK in (0, 1)
+· `rejected_reason` TEXT nullable · `ai_generation_cost_eur` REAL nullable,
+≥ 0 when known · `reviewed_by` FK → users · UNIQUE (`client_id`, `month`).
+A human reviewer is required for `rejected` and `sent`; the original draft
+is retained. A rejected report cannot be sent or overwritten by an automatic
+retry; a replacement requires an explicit, audited human revision.
 
 ### Fictional shop data
 
@@ -184,7 +194,12 @@ stock returns). The original order is never edited.
 `client_id`, `external_id`, `payload`, `status` CHECK in (`accepted`,
 `rejected`, `duplicate`), `reason`, `received_at`, UNIQUE (`source`,
 `external_id`). Rejected rows are kept, so data-quality problems are counted, not
-lost. **`outbound_events`** — the outbox of ids-only announcements to
+lost. Each `shop_data` client/date/type batch supplies `expected_row_count`
+and, for orders, `expected_net_revenue_eur` in the signed payload. Check both
+against validated rows using integer cents **before any row commits**. A
+mismatch rejects the whole batch, records the reason, and emits no `data.loaded`.
+A corrected batch needs a new versioned `external_id` (a rejected id is not
+silently replayed as accepted). **`outbound_events`** — the outbox of ids-only announcements to
 Make, written in the same transaction as the change they announce, as in v1.
 
 ## 4 · Measurement and ROI
@@ -204,6 +219,26 @@ same rule as v1 and every action plan.
 payment fee − refunds + restocked product cost. Discounts are already inside net
 revenue and are **never subtracted again**.
 
+### Growth P&L — store health, not agency attribution
+
+The dashboard reconciles each client's month from existing source rows:
+
+1. `sessions × (orders / sessions) × (Σ net order revenue / orders)` = order
+   revenue **after discounts** (not gross pre-discount revenue); consistent
+   date/channel scope is required, and zero denominators display `n/a`.
+2. **Store contribution before marketing** = Σ order net revenue − Σ product
+   costs − Σ shipping costs − Σ payment fees − Σ refund amounts + Σ restocked
+   product costs. Refunds are counted once against their original orders.
+3. **Store contribution after marketing** = store contribution before marketing
+   − Σ media spend for that client and month.
+
+Show before/after-media contribution and margins, conversion, AOV and spend.
+Reconcile figures to rows; never double-subtract discounts or refunds. This
+Growth P&L is a **store-health driver**, not proof of agency causation: the
+agency's outcome and `adopt` decision still use separately measured
+**incremental** contribution and `benefit_key` deduplication. Store-level
+contribution must never be added to system ROI.
+
 **An action's measured benefit** (`benefit_type = contribution`), over the
 window plus the template's post-period:
 
@@ -213,6 +248,16 @@ window plus the template's post-period:
 - `before_after`: contribution in the window − contribution in the equal-length
   period immediately before, for the action's scope. Confidence `before_after`,
   shown as weaker evidence.
+
+**Experiment contract.** Freeze `primary_metric`, `guardrail_metrics`,
+hypothesis, comparison, measurement window and `post_period_days` before
+review. Guardrail keys come only from the guardrail class (e.g.
+`contribution_margin_pct`, `refund_rate`, `refund_value_eur`). A promising
+interim result never authorises early closure or adoption. The reviewer may
+close only after `window_end + post_period_days` and complete evidence. An
+unsafe pilot may be **cancelled** early with an audited reason, never
+certified as early `adopt`. Show guardrail breaches beside the action's
+outcome even when its ROI passes the hurdle.
 
 **Two economic views, never mixed:**
 
@@ -237,11 +282,11 @@ the key; one carries the benefit, the other records cost only.
 | Class | Role | Metrics in the MVP |
 |---|---|---|
 | **Outcome** | The verdict | Benefit, net benefit, system ROI against target, setup payback |
-| **Driver** | Explains the outcome | Revenue, orders, conversion (orders ÷ sessions), average order value, repeat-purchase rate (customers with two or more orders in the trailing 90 days ÷ customers with one or more) |
+| **Driver** | Explains the outcome | Growth P&L (store contribution before/after media), revenue, orders, conversion (orders ÷ sessions), average order value, repeat-purchase rate (customers with two or more orders in the trailing 90 days ÷ customers with one or more) |
 | **Efficiency** | Cost of the result | CAC (paid acquisition spend ÷ new customers), CPA by channel (spend ÷ orders) |
 | **Diagnostic** | Helps find causes | ROAS by channel (channel revenue ÷ channel spend) |
 | **Guardrail** | Stops destructive optimisation | Contribution margin %, refund rate (refunded orders ÷ orders), refund value |
-| **Quality and risk** | Watches the system itself | Rejected and duplicate intake rows, failed automation and agent runs, open alerts |
+| **Quality and risk** | Watches the system itself | Rejected and duplicate intake rows, failed automation and agent runs, open alerts; AI-report correction/rejection rates and cost per draft (when known) |
 
 Only **outcome** metrics decide anything. A guardrail breach — margin % or
 refund rate worse than the client's average over the previous three months — is
@@ -262,10 +307,12 @@ figures the code has calculated.
 `cancelled`.
 
 - **To enter review:** owner, hypothesis, benefit type, expected benefit (unless
-  enabler), comparison, measurement window, and a named reviewer who is a lead
+  enabler), **primary metric and at least one valid guardrail**, comparison,
+  measurement window and post-period, and a named reviewer who is a lead
   assigned to the client and is neither requester nor owner.
-- **To close:** measured benefit (unless enabler), confidence and decision,
-  certified by the named reviewer.
+- **To close:** window and post-period have elapsed, and measured benefit
+  (unless enabler), confidence and decision are certified by the named reviewer.
+  A safety stop is `cancelled`, with an audit note, never an early `adopt`.
 - **On `adopt`,** the reviewer is offered "add to the growth system", which
   creates a component linked to the action. Nothing becomes a component any
   other way.
@@ -312,22 +359,26 @@ reviewer the action stays blocked. `lifecycle.User` becomes multi-role
 - **Portfolio** — each assigned client: name, business model, profile (average
   order, margin, frequency, budget), system ROI against its target, and a
   "fictional" badge.
-- **Growth-system dashboard**, one client and month, laid out by the six metric
-  classes (§4):
+- **Growth-system dashboard**, one client and month: a **Growth P&L**
+  (sessions → conversion → orders/AOV → net revenue → store contribution
+  before/after media) provides store-health context above the six metric
+  classes (§4). Keep store totals separate from agency incremental outcomes:
   - **Outcome (the scoreboard):** monthly operating cost, benefit, net, system
     ROI against target, ROI by month, and setup payback;
-  - **Drivers:** revenue, orders, conversion, average order, repeat rate;
+  - **Drivers:** Growth P&L, revenue, orders, conversion, average order, repeat rate;
   - **Efficiency:** CAC and CPA by channel;
   - **Diagnostics:** ROAS by channel, labelled diagnostic;
   - **Guardrails:** margin and refunds, flagged when worse than baseline;
-  - **Quality and risk:** rejected intake rows, failed runs, open alerts;
+  - **Quality and risk:** rejected intake rows, failed runs, open alerts,
+    AI-report corrections, rejections and cost per draft where available;
   - **Components:** discipline, lifecycle stage, monthly cost, benefit, ROI,
     confidence and status, with pilots in progress;
   - **By lifecycle stage:** investment and benefit per stage, so the consultant
     sees where the system is strong or weak.
 - **Plans** — templates that fit this client, with a "start an action" button.
-- **Action** — the plan, costs, comparison, history, measured result, net
-  benefit against the hurdle, and decision.
+- **Action** — the plan, primary metric, guardrails, frozen comparison,
+  measurement window and post-period, costs, history, measured result, net
+  benefit against the hurdle, and decision; show `not yet closable` until due.
 - **Review queue**, **component** record, **report** draft editor, and admin
   set-up pages.
 
@@ -345,12 +396,27 @@ data and messages. Design references in the action plans: 61 and 71 (intake and
 validation), 70 (alerts), 69 and 50 (the report), 72 (idempotency, bounded
 retries, unknown outcomes held for review).
 
+**Intake:** Automation 1 rejects batches whose signed row-count or order-revenue
+control totals fail, atomically and with a quality event; `data.loaded` only
+follows accepted batches. **AI report quality:** Automation 4 records whether
+the reviewer corrected or rejected a draft, and the provider cost per draft
+when known. Correction/rejection rates use **reviewed drafts** as denominator;
+unknown cost displays `n/a`, not zero. Sent reports display `AI-assisted draft;
+reviewed by a person before sending.` This is a product transparency policy,
+not a blanket claim of legal obligation for private, human-reviewed reports.
+Article 50 EU AI Act transparency rules apply from **2 August 2026**; verify
+this use case at Week 11 ([European Commission guidance](https://digital-strategy.ec.europa.eu/en/faqs/transparency-obligations-under-article-50-ai-act)).
+
 Every automation and AI agent component also carries a **governance checklist**,
 written in the Week 11 governance document rather than stored as fields: its
 purpose, the data and permissions it has, where a person approves, what happens
 when it fails, how its output is checked, what it costs each month, and its main
-risk. Its runs and failed runs are recorded monthly (§3) and shown as quality
-metrics (§4).
+risk, **allowlisted tools/endpoints**, and **human approval before any spend
+change**. The MVP agent is a **read-only report drafter**: no spend or price
+write permissions. For hypothetical future workflows, a 10% spend-change
+threshold can trigger *extra* escalation but never replace human approval.
+Runs and failed runs are recorded monthly (§3) and shown as quality metrics
+(§4).
 
 ## 9 · Fictional shop data
 
@@ -425,6 +491,14 @@ Fixtures are small and separate from the generated demo data.
 25. An action cannot enter review without a lifecycle stage
 26. A guardrail breach is flagged on the dashboard even when the client's system ROI meets its target
 27. A rejected intake row is kept with its reason and counted in the quality metrics
+28. Growth P&L reconciles sessions, orders, refunds, costs and spend without double subtraction, and never changes action ROI
+29. An action cannot enter review without an allowed primary metric and guardrails
+30. No `close`/`adopt` before the window plus post-period; an early safety cancellation is audited
+31. A breached action guardrail is visible even if ROI clears the hurdle
+32. Intake with wrong row count or order revenue rejects atomically, logs the reason and emits no `data.loaded`; corrected batch uses a new id
+33. An AI report may be corrected, rejected or sent only with a human reviewer; retries cannot overwrite a reviewed report
+34. Report correction/rejection rates use reviewed drafts; unknown AI cost shows `n/a`; sent reports carry the AI-assisted label
+35. Report agent uses read-only allowlisted tools; service/agent cannot change spend or prices
 
 ## 12 · Security surface — what Week 8 should find
 
