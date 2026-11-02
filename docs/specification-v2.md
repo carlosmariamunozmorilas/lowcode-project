@@ -67,7 +67,7 @@ tests/                  see §11
 
 ## 3 · Entities
 
-Sixteen tables. Money is stored in euros as REAL, rounded only for display;
+Seventeen tables. Money is stored in euros as REAL, rounded only for display;
 dates are ISO 8601 text, UTC.
 
 ### People and access
@@ -110,7 +110,9 @@ contradiction between "NOT NULL" and password-less service accounts.
 never edited in the app. `id` INTEGER PK (the plan number, 1–72) · `discipline`
 CHECK in (`ecommerce`, `digital_marketing`, `performance_marketing`,
 `digital_growth`, `agentic_ai`, `automations`) · `title` · `summary` ·
-`benefit_type` · `default_window_days` · `default_hurdle_eur` · `setup_hours` ·
+`benefit_type` · `default_window_days` · `default_post_period_days` (how long
+after the window the plan's effect is still counted, e.g. 14, 30 or 90 days) ·
+`default_hurdle_eur` · `setup_hours` ·
 `store_fit` (which profiles it suits) · `featured` 0/1 · `source_file`.
 
 ### The work
@@ -124,20 +126,22 @@ CHECK in (`ecommerce`, `digital_marketing`, `performance_marketing`,
 | `plan_template_id` | INTEGER | FK → plan_templates, nullable |
 | `discipline` | TEXT | same CHECK as templates — `digital_growth` labels growth initiatives such as retention or referral; growth is also the loop every action follows |
 | `lifecycle_stage` | TEXT | CHECK in (`acquisition`, `activation`, `conversion`, `engagement`, `retention`, `repeat`, `expansion`, `referral`, `reactivation`) — required before review; shows where in the customer lifecycle a client's growth system is strong or weak |
-| `title`, `hypothesis` | TEXT | title NOT NULL; hypothesis required before review — written as *if [change], then [primary metric] will [move], because [mechanism], without worsening [guardrails]* |
-| `primary_metric` | TEXT | exactly one, required before review: CHECK in (`contribution`, `revenue`, `orders`, `conversion`, `average_order_value`, `repeat_rate`, `cac`, `cpa`, `refund_rate`, `avoided_cost`) — what the action is expected to move; adoption is still decided on net benefit |
+| `title`, `hypothesis` | TEXT | title NOT NULL; hypothesis required before review — written as *if [change], then [primary metric] will [move], because [mechanism], without worsening [guardrails]*; for an `enabler`, it states the acceptance criterion instead (e.g. *purchase capture ≥ 98%, duplicates ≤ 0.5%*) |
+| `primary_metric` | TEXT | exactly one, required before review except for an `enabler` (NULL): CHECK in (`contribution`, `revenue`, `orders`, `conversion`, `average_order_value`, `repeat_rate`, `cac`, `cpa`, `refund_rate`, `avoided_cost`) — what the action is expected to move; adoption is still decided on net benefit |
 | `guardrail_metrics` | TEXT | at least one, required before review: a comma-separated list from (`margin_pct`, `refund_rate`, `refund_value`, `cpa`), validated in code; default `margin_pct,refund_rate` |
 | `benefit_type` | TEXT | CHECK in (`contribution`, `avoided_cost`, `enabler`) — see §4 |
 | `expected_benefit_eur` | REAL | required before review, except for `enabler` |
 | `setup_cost_eur`, `setup_hours` | REAL | ≥ 0 — one-off |
 | `operating_cost_eur`, `operating_hours` | REAL | ≥ 0 — for the pilot period |
 | `hurdle_eur` | REAL | the minimum net benefit that justifies adoption; default from the template (often €500) |
-| `comparison` | TEXT | CHECK in (`holdout`, `before_after`) — required before review |
+| `comparison` | TEXT | CHECK in (`holdout`, `before_after`, `invoice`, `none`) — required before review, and must match the benefit type: `contribution` → `holdout` or `before_after`; `avoided_cost` → `invoice` (the paid cost before and after); `enabler` → `none` |
 | `window_start`, `window_end` | TEXT | required before review; end after start |
+| `post_period_days` | INTEGER | ≥ 0, required before review; copied from the template's default, set by the consultant when there is no template; cannot change once the action is in review. The **measurement period** is `window_start` to `window_end` + `post_period_days` |
 | `requester_id`, `owner_id`, `reviewer_id` | INTEGER | FK → users; reviewer neither requester nor owner (`CHECK`) |
 | `status` | TEXT | CHECK in (`submitted`, `assigned`, `in_review`, `approved`, `closed`, `rejected`, `cancelled`) |
 | `measured_benefit_eur` | REAL | required to close, except for `enabler` |
-| `confidence` | TEXT | CHECK in (`holdout`, `before_after`, `correlated`, `documented`) ❓ — `documented` is new: an avoided cost evidenced by invoices |
+| `confidence` | TEXT | CHECK in (`holdout`, `before_after`, `correlated`, `documented`) — required to close, except for an `enabler` (NULL); `documented` (decided 2 November) is the only label for an `invoice` comparison |
+| `evidence_note` | TEXT | required to close an `avoided_cost` action: which invoices or contracts show the paid cost falling, and by how much |
 | `decision` | TEXT | CHECK in (`adopt`, `revise`, `reject`, `inconclusive`) — required to close |
 | `decision_note` | TEXT | required when adopting despite a breached guardrail |
 | `early_stop_reason` | TEXT | CHECK in (`data_quality_failure`, `technical_failure`, `customer_harm`, `financial_risk`, `legal_risk`), nullable — required to close before the measurement period ends |
@@ -148,16 +152,29 @@ CHECK in (`ecommerce`, `digital_marketing`, `performance_marketing`,
 `to_status`, `actor_id` FK, `note`, `created_at`. Triggers abort `UPDATE` and
 `DELETE`. Every status change and its history row are one transaction.
 
+**`assignments`** — who is in a holdout's test or control group. `action_id` FK →
+actions · `customer_ref` · `group` CHECK in (`test`, `control`) · `assigned_at` ·
+UNIQUE (`action_id`, `customer_ref`). A customer is assigned whether or not
+they ever buy, so the holdout can count non-buyers; a customer may be in
+several actions' groups at once. The link to orders is the customer and the
+measurement period, not a field on the order. When an adopted component keeps
+a control group (§4), its assignments continue under the origin action.
+
 **`components`** — a running part of a client's growth system. `id` PK ·
 `client_id` FK · `origin_action_id` FK → actions (the adopted pilot), nullable
 only for seeded history · `name` · `discipline` · `lifecycle_stage` ·
-`benefit_type` · `status` CHECK in (`running`, `review_due`, `retired`) ·
-`started_on` · `retired_on` · `benefit_key`.
+`benefit_type` · `measurement` CHECK in (`holdout_kept`, `pilot_estimate`,
+`invoice`), NULL only for an enabler — set by the reviewer on adoption (§4) ·
+`status` CHECK in (`running`, `review_due`, `retired`) · `started_on` ·
+`retired_on` · `benefit_key`.
 
 **`component_months`** — append-only monthly record. `id` PK · `component_id` FK
 · `month` (`YYYY-MM`) · `operating_cost_eur` · `operating_hours` ·
 `measured_benefit_eur` (NULL for an enabler, or when the benefit is recorded
-under another component) · `confidence` · `benefit_key` · for automation and
+under another component; computed by the app unless the component's
+measurement is `invoice`) · `confidence` CHECK in (`holdout`,
+`pilot_estimate`, `documented`), set by the app from the component's
+measurement · `benefit_key` · for automation and
 agent components: `runs`, `failed_runs` and `hours_freed` — **`hours_freed` is
 capacity and never enters any benefit** · `supersedes_id` FK → component_months ·
 `recorded_by` FK → users · `created_at`. Triggers abort `UPDATE` and `DELETE`; a
@@ -178,9 +195,8 @@ rejected draft stays on record and a new one can be drafted.
 `customer_ref` (a pseudonymous code such as `C-01834`; no names, emails or
 addresses exist anywhere) · `is_new_customer` 0/1 · `channel` · `net_revenue_eur`
 (after discounts, excluding tax) · `discount_eur` (informational; already inside
-net revenue) · `product_cost_eur` · `shipping_cost_eur` · `payment_fee_eur` ·
-`assignment_group` CHECK in (`none`, `control`, `test`) · `test_action_id` FK →
-actions, nullable.
+net revenue) · `product_cost_eur` · `shipping_cost_eur` · `payment_fee_eur`.
+Whether a customer was in a test is held in `assignments`, never on the order.
 
 **`refunds`** — `id` PK · `order_id` FK → orders · `external_id` UNIQUE ·
 `refunded_at` · `amount_eur` · `restocked_cost_eur` (product cost recovered when
@@ -212,8 +228,8 @@ Make, written in the same transaction as the change they announce, as in v1.
 | `benefit_type` | What counts | How it is measured |
 |---|---|---|
 | `contribution` | Extra contribution from the store's orders | Computed by `measure.py` from orders, refunds and the comparison |
-| `avoided_cost` | Paid spending that genuinely falls — a cancelled service, a smaller invoice | Recorded by the consultant with evidence; confidence `documented` |
-| `enabler` | Work others depend on: data, tracking, reliability | Cost only; never a benefit figure |
+| `avoided_cost` | Paid spending that genuinely falls — a cancelled service, a smaller invoice | Comparison `invoice`: the paid cost before and after, recorded at close with an `evidence_note`; confidence `documented` |
+| `enabler` | Work others depend on: data, tracking, reliability | Comparison `none`, cost only, never a benefit figure; the reviewer checks the acceptance criterion stated in the hypothesis, and `adopt` means it was met |
 
 **Freed staff hours are capacity, not money**, and never enter a benefit — the
 same rule as v1 and every action plan.
@@ -249,10 +265,12 @@ cost is missing makes every Growth P&L line that depends on it show as
 orders cannot close an action.
 
 **An action's measured benefit** (`benefit_type = contribution`), over the
-window plus the template's post-period:
+action's measurement period (the window plus `post_period_days`):
 
 - `holdout`: (contribution per assigned customer in `test` − contribution per
-  assigned customer in `control`) × customers assigned to `test`. Every assigned
+  assigned customer in `control`) × customers assigned to `test`, where
+  "assigned" means a row in `assignments` and contribution is summed over each
+  assigned customer's orders in the measurement period. Every assigned
   customer counts, including those who bought nothing. Confidence `holdout`.
 - `before_after`: contribution in the window − contribution in the equal-length
   period immediately before, for the action's scope. Confidence `before_after`,
@@ -264,6 +282,18 @@ window plus the template's post-period:
 |---|---|---|
 | **Action — full payback** | net benefit = measured benefit − setup cost − setup hours × rate − operating cost − operating hours × rate; ROI = net benefit ÷ total investment | Closing the pilot; the decision is `adopt` only if net benefit ≥ `hurdle_eur` |
 | **Component — continuation** | monthly net = monthly benefit − monthly operating cost − operating hours × rate; ROI = monthly net ÷ monthly operating cost | Keep, improve or retire. Setup is already spent and does not count again |
+
+**A running component's monthly benefit** — after adoption there is usually no
+control group any more, so each component declares how its benefit is
+measured, chosen by the reviewer when it is adopted:
+
+| `measurement` | How each month's benefit is found | Confidence |
+|---|---|---|
+| `holdout_kept` | The component keeps a small permanent control group (for example 10%, as email flows and cart recovery allow); the app computes the month exactly as the pilot's holdout, from `assignments` | `holdout` |
+| `pilot_estimate` | No control can be kept (a checkout change applied to everyone): the pilot's measured monthly result is carried forward, shown as *"estimate from the pilot of <month>"*; six months after it started the component becomes `review_due` and should be re-tested | `pilot_estimate` |
+| `invoice` | An avoided cost: the paid cost before and after, recorded by an independent lead (§5) | `documented` |
+
+Nobody types a benefit figure that the app can compute.
 
 **System ROI for a client and month** = (Σ benefits − Σ operating costs) ÷ Σ
 operating costs over its running components, counting **each benefit once**.
@@ -305,14 +335,17 @@ figures the code has calculated.
 `submitted → assigned → in_review → approved → closed`, or `rejected` /
 `cancelled`.
 
-- **To enter review:** owner, hypothesis, primary metric, at least one guardrail
-  metric, lifecycle stage, benefit type, expected benefit (unless enabler),
-  comparison, measurement window, and a named reviewer who is a lead assigned to
-  the client and is neither requester nor owner.
-- **To close:** measured benefit (unless enabler), confidence and decision,
-  certified by the named reviewer.
+- **To enter review:** owner, hypothesis, primary metric (unless enabler), at
+  least one guardrail metric, lifecycle stage, benefit type, expected benefit
+  (unless enabler), a comparison that matches the benefit type, measurement
+  window and post-period, and a named reviewer who is a lead assigned to the
+  client and is neither requester nor owner.
+- **To close:** measured benefit and confidence (unless enabler), an
+  `evidence_note` for an avoided cost, and a decision, certified by the named
+  reviewer. For an enabler the decision records whether the acceptance
+  criterion was met: `adopt` if it was.
 - **No early close.** An action cannot be closed before its measurement period
-  ends (`window_end` plus the template's post-period) unless an
+  ends (`window_end` plus `post_period_days`) unless an
   `early_stop_reason` is recorded — "the metric looks good" is not one — and an
   action stopped early cannot be adopted.
 - **Guardrails at close.** The reviewer sees each guardrail over the window
@@ -320,13 +353,19 @@ figures the code has calculated.
   `revise` or `reject` may be chosen even when net benefit clears the hurdle;
   `adopt` needs a `decision_note` saying why the breach is acceptable.
 - **On `adopt`,** the reviewer is offered "add to the growth system", which
-  creates a component linked to the action. Nothing becomes a component any
-  other way.
+  creates a component linked to the action and sets how its monthly benefit
+  will be measured (§4). Nothing becomes a component any other way.
+- **A component's month:** for `holdout_kept` and `pilot_estimate` components,
+  any assigned consultant or lead records the month's cost and hours and the
+  app fills in the benefit — a typed benefit figure is ignored. For `invoice`
+  components the whole month is recorded by an assigned lead who neither
+  requested nor owned the origin action, the same independence as closing an
+  action.
 
 | Role | May |
 |---|---|
-| `consultant` | Read assigned clients; create and own actions for them; record component months and avoided-cost evidence; edit report drafts |
-| `lead` | Everything a consultant may, plus review, approve, reject and close actions they are named on — never ones they requested or own |
+| `consultant` | Read assigned clients; create and own actions for them; record component months' cost and hours (never a typed benefit); edit report drafts |
+| `lead` | Everything a consultant may, plus review, approve, reject and close actions they are named on, and record `invoice` component months — never for actions, or components from actions, they requested or own |
 | `admin` | Create clients, users, roles and assignments; read all clients; **no** sign-off bypass |
 | `service` | Write through the signed API only |
 
@@ -379,7 +418,8 @@ reviewer the action stays blocked. `lifecycle.User` becomes multi-role
   - **Guardrails:** margin and refunds, flagged when worse than baseline;
   - **Quality and risk:** rejected intake rows, failed runs, open alerts;
   - **Components:** discipline, lifecycle stage, monthly cost, benefit, ROI,
-    confidence and status, with pilots in progress;
+    measurement, confidence and status (a `pilot_estimate` benefit is shown as
+    *"estimate from the pilot of <month>"*), with pilots in progress;
   - **By lifecycle stage:** investment and benefit per stage, so the consultant
     sees where the system is strong or weak.
 - **Plans** — templates that fit this client, with a "start an action" button.
@@ -431,7 +471,9 @@ edits or deletes shop data.
   kept even where the law asks for less.
 
 **For the Week 11 governance document** (not settings in the app): the list of
-prohibited actions above, and a 10% change in spend as an *illustrative*
+prohibited actions above; the known limit that a component's monthly cost and
+hours are recorded by the team without independent sign-off, so an understated
+cost would inflate ROI; and a 10% change in spend as an *illustrative*
 threshold above which any future tool proposing spend changes would need a
 person's approval. In this app even a 1% change is only ever a recommendation —
 nothing executes spend.
@@ -459,8 +501,9 @@ and tests can rely on it.
 The generator produces daily sessions and ad spend by channel, orders with
 pseudonymous customers and realistic cost fields, refunds, noise, weekly and
 seasonal patterns, and **effects written in for a set of past actions** — some
-measured with a holdout group, some before/after, and some that fail, such as
-Luna Home's promotional campaign (ROAS 3.0, ROI −0.17). It also writes the
+measured with a holdout group (with their `assignments`, including assigned
+customers who never buy, such as cart abandoners), some before/after, and some
+that fail, such as Luna Home's promotional campaign (ROAS 3.0, ROI −0.17). It also writes the
 matching actions, components and monthly records, so the dashboards have a
 history on day one.
 
@@ -491,14 +534,14 @@ reference later.
 Fixtures are small and separate from the generated demo data.
 
 1. Contribution of an order subtracts costs and refunds, adds restocked cost, and never subtracts the discount again
-2. Holdout benefit uses every assigned customer, including those who bought nothing
+2. Holdout benefit uses every customer in `assignments`, including those who bought nothing, and a customer assigned to two actions counts in each
 3. Before/after benefit compares equal-length windows and is labelled `before_after`
 4. An action's net benefit and ROI include setup and operating costs and hours at the client's rate
 5. `adopt` is refused when net benefit is below the hurdle
 6. A component's continuation ROI excludes setup cost
 7. System ROI counts each `benefit_key` once; a second benefit row for the same key and month is refused
 8. An `enabler` never shows a benefit or an ROI figure
-9. An `avoided_cost` result requires the `documented` confidence and its evidence note
+9. An `avoided_cost` result requires the `documented` confidence and an `evidence_note`
 10. Saved hours, including `hours_freed`, never appear in any benefit or ROI
 11. A requester or owner cannot approve, reject or close their own action, whatever their roles; admin included
 12. With no eligible reviewer, an action cannot enter review
@@ -526,11 +569,14 @@ Fixtures are small and separate from the generated demo data.
 34. A report cannot be sent or rejected without a person's review; a rejected report keeps its reason, and only then can a new draft for that month be stored
 35. Correction rate, rejection rate and cost per draft are computed from stored reports, and every sent report carries the AI-assisted label
 36. The report automation's credentials can read `GET /api/metrics` and write `report_draft` only; any other event type is refused
+37. The comparison must match the benefit type (`contribution` → `holdout` or `before_after`, `avoided_cost` → `invoice`, `enabler` → `none`), and an enabler enters review without a primary metric
+38. A component month for a `holdout_kept` or `pilot_estimate` component ignores a typed benefit and stores the app's figure; an `invoice` month recorded by the origin action's requester or owner is refused
+39. A `pilot_estimate` component becomes `review_due` six months after it started
 
 ## 12 · Security surface — what Week 8 should find
 
 1. **Client isolation (IDOR):** can a consultant read or change another client's data by changing an id?
-2. **Sign-off independence:** can anyone approve or close their own work through the route, not just the button?
+2. **Sign-off independence:** can anyone approve or close their own work, or record an `invoice` month for their own component, through the route, not just the button?
 3. **Mass assignment:** can a form set a status, a result or a decision directly?
 4. **The forwarded approval link:** does opening it as someone else refuse the decision?
 5. **API trust:** signatures, idempotency, unknown clients, oversized batches.
@@ -564,8 +610,7 @@ From the growth research, excluded on purpose:
 ## 14 · Open decisions ❓
 
 1. **People time:** €35/hour (the app's default) or €25/hour (all 72 plans); now a per-client setting, so the choice is the default.
-2. **The `documented` confidence label** for invoice-evidenced avoided costs.
-3. **The delete rule** for clients and actions — decided on paper, as Week 5 requires.
-4. **Baselines for Brote Cosmetics and Roble Muebles**, set when the generator is written.
-5. **Real users and the lecturer's agreement** to v2.
-6. **The design pack** — ERD and roles for Week 5, DFD and STRIDE for Week 8, GDPR for Week 11.
+2. **The delete rule** for clients and actions — decided on paper, as Week 5 requires.
+3. **Baselines for Brote Cosmetics and Roble Muebles**, set when the generator is written.
+4. **Real users and the lecturer's agreement** to v2.
+5. **The design pack** — ERD and roles for Week 5, DFD and STRIDE for Week 8, GDPR for Week 11.
