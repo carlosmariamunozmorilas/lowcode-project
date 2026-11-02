@@ -557,8 +557,10 @@ written in where the demo needs them, not everywhere:
   their `assignments`, including assigned customers who never buy, such as cart
   abandoners) or before/after, among them a failure: the promotional campaign
   (ROAS 3.0, ROI −0.17); and two running components with their monthly records;
-- **Brote Cosmetics** — one action closed with a holdout (an email plan), so the
-  same kind of action can be compared across two stores;
+- **Brote Cosmetics** — one action closed with a holdout: plan 20, email
+  segmentation, over its four groups, with fictional prospects who never buy
+  in the window counted as non-buyers in their group; so the same kind of
+  action can be compared across two stores;
 - **Roble Muebles** — one pilot still in progress.
 
 The matching actions, components and monthly records are written with them, so
@@ -582,7 +584,7 @@ can start an action in the MVP.
 | Plan | Discipline | Typical benefit type | Why it is in the MVP |
 |---|---|---|---|
 | 03 Discounts | Ecommerce | contribution | Shows why discounts are never subtracted twice |
-| 20 Email segmentation | Digital marketing | contribution | Fits the repeat-purchase store — chosen by title, to verify against the full plan ❓ |
+| 20 Email segmentation | Digital marketing | contribution | Fits the repeat-purchase store; verified against the full plan on 31 October. All four of its groups are used: lapsed, recent repeat and recent first-time customers come from the orders, and **prospects** (contacts who have never bought) are fictional pseudonymous codes the generator places in `assignments` — in real use they would come from an email platform's contact list, which the MVP does not connect |
 | 30 Search terms | Performance marketing | contribution | Media saved and contribution in one result |
 | 43 Purchase frequency | Digital growth | contribution | A reorder shortcut that moves the repeat rate; fully measurable from the fictional orders, and it fills the thin "repeat" stage |
 | 50 Analytics agents | Agentic AI | avoided_cost | Also the design of the read-only client report |
