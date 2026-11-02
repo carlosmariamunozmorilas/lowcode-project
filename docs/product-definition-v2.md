@@ -85,7 +85,12 @@ shows the store's health — it is not the agency's result, which is only ever
 the measured, incremental benefit of its work. A missing cost is shown as
 *incomplete*, never as zero.
 
-Then six classes of metric, each with one job — only the outcome decides:
+The main view follows the story *diagnose → levers → proof → growth*: the
+Growth P&L, then **where to grow** (each metric that is weaker than the store's
+own previous three months, with the action plans that target it), the
+outcome scoreboard, guardrail flags and the running components. The other
+metric classes sit in a **Details** tab. Six classes of metric in all, each
+with one job — only the outcome decides:
 
 | Class | What it shows | Role |
 |---|---|---|
@@ -93,14 +98,15 @@ Then six classes of metric, each with one job — only the outcome decides:
 | **Drivers** | Revenue, orders, conversion rate, average order value, repeat-purchase rate — for the whole store | The context: is the business growing? |
 | **Efficiency** | Cost per new customer (CAC) and per order (CPA), by channel | What the result costs |
 | **Diagnostics** | ROAS and other platform figures | Kept apart, labelled diagnostic; never decide anything |
-| **Guardrails** | Contribution margin and refund rate | Flagged when they worsen, even if ROI looks good |
+| **Guardrails** | Contribution margin and refund rate, checked on every action | Flagged when they worsen beyond a stated tolerance, even if ROI looks good |
 | **Quality and risk** | Rejected intake rows, failed automation and agent runs, open alerts | Is the system itself working? |
 
-Below them, each running **component** with its discipline, lifecycle stage,
-monthly cost, contribution, ROI and status (keep, review due, pilot) — where the
-consultant acts — and a view **by lifecycle stage** (acquisition, activation,
-conversion, engagement, retention, repeat, expansion, referral, reactivation),
-showing where the client's growth system is strong or weak.
+Each running **component** shows its discipline, lifecycle stage, monthly
+cost, contribution, ROI and status (keep, review due, pilot) — where the
+consultant acts — and the Details tab has a view **by lifecycle stage**
+(acquisition, activation, conversion, engagement, retention, repeat,
+expansion, referral, reactivation, and operations for work with no customer
+stage), showing where the client's growth system is strong or weak.
 
 The other screens: the **client portfolio** (every assigned client with its
 profile and ROI against target), the **review queue** (actions waiting for this
@@ -116,7 +122,7 @@ type it in.
 
 | Data | Fields the action plans show are needed |
 |---|---|
-| Orders | date, net revenue, product cost, discount, shipping cost, payment fee, channel, new or returning customer, a **pseudonymous customer code** (no names or contact details), **assignment group** (control or test); refunds as separate rows |
+| Orders | date, net revenue, product cost, discount, shipping cost, payment fee, channel, new or returning customer, a **pseudonymous customer code** (no names or contact details); refunds as separate rows. Which customers are in a test's control or test group is kept separately, so customers who never buy still count |
 | Sessions | date, channel, sessions |
 | Ad spend | date, channel, spend |
 
@@ -137,24 +143,28 @@ type it in.
 
 My own series (Google Drive, *ROI Unified System — 6 disciplines*, all 72
 written by 31 October, 12 per discipline), generated with an AI assistant. In v2
-they are **templates and requirements, not a catalogue to load in full**:
+they are **templates, requirements and a read-only reference**:
 
 - they define what the fictional data must contain (plan 03, for example,
   measures contribution per assigned visitor with a control group and a
   post-promotion period);
-- about **six plans, one per discipline**, become action templates for the MVP;
+- all 72 are loaded as reference, each tagged with the metric it moves
+  ([`plan-lever-map.md`](plan-lever-map.md)), so "where to grow" can point at
+  any of them;
+- **six plans, one per discipline** (03, 20, 30, 43, 50, 65), are featured and
+  are the only ones that can start an action in the MVP;
 - plan 38 (experiment prioritisation) shapes the prioritisation step, and plan
   50 (analytics agents) the read-only AI client report.
 
 ## Data model for the MVP
 
-Seventeen tables; fields, constraints and formulas are in
+Eighteen tables; fields, constraints and formulas are in
 [`specification-v2.md`](specification-v2.md).
 
 | Tables | Hold |
 |---|---|
 | `users`, `user_roles`, `client_assignments` | people, their roles, and which clients each one works on — the basis of "you see only your clients" |
-| `clients`, `plan_templates` | the store profiles, each with its business model (DTC, B2C, B2B, marketplace, subscription or omnichannel), and the action-plan templates |
+| `clients`, `plan_templates`, `plan_template_tags` | the store profiles, each with its business model (DTC, B2C, B2B, marketplace, subscription or omnichannel), the action-plan templates, and what each plan moves and which stores it suits |
 | `actions`, `action_history`, `assignments` | the pilots — benefit type, expected benefit, setup and operating costs, hurdle, comparison, window and post-period, named reviewer, measured result, confidence, decision — their append-only history, and which customers are in each holdout's test or control group, buyers or not |
 | `components`, `component_months` | a client's running growth-system components, how each one's benefit is measured, and their append-only monthly cost and benefit |
 | `client_reports` | the monthly report drafts and what was sent |
@@ -195,7 +205,7 @@ the append-only history with database triggers, and Werkzeug scrypt passwords.
 
 | Requirement | v2 answer |
 |---|---|
-| ≥ 3 related tables | Seventeen, linked through clients, actions and components |
+| ≥ 3 related tables | Eighteen, linked through clients, actions and components |
 | ≥ 3 automations, one scheduled, one event-triggered, one with human approval | The four above |
 | ≥ 2 roles enforced on the data | Consultant, lead and admin; client isolation and reviewer independence on every query |
 | DFD, STRIDE, GDPR | To revise for v2; GDPR becomes simpler — the fictional orders hold no customer names or contact details, only staff data is personal |
@@ -210,11 +220,10 @@ data warehouse, headless commerce, and agents that move budgets or prices.
 
 ## Open decisions
 
-1. **People time:** €35/hour (the app) or €25/hour (the action plans).
-2. **Closing decisions for actions:** add *inconclusive*, and align with the
-   plans' adopt / revise / reject.
-3. **A target per action** (each plan sets its own hurdle) as well as a target
-   per client.
-4. **The delete rule** — decided on paper, as Week 5 requires.
-5. **Real users and the lecturer's agreement** to the v2 direction.
-6. **Revising the design pack** (ERD, roles, DFD, STRIDE, GDPR) for v2.
+1. **Real users and the lecturer's agreement** to the v2 direction.
+
+Settled in [`specification-v2.md`](specification-v2.md): €35/hour as the
+default, *inconclusive* alongside adopt / revise / reject, a hurdle per action
+as well as a target per client, and the delete rule (nothing is deleted). The
+design pack is revised on schedule: ERD and roles in Week 5, DFD and STRIDE in
+Week 8, GDPR in Week 11.
