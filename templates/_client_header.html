@@ -1,0 +1,20 @@
+<h1>{{ client.name }} {% if client.is_fictional %}<span class="badge">fictional store</span>{% endif %}</h1>
+<p class="muted">{{ client.sector }} · {{ client.business_model|upper }} · {{ client.purchase_frequency }} purchases ·
+    average order {{ client.avg_order_value_eur|eur }} · margin {{ client.contribution_margin|pct(0) }} ·
+    budget {{ client.monthly_budget_eur|eur }}/month · ROI target {{ client.roi_target|pct(0) }}</p>
+<nav class="tabs">
+    <a href="{{ url_for('clients.dashboard', client_id=client.id, month=month) }}" {% if tab == 'overview' %}aria-current="page"{% endif %}>Growth system</a>
+    <a href="{{ url_for('clients.details', client_id=client.id, month=month) }}" {% if tab == 'details' %}aria-current="page"{% endif %}>Details</a>
+    <a href="{{ url_for('clients.plans', client_id=client.id) }}" {% if tab == 'plans' %}aria-current="page"{% endif %}>Plans</a>
+    {% if month %}<a href="{{ url_for('reports.report', client_id=client.id, month=month) }}" {% if tab == 'report' %}aria-current="page"{% endif %}>Report {{ month }}</a>{% endif %}
+    <a href="{{ url_for('actions.new', client_id=client.id) }}">New action</a>
+</nav>
+{% if months %}
+<form method="get" class="inline month-picker">
+    <label for="month">Month</label>
+    <select id="month" name="month" onchange="this.form.submit()">
+        {% for m in months %}<option value="{{ m }}" {% if m == month %}selected{% endif %}>{{ m }}</option>{% endfor %}
+    </select>
+    <noscript><button type="submit">Show</button></noscript>
+</form>
+{% endif %}

@@ -80,14 +80,24 @@ In Git Bash on Windows (on macOS or Linux the activate script is
 ```bash
 python3 -m venv .venv
 source .venv/Scripts/activate
-pip install -r requirements.txt
-flask --app app init-db
-python app.py
+pip install -r requirements-dev.txt
+python scripts/generate_shop_data.py     # the fictional demo database
+flask --app app run
 ```
 
-Then open <http://127.0.0.1:5000>. `SECRET_KEY` and `DATABASE_PATH` are read
-from the environment; without a `SECRET_KEY` the app makes a random one for
-each run and says so.
+Then open <http://127.0.0.1:5000> and sign in with one of the fictional
+team's test accounts listed in
+[`scripts/generate_shop_data.py`](scripts/generate_shop_data.py) (`PEOPLE`; the
+password is `DEMO_PASSWORD` in the same file, or set it in the environment
+before generating). `flask --app app init-db` creates an empty database with
+only the plan templates instead. Run the tests with `pytest` and the linter
+with `ruff check .`.
+
+`SECRET_KEY`, `DATABASE_PATH` and one `API_SECRET_<AUTOMATION>` per
+automation are read from the environment; without a `SECRET_KEY` the app
+makes a random one for each run and says so. What was built, and how it
+differs from the specification, is in
+[`docs/v2-build-notes.md`](docs/v2-build-notes.md).
 
 ## What is where
 
@@ -101,7 +111,12 @@ each run and says so.
 | [`docs/week03-slice.md`](docs/week03-slice.md) | the first small slice the Week 3 lab generates |
 | [`docs/product-definition-v2.md`](docs/product-definition-v2.md) | **the current direction (30 October 2026):** a growth consultancy tool for an agency serving several online stores |
 | [`docs/week03-review.md`](docs/week03-review.md) | that slice reviewed by a second assistant: findings, fixes, what was left and what the reviewer got wrong |
-| [`app.py`](app.py), [`templates/`](templates/), [`schema.sql`](schema.sql) | the running slice: one table, five routes |
+| [`docs/v2-build-notes.md`](docs/v2-build-notes.md) | **the v2 build (2 November 2026):** what was built, how it differs from the spec, bugs found while building, what is not built |
+| [`app.py`](app.py), [`auth.py`](auth.py), [`routes/`](routes/), [`templates/`](templates/) | the v2 application: Flask factory, sign-in and access, blueprints, screens |
+| [`measure.py`](measure.py), [`schema/002_v2.sql`](schema/002_v2.sql) | figures from the shop data; the 18-table v2 schema |
+| [`scripts/generate_shop_data.py`](scripts/generate_shop_data.py), [`data/plan_templates.json`](data/plan_templates.json) | the fictional demo data; the 72 plan templates |
+| [`tests/`](tests/) | the pytest suite |
+| [`schema.sql`](schema.sql) | the Week 3 one-table slice's schema, kept as the record |
 | [`docs/project-definition.md`](docs/project-definition.md) | scope, invariants and the week-by-week plan |
 | [`docs/portfolio/portfolio-plan.md`](docs/portfolio/portfolio-plan.md) | the four automations — the 40% portfolio |
 | [`lifecycle.py`](lifecycle.py) | who may move an action to which stage, and what each stage requires |

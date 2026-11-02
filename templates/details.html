@@ -1,0 +1,58 @@
+{% extends "base.html" %}
+{% block title %}{{ client.name }} · details{% endblock %}
+{% block content %}
+{% set tab = 'details' %}
+{% include "_client_header.html" %}
+{% if month %}
+<section>
+    <h2>Drivers — they explain the outcome</h2>
+    <table class="compact">
+        <tr><th>Metric</th><th class="num">{{ month }}</th><th class="num">Previous 3 months</th></tr>
+        <tr><td>Revenue</td><td class="num">{{ current.revenue|eur }}</td><td></td></tr>
+        <tr><td>Orders</td><td class="num">{{ current.orders|num }}</td><td class="num">{{ baseline.orders|num }}</td></tr>
+        <tr><td>Sessions</td><td class="num">{{ current.sessions|num }}</td><td class="num">{{ baseline.sessions|num }}</td></tr>
+        <tr><td>Conversion</td><td class="num">{{ current.conversion|pct(2) }}</td><td class="num">{{ baseline.conversion|pct(2) }}</td></tr>
+        <tr><td>Average order value</td><td class="num">{{ current.average_order_value|eur(2) }}</td><td class="num">{{ baseline.average_order_value|eur(2) }}</td></tr>
+        <tr><td>New customers</td><td class="num">{{ current.new_customers|num }}</td><td class="num">{{ baseline.new_customers|num }}</td></tr>
+        <tr><td>Repeat rate (90 days)</td><td class="num">{{ current.repeat_rate|pct(1) }}</td><td class="num">{{ baseline.repeat_rate|pct(1) }}</td></tr>
+    </table>
+</section>
+<section>
+    <h2>Efficiency — what the result costs</h2>
+    <p>CAC {{ current.cac|eur(2) }} · CPA {{ current.cpa|eur(2) }} (all paid spend)</p>
+    <h2>Diagnostics — help find causes, never decide</h2>
+    <table class="compact">
+        <tr><th>Paid channel</th><th class="num">Spend</th><th class="num">Orders</th><th class="num">CPA</th><th class="num">CAC</th><th class="num">ROAS <span class="muted">(diagnostic)</span></th></tr>
+        {% for ch in channels %}
+        <tr><td>{{ ch.channel|label }}</td><td class="num">{{ ch.spend|eur }}</td><td class="num">{{ ch.orders|num }}</td>
+            <td class="num">{{ ch.cpa|eur(2) }}</td><td class="num">{{ ch.cac|eur(2) }}</td><td class="num">{{ ch.roas|num(2) }}</td></tr>
+        {% endfor %}
+    </table>
+    <p class="muted">ROAS counts platform-attributed revenue, not profit; it is never treated as a result.</p>
+</section>
+<section>
+    <h2>Quality and risk — is the system itself working?</h2>
+    <table class="compact">
+        <tr><td>Shop-data batches received / rejected / duplicate</td><td class="num">{{ quality.batches_received }} / {{ quality.batches_rejected }} / {{ quality.batches_duplicate }}</td></tr>
+        <tr><td>Intake quality (accepted ÷ received)</td><td class="num">{{ quality.intake_quality|pct(1) }}</td></tr>
+        <tr><td>Orders with a missing cost</td><td class="num">{{ quality.orders_missing_cost }}</td></tr>
+        <tr><td>Automation and agent runs / failed</td><td class="num">{{ quality.runs }} / {{ quality.failed_runs }}</td></tr>
+        <tr><td>Hours freed <span class="muted">(capacity — never money)</span></td><td class="num">{{ quality.hours_freed|num(1) }}</td></tr>
+        <tr><td>Open alerts</td><td class="num">{{ quality.open_alerts }}</td></tr>
+        <tr><td>Reports drafted · correction rate · rejection rate · cost per draft</td>
+            <td class="num">{{ quality.reports_drafted }} · {{ quality.correction_rate|pct(0) }} · {{ quality.rejection_rate|pct(0) }} · {{ quality.cost_per_draft|eur(2) }}</td></tr>
+    </table>
+</section>
+<section>
+    <h2>By lifecycle stage</h2>
+    <table class="compact">
+        <tr><th>Stage</th><th class="num">Monthly cost</th><th class="num">Benefit</th></tr>
+        {% for s in stages %}
+        <tr><td>{{ 'Operations (no customer stage)' if s.stage == 'operations' else s.stage|capitalize }}</td><td class="num">{{ s.cost|eur }}</td><td class="num">{{ s.benefit|eur }}</td></tr>
+        {% else %}
+        <tr><td colspan="3" class="muted">No running components this month.</td></tr>
+        {% endfor %}
+    </table>
+</section>
+{% endif %}
+{% endblock %}

@@ -1,0 +1,45 @@
+{% extends "base.html" %}
+{% block title %}{{ 'Edit action' if editing else 'New action' }}{% endblock %}
+{% block content %}
+<h1>{{ 'Edit action' if editing else 'New action' }} · {{ client.name }}</h1>
+{% if plan %}<p class="muted">From plan {{ '%02d'|format(plan.id) }} — {{ plan.title }}. Defaults come from the plan; check them.</p>{% endif %}
+<p class="muted">Everything here can change until the action enters review. From then on, the window, post-period, expected benefit, primary metric, comparison and hurdle are fixed.</p>
+<form method="post" action="{{ url_for('actions.edit', action_id=action_id) if editing else url_for('actions.new', client_id=client.id) }}">
+    <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+    {% if plan %}<input type="hidden" name="plan" value="{{ plan.id }}">{% endif %}
+    <label for="title">Title</label>
+    <input type="text" id="title" name="title" value="{{ action.title or '' }}" required>
+
+    <label for="hypothesis">Hypothesis</label>
+    <textarea id="hypothesis" name="hypothesis" rows="3" placeholder="If [change], then [primary metric] will [move], because [mechanism], without worsening margin or refunds. For an enabler: the acceptance criterion.">{{ action.hypothesis or '' }}</textarea>
+
+    <div class="grid">
+        <div><label for="discipline">Discipline</label>
+            <select id="discipline" name="discipline">{% for d in disciplines %}<option value="{{ d }}" {% if action.discipline == d %}selected{% endif %}>{{ d|label }}</option>{% endfor %}</select></div>
+        <div><label for="benefit_type">Benefit type</label>
+            <select id="benefit_type" name="benefit_type">{% for b in benefit_types %}<option value="{{ b }}" {% if action.benefit_type == b %}selected{% endif %}>{{ b|label }}</option>{% endfor %}</select></div>
+        <div><label for="comparison">Comparison</label>
+            <select id="comparison" name="comparison"><option value="">—</option>
+                {% for b, cs in comparisons.items() %}{% for cmp in cs|sort %}<option value="{{ cmp }}" {% if action.comparison == cmp %}selected{% endif %}>{{ cmp|label }} ({{ b|label }})</option>{% endfor %}{% endfor %}</select></div>
+        <div><label for="primary_metric">Primary metric</label>
+            <select id="primary_metric" name="primary_metric"><option value="">— (none for an enabler)</option>{% for m in metrics %}<option value="{{ m }}" {% if action.primary_metric == m %}selected{% endif %}>{{ m|label }}</option>{% endfor %}</select></div>
+        <div><label for="lifecycle_stage">Lifecycle stage</label>
+            <select id="lifecycle_stage" name="lifecycle_stage"><option value="">—</option>{% for s in stages %}<option value="{{ s }}" {% if action.lifecycle_stage == s %}selected{% endif %}>{{ s|label }}</option>{% endfor %}</select></div>
+        <div><label for="benefit_key">Benefit key</label>
+            <input type="text" id="benefit_key" name="benefit_key" value="{{ action.benefit_key or '' }}" placeholder="e.g. luna:cart_recovery"></div>
+    </div>
+
+    <div class="grid">
+        <div><label for="expected_benefit_eur">Expected benefit (€)</label><input type="number" step="0.01" id="expected_benefit_eur" name="expected_benefit_eur" value="{{ action.expected_benefit_eur if action.expected_benefit_eur is not none else '' }}"></div>
+        <div><label for="hurdle_eur">Hurdle (€ net)</label><input type="number" step="0.01" min="0" id="hurdle_eur" name="hurdle_eur" value="{{ action.hurdle_eur if action.hurdle_eur is not none else 500 }}"></div>
+        <div><label for="setup_cost_eur">Setup cost (€)</label><input type="number" step="0.01" min="0" id="setup_cost_eur" name="setup_cost_eur" value="{{ action.setup_cost_eur or 0 }}"></div>
+        <div><label for="setup_hours">Setup hours</label><input type="number" step="0.5" min="0" id="setup_hours" name="setup_hours" value="{{ action.setup_hours or 0 }}"></div>
+        <div><label for="operating_cost_eur">Operating cost for the pilot (€)</label><input type="number" step="0.01" min="0" id="operating_cost_eur" name="operating_cost_eur" value="{{ action.operating_cost_eur or 0 }}"></div>
+        <div><label for="operating_hours">Operating hours for the pilot</label><input type="number" step="0.5" min="0" id="operating_hours" name="operating_hours" value="{{ action.operating_hours or 0 }}"></div>
+        <div><label for="window_start">Window start</label><input type="text" id="window_start" name="window_start" placeholder="YYYY-MM-DD" value="{{ action.window_start or '' }}"></div>
+        <div><label for="window_end">Window end</label><input type="text" id="window_end" name="window_end" placeholder="YYYY-MM-DD" value="{{ action.window_end or '' }}"></div>
+        <div><label for="post_period_days">Post-period (days)</label><input type="number" min="0" id="post_period_days" name="post_period_days" value="{{ action.post_period_days if action.post_period_days is not none else '' }}"></div>
+    </div>
+    <button type="submit">{{ 'Save' if editing else 'Create action' }}</button>
+</form>
+{% endblock %}

@@ -120,3 +120,245 @@ dt {
 dd {
     margin: 0;
 }
+
+/* v2 ----------------------------------------------------------------------- */
+
+main {
+    max-width: 1100px;
+}
+
+nav {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: center;
+    gap: 0.25rem 0;
+}
+
+nav .who {
+    color: #cbd2d9;
+    margin-left: auto;
+    margin-right: 0.75rem;
+    font-size: 0.85rem;
+}
+
+form.inline {
+    display: inline;
+}
+
+button.link {
+    background: none;
+    border: none;
+    color: inherit;
+    padding: 0;
+    margin: 0;
+    text-decoration: underline;
+    font: inherit;
+}
+
+nav button.link {
+    color: #fff;
+}
+
+section {
+    margin: 1.5rem 0;
+}
+
+h2 {
+    font-size: 1.2rem;
+    margin-bottom: 0.4rem;
+}
+
+h3 {
+    font-size: 1rem;
+}
+
+.muted {
+    color: #616e7c;
+}
+
+.small {
+    font-size: 0.85rem;
+}
+
+.badge {
+    display: inline-block;
+    font-size: 0.75rem;
+    font-weight: 600;
+    padding: 0.05rem 0.45rem;
+    border: 1px solid #9aa5b1;
+    border-radius: 4px;
+    color: #3e4c59;
+    vertical-align: middle;
+}
+
+/* A flag always says what it means in words; colour is never the only signal. */
+.flag {
+    display: inline-block;
+    font-size: 0.8rem;
+    font-weight: 700;
+    padding: 0.05rem 0.45rem;
+    border-radius: 4px;
+    background: #fde8e8;
+    color: #9b1c1c;
+}
+
+.ok {
+    display: inline-block;
+    font-size: 0.8rem;
+    font-weight: 700;
+    padding: 0.05rem 0.45rem;
+    border-radius: 4px;
+    background: #e3f9e5;
+    color: #1f6f2b;
+}
+
+.flag-text {
+    color: #9b1c1c;
+}
+
+.tabs {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 0.25rem;
+    border-bottom: 1px solid #cbd2d9;
+    margin: 0.75rem 0;
+}
+
+.tabs a {
+    padding: 0.4rem 0.75rem;
+    text-decoration: none;
+    color: #1f2933;
+}
+
+.tabs a[aria-current="page"] {
+    border-bottom: 3px solid #1f2933;
+    font-weight: 700;
+}
+
+.month-picker label {
+    display: inline;
+    margin-right: 0.4rem;
+}
+
+.month-picker select {
+    width: auto;
+}
+
+.cards {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(300px, 1fr));
+    gap: 1rem;
+}
+
+.card, .box, .tile {
+    background: #fff;
+    border: 1px solid #e4e7eb;
+    border-radius: 6px;
+    padding: 0.75rem 1rem;
+}
+
+.card h2 {
+    margin-top: 0;
+}
+
+.tiles {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(160px, 1fr));
+    gap: 0.75rem;
+    margin-bottom: 0.75rem;
+}
+
+.tile span {
+    display: block;
+    font-size: 0.85rem;
+    color: #616e7c;
+}
+
+.tile strong {
+    display: block;
+    font-size: 1.4rem;
+}
+
+.tile em {
+    font-style: normal;
+    font-size: 0.8rem;
+    color: #616e7c;
+}
+
+.pnl tr.strong td {
+    font-weight: 700;
+    border-top: 2px solid #9aa5b1;
+}
+
+table.compact {
+    width: auto;
+    min-width: 50%;
+}
+
+.two {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(320px, 1fr));
+    gap: 1.5rem;
+}
+
+.grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(200px, 1fr));
+    gap: 0 1rem;
+}
+
+.steps {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 1rem;
+    align-items: flex-start;
+}
+
+.box {
+    flex: 1 1 240px;
+}
+
+.box.wide {
+    flex: 2 1 480px;
+}
+
+.box h3 {
+    margin-top: 0;
+}
+
+.struck td {
+    text-decoration: line-through;
+}
+
+.draft {
+    background: #fff;
+    border: 1px solid #e4e7eb;
+    padding: 0.75rem;
+}
+
+fieldset {
+    margin-top: 0.75rem;
+    border: 1px solid #e4e7eb;
+}
+
+label.check {
+    display: inline-block;
+    font-weight: 400;
+    margin-right: 1rem;
+}
+
+ul.plans li {
+    margin-bottom: 0.25rem;
+}
+
+@media (max-width: 600px) {
+    th, td {
+        padding: 0.35rem;
+        font-size: 0.9rem;
+    }
+
+    table {
+        display: block;
+        overflow-x: auto;
+    }
+}

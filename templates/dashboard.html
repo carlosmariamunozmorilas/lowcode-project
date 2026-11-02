@@ -1,0 +1,109 @@
+{% extends "base.html" %}
+{% block title %}{{ client.name }}{% endblock %}
+{% block content %}
+{% set tab = 'overview' %}
+{% include "_client_header.html" %}
+{% if not month %}
+    <p>No shop data yet for this client.</p>
+{% else %}
+
+<section>
+    <h2>1 · Store health — the Growth P&amp;L, {{ month }}</h2>
+    <p class="muted">The store's own figures. They move for reasons the agency did not cause, so they are context — never the agency's result.</p>
+    <table class="pnl">
+        <tr><td>Sessions × conversion × average order</td>
+            <td class="num">{{ pnl.sessions.value|num }} × {{ pnl.conversion.value|pct(2) }} × {{ pnl.average_order_value.value|eur(2) }}</td></tr>
+        <tr><td>Discounts <span class="muted">(already inside net revenue)</span></td><td class="num muted">{{ pnl.discounts.value|eur }}</td></tr>
+        <tr class="strong"><td>Net revenue ({{ pnl.orders.value|num }} orders)</td><td class="num">{{ pnl.net_revenue.value|eur }}</td></tr>
+        <tr><td>− Refunds</td><td class="num">{{ pnl.refunds.value|eur }}</td></tr>
+        {% for key, label in [('product_cost', '− Product cost (net of restocked)'), ('shipping_and_fees', '− Shipping and payment fees')] %}
+        <tr><td>{{ label }}</td><td class="num">{% if pnl[key].incomplete %}<span class="flag">incomplete</span>{% else %}{{ pnl[key].value|eur }}{% endif %}</td></tr>
+        {% endfor %}
+        <tr class="strong"><td>= Contribution before marketing</td><td class="num">{% if pnl.contribution_before_marketing.incomplete %}<span class="flag">incomplete</span>{% else %}{{ pnl.contribution_before_marketing.value|eur }}{% endif %}</td></tr>
+        <tr><td>− Ad spend</td><td class="num">{{ pnl.ad_spend.value|eur }}</td></tr>
+        <tr class="strong"><td>= Contribution after marketing</td><td class="num">{% if pnl.contribution_after_marketing.incomplete %}<span class="flag">incomplete</span>{% else %}{{ pnl.contribution_after_marketing.value|eur }}{% endif %}</td></tr>
+        <tr><td>Contribution margin</td><td class="num">{% if pnl.margin_pct.incomplete %}<span class="flag">incomplete</span>{% else %}{{ pnl.margin_pct.value|pct(1, false) }}{% endif %}</td></tr>
+    </table>
+    {% if pnl.product_cost.incomplete or pnl.shipping_and_fees.incomplete %}<p class="flag-text">Some orders this month have a missing cost. A missing cost is never treated as zero.</p>{% endif %}
+</section>
+
+<section>
+    <h2>2 · Where to grow</h2>
+    <p class="muted">Metrics worse than this store's own average over the previous three months, with the action plans that target them. Plans that target a metric — not a recommendation; a consultant decides.</p>
+    {% if not grow %}<p>No metric is weaker than the store's own recent average.</p>{% endif %}
+    {% for w in grow %}
+        <h3>{{ w.metric|label }}: {% if w.metric in ('conversion', 'repeat_rate') %}{{ w.current|pct(2) }} against {{ w.baseline|pct(2) }}{% elif w.metric in ('refund_rate', 'margin_pct') %}{{ w.current|pct(1, false) }} against {{ w.baseline|pct(1, false) }}{% elif w.metric in ('cac', 'cpa', 'average_order_value') %}{{ w.current|eur(2) }} against {{ w.baseline|eur(2) }}{% else %}{{ w.current|num }} against {{ w.baseline|num }}{% endif %} <span class="flag">weak</span></h3>
+        {% if w.plans %}
+        <ul class="plans">
+            {% for p in w.plans %}
+            <li>{{ '%02d'|format(p.id) }} {{ p.title }} <span class="muted">· {{ p.discipline|label }} · data fit {{ p.data_fit }}</span>
+                {% if p.featured %}<a href="{{ url_for('actions.new', client_id=client.id, plan=p.id) }}">start an action</a>{% else %}<span class="muted">· reference only</span>{% endif %}</li>
+            {% endfor %}
+        </ul>
+        {% else %}<p class="muted">No plan in the catalogue targets this metric for a store like this one.</p>{% endif %}
+    {% endfor %}
+</section>
+
+<section>
+    <h2>3 · The scoreboard — the agency's result</h2>
+    <p class="muted">Only measured, incremental results of running components. Each benefit counted once.</p>
+    <div class="tiles">
+        <div class="tile"><span>Monthly cost</span><strong>{{ system.cost_eur|eur }}</strong></div>
+        <div class="tile"><span>Benefit</span><strong>{{ system.benefit_eur|eur }}</strong></div>
+        <div class="tile"><span>Net</span><strong>{{ system.net_eur|eur }}</strong></div>
+        <div class="tile"><span>System ROI</span><strong>{{ system.roi|pct(0) }}</strong>
+            <em>target {{ client.roi_target|pct(0) }} ·
+            {% if system.roi is none %}no components{% elif system.roi < client.roi_target %}<span class="flag">below target</span>{% else %}<span class="ok">on target</span>{% endif %}</em></div>
+        <div class="tile"><span>Setup payback</span><strong>{{ payback.share|pct(0) }}</strong>
+            <em>{{ payback.cumulative_net_eur|eur }} of {{ payback.setup_eur|eur }} setup</em></div>
+    </div>
+    <table class="compact">
+        <tr><th>Month</th>{% for h in history %}<th class="num">{{ h.month }}</th>{% endfor %}</tr>
+        <tr><td>System ROI</td>{% for h in history %}<td class="num">{{ h.system.roi|pct(0) }}</td>{% endfor %}</tr>
+        <tr><td>Net</td>{% for h in history %}<td class="num">{{ h.system.net_eur|eur }}</td>{% endfor %}</tr>
+    </table>
+</section>
+
+<section>
+    <h2>4 · Guardrails</h2>
+    <table class="compact">
+        <tr><th>Guardrail</th><th class="num">{{ month }}</th><th class="num">Previous 3 months</th><th>Status</th></tr>
+        {% for gr in guardrails %}
+        <tr><td>{{ gr.metric|label }}</td>
+            <td class="num">{{ gr.current|pct(1, false) }}</td><td class="num">{{ gr.baseline|pct(1, false) }}</td>
+            <td>{% if gr.breached %}<span class="flag">breached</span>{% elif gr.current is none or gr.baseline is none %}<span class="muted">not enough data</span>{% else %}<span class="ok">within tolerance</span>{% endif %}</td></tr>
+        {% endfor %}
+    </table>
+    <p class="muted">Breached means margin more than 2 points lower, or refund rate more than 1 point higher, than the previous three months — flagged even when ROI looks good.</p>
+</section>
+
+<section>
+    <h2>5 · The growth system</h2>
+    <table>
+        <tr><th>Component</th><th>Discipline · stage</th><th class="num">Cost</th><th class="num">Benefit</th><th class="num">ROI</th><th>Measured by</th><th>Status</th></tr>
+        {% for item in components %}
+        {% set c = item.c %}
+        <tr>
+            <td><a href="{{ url_for('components.show', component_id=c.id) }}">{{ c.name }}</a></td>
+            <td>{{ c.discipline|label }} · {{ 'operations (no customer stage)' if c.lifecycle_stage == 'operations' else c.lifecycle_stage }}</td>
+            <td class="num">{{ item.cost|eur }}</td>
+            <td class="num">{% if item.row %}{{ item.benefit|eur }}{% else %}<span class="muted">not recorded</span>{% endif %}</td>
+            <td class="num">{{ item.roi|pct(0) }}</td>
+            <td>{{ c.measurement|label }}{% if item.row and item.row.confidence %} · {{ item.row.confidence|label }}{% endif %}</td>
+            <td><span class="status">{{ c.status|label }}</span></td>
+        </tr>
+        {% else %}
+        <tr><td colspan="7" class="muted">No running components yet. An action adopted at close can be added to the growth system.</td></tr>
+        {% endfor %}
+    </table>
+    <h3>Pilots in progress</h3>
+    <ul>
+        {% for a in pilots %}
+        <li><a href="{{ url_for('actions.show', action_id=a.id) }}">{{ a.title }}</a> <span class="status">{{ a.status|label }}</span></li>
+        {% else %}
+        <li class="muted">None.</li>
+        {% endfor %}
+    </ul>
+</section>
+{% endif %}
+{% endblock %}

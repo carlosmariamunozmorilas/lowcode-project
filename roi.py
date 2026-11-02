@@ -133,6 +133,95 @@ class TrackRecord:
     realisation: float | None
 
 
+# --- v2: actions, components and the client's growth system (spec v2 §4) ----
+#
+# Two economic views, never mixed: an action is judged on full payback (setup
+# and operating costs, people time at the client's hourly rate); a running
+# component on continuation (its setup is already spent and does not count
+# again). Freed hours are capacity and never enter a benefit.
+
+
+def people_cost(hours: float, hourly_rate: float) -> float:
+    return hours * hourly_rate
+
+
+def action_investment(setup_cost_eur: float, setup_hours: float,
+                      operating_cost_eur: float, operating_hours: float,
+                      hourly_rate: float) -> float:
+    """Everything a pilot cost: cash and people time, setup and operation."""
+    return (setup_cost_eur + people_cost(setup_hours, hourly_rate)
+            + operating_cost_eur + people_cost(operating_hours, hourly_rate))
+
+
+def action_net_benefit(measured_benefit_eur: float, invested: float) -> float:
+    return measured_benefit_eur - invested
+
+
+def action_roi(measured_benefit_eur: float, invested: float) -> float | None:
+    """Net benefit per euro invested; None when nothing was invested."""
+    if invested == 0:
+        return None
+    return action_net_benefit(measured_benefit_eur, invested) / invested
+
+
+def component_month_cost(operating_cost_eur: float, operating_hours: float,
+                         hourly_rate: float) -> float:
+    return operating_cost_eur + people_cost(operating_hours, hourly_rate)
+
+
+def continuation_roi(benefit_eur: float | None, month_cost: float) -> float | None:
+    """A component's monthly ROI: setup excluded. None for an enabler or no cost."""
+    if benefit_eur is None or month_cost == 0:
+        return None
+    return (benefit_eur - month_cost) / month_cost
+
+
+@dataclass(frozen=True)
+class ComponentMonth:
+    """One component's month, ready to add up for a client."""
+
+    benefit_key: str | None
+    benefit_eur: float | None
+    cost_eur: float
+
+
+@dataclass(frozen=True)
+class SystemResult:
+    benefit_eur: float
+    cost_eur: float
+    net_eur: float
+    roi: float | None
+
+
+def system_result(months: Iterable[ComponentMonth]) -> SystemResult:
+    """A client's month across its running components, each benefit counted once.
+
+    Two components that contribute to the same outcome share a benefit_key; only
+    the first benefit for a key is counted. ROI percentages are never added.
+    """
+    seen: set[str] = set()
+    benefit = 0.0
+    cost = 0.0
+    for m in months:
+        cost += m.cost_eur
+        if m.benefit_eur is None:
+            continue
+        if m.benefit_key is not None:
+            if m.benefit_key in seen:
+                continue
+            seen.add(m.benefit_key)
+        benefit += m.benefit_eur
+    net = benefit - cost
+    return SystemResult(benefit, cost, net, None if cost == 0 else net / cost)
+
+
+def setup_payback(cumulative_net_eur: float, setup_cost_eur: float) -> float | None:
+    """Share of setup already paid back by the components' cumulative net benefit."""
+    if setup_cost_eur == 0:
+        return None
+    return cumulative_net_eur / setup_cost_eur
+
+
 def track_record(outcomes: Iterable[tuple[float, float]]) -> TrackRecord:
     """Total actual change over total expected change, for one lever.
 

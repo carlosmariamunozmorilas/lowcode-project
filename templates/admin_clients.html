@@ -1,0 +1,37 @@
+{% extends "base.html" %}
+{% block title %}Admin · clients{% endblock %}
+{% block content %}
+<h1>Clients</h1>
+<p class="muted">Clients are deactivated, never deleted.</p>
+<table>
+    <tr><th>Name</th><th>Model</th><th class="num">Average order</th><th class="num">Margin</th><th class="num">Rate</th><th>Status</th><th></th></tr>
+    {% for c in clients %}
+    <tr {% if not c.is_active %}class="muted"{% endif %}>
+        <td>{{ c.name }}{% if c.is_fictional %} <span class="badge">fictional</span>{% endif %}</td><td>{{ c.business_model }}</td>
+        <td class="num">{{ c.avg_order_value_eur|eur }}</td><td class="num">{{ c.contribution_margin|pct(0) }}</td>
+        <td class="num">{{ c.hourly_rate_eur|eur }}/h</td><td>{{ 'active' if c.is_active else 'deactivated' }}</td>
+        <td><form method="post" action="{{ url_for('admin.client_active', client_id=c.id) }}" class="inline">
+            <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+            <input type="hidden" name="active" value="{{ 0 if c.is_active else 1 }}">
+            <button type="submit" class="link">{{ 'Deactivate' if c.is_active else 'Reactivate' }}</button></form></td>
+    </tr>
+    {% endfor %}
+</table>
+<h2>Add a client</h2>
+<form method="post">
+    <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+    <div class="grid">
+        {% for name, label in [('name', 'Name'), ('sector', 'Sector'), ('products', 'Products'), ('audience', 'Audience'), ('main_channels', 'Main channels')] %}
+        <div><label for="{{ name }}">{{ label }}</label><input type="text" id="{{ name }}" name="{{ name }}" required></div>
+        {% endfor %}
+        <div><label for="business_model">Business model</label><select id="business_model" name="business_model">{% for m in ('dtc', 'b2c', 'b2b', 'marketplace', 'subscription', 'omnichannel') %}<option>{{ m }}</option>{% endfor %}</select></div>
+        <div><label for="purchase_frequency">Purchase frequency</label><select id="purchase_frequency" name="purchase_frequency">{% for f in ('rare', 'occasional', 'monthly') %}<option>{{ f }}</option>{% endfor %}</select></div>
+        <div><label for="avg_order_value_eur">Average order (€)</label><input type="number" step="0.01" id="avg_order_value_eur" name="avg_order_value_eur" required></div>
+        <div><label for="contribution_margin">Contribution margin (0–1)</label><input type="number" step="0.01" id="contribution_margin" name="contribution_margin" required></div>
+        <div><label for="monthly_budget_eur">Monthly budget (€)</label><input type="number" step="1" id="monthly_budget_eur" name="monthly_budget_eur" required></div>
+        <div><label for="roi_target">ROI target (e.g. 0.20)</label><input type="number" step="0.01" id="roi_target" name="roi_target" value="0.20" required></div>
+        <div><label for="hourly_rate_eur">Hourly rate (€)</label><input type="number" step="1" id="hourly_rate_eur" name="hourly_rate_eur" value="35" required></div>
+    </div>
+    <button type="submit">Add client</button>
+</form>
+{% endblock %}

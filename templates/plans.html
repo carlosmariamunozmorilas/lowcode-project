@@ -1,0 +1,21 @@
+{% extends "base.html" %}
+{% block title %}{{ client.name }} · plans{% endblock %}
+{% block content %}
+{% set tab = 'plans' %}{% set month = none %}{% set months = none %}
+{% include "_client_header.html" %}
+<p class="muted">All 72 ROI Action Plans, those that suit this store first. Only the six featured plans can start an action in the MVP; the rest are reference. The plans were generated with an AI assistant.</p>
+<table>
+    <tr><th>#</th><th>Plan</th><th>Discipline</th><th>Moves</th><th>Benefit</th><th>Data fit</th><th></th></tr>
+    {% for p in plans %}
+    <tr {% if not p.suits %}class="muted"{% endif %}>
+        <td>{{ '%02d'|format(p.id) }}</td>
+        <td><strong>{{ p.title }}</strong><br><span class="small">{{ p.summary }}</span></td>
+        <td>{{ p.discipline|label }}</td>
+        <td>{{ (p.moves or 'none')|label }}</td>
+        <td>{{ p.benefit_type|label }}</td>
+        <td>{{ p.data_fit }}</td>
+        <td>{% if p.featured %}<a href="{{ url_for('actions.new', client_id=client.id, plan=p.id) }}">start an action</a>{% elif not p.suits %}does not suit this store{% else %}reference{% endif %}</td>
+    </tr>
+    {% endfor %}
+</table>
+{% endblock %}

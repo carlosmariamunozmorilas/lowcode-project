@@ -1,0 +1,56 @@
+{% extends "base.html" %}
+{% block title %}{{ component.name }}{% endblock %}
+{% block content %}
+<p><a href="{{ url_for('clients.dashboard', client_id=client.id) }}">← {{ client.name }}</a></p>
+<h1>{{ component.name }} <span class="status">{{ component.status|label }}</span></h1>
+<p class="muted">{{ component.discipline|label }} · {{ component.lifecycle_stage|label }} · {{ component.benefit_type|label }} ·
+    measured by <strong>{{ component.measurement|label }}</strong> · running since {{ component.started_on }}
+    {% if origin %}· from the pilot <a href="{{ url_for('actions.show', action_id=origin.id) }}">{{ origin.title }}</a>{% endif %}</p>
+{% if component.measurement == 'pilot_estimate' %}<p class="flag-text">Each month carries the pilot's result forward: an estimate, re-tested six months after the component started.</p>{% endif %}
+
+<h2>Month by month <span class="muted small">(append-only; a correction supersedes a row)</span></h2>
+<table class="compact">
+    <tr><th>#</th><th>Month</th><th class="num">Cost</th><th class="num">Benefit</th><th class="num">Continuation ROI</th><th>Confidence</th><th class="num">Runs / failed</th><th class="num">Hours freed</th><th>Recorded by</th></tr>
+    {% for r in rows %}
+    <tr {% if r.m.superseded %}class="muted struck"{% endif %}>
+        <td>{{ r.m.id }}{% if r.m.supersedes_id %} <span class="small">corrects {{ r.m.supersedes_id }}</span>{% endif %}</td>
+        <td>{{ r.m.month }}</td><td class="num">{{ r.cost|eur }}</td><td class="num">{{ r.m.measured_benefit_eur|eur }}</td>
+        <td class="num">{{ r.roi|pct(0) }}</td><td>{{ r.m.confidence|label }}{% if r.m.confidence == 'pilot_estimate' %} (estimate){% endif %}</td>
+        <td class="num">{{ r.m.runs if r.m.runs is not none else '—' }} / {{ r.m.failed_runs if r.m.failed_runs is not none else '—' }}</td>
+        <td class="num">{{ r.m.hours_freed|num(1) }}</td><td>{{ r.m.recorder }}</td>
+    </tr>
+    {% else %}
+    <tr><td colspan="9" class="muted">No months recorded yet.</td></tr>
+    {% endfor %}
+</table>
+<p class="muted">Continuation ROI leaves out the setup cost, which is already spent. Hours freed are capacity and never count as money.</p>
+
+<div class="steps">
+<form method="post" action="{{ url_for('components.record_month', component_id=component.id) }}" class="box wide">
+    <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+    <h3>Record a month</h3>
+    {% if component.measurement == 'invoice' and not may_invoice %}
+        <p class="small">An invoice month is recorded by an assigned lead who neither requested nor owned the original action.</p>
+    {% endif %}
+    <div class="grid">
+        <div><label for="month">Month</label><input type="text" id="month" name="month" placeholder="2026-11"></div>
+        <div><label for="operating_cost_eur">Operating cost (€)</label><input type="number" step="0.01" min="0" id="operating_cost_eur" name="operating_cost_eur"></div>
+        <div><label for="operating_hours">Operating hours</label><input type="number" step="0.5" min="0" id="operating_hours" name="operating_hours"></div>
+        {% if component.measurement == 'invoice' %}<div><label for="measured_benefit_eur">Avoided cost shown by the invoices (€)</label><input type="number" step="0.01" min="0" id="measured_benefit_eur" name="measured_benefit_eur"></div>{% endif %}
+        <div><label for="runs">Runs</label><input type="number" min="0" id="runs" name="runs"></div>
+        <div><label for="failed_runs">Failed runs</label><input type="number" min="0" id="failed_runs" name="failed_runs"></div>
+        <div><label for="hours_freed">Hours freed (capacity)</label><input type="number" step="0.5" min="0" id="hours_freed" name="hours_freed"></div>
+        <div><label for="supersedes_id">Corrects row # (optional)</label><input type="number" min="1" id="supersedes_id" name="supersedes_id"></div>
+    </div>
+    {% if component.measurement != 'invoice' %}<p class="small">The benefit is computed by the app ({{ component.measurement|label }}); it cannot be typed.</p>{% endif %}
+    <button type="submit">Record</button>
+</form>
+<form method="post" action="{{ url_for('components.set_status', component_id=component.id) }}" class="box">
+    <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+    <h3>Keep, review or retire</h3>
+    <label for="status">Status (assigned leads)</label>
+    <select id="status" name="status">{% for s in ('running', 'review_due', 'retired') %}<option value="{{ s }}" {% if component.status == s %}selected{% endif %}>{{ s|label }}</option>{% endfor %}</select>
+    <button type="submit">Update</button>
+</form>
+</div>
+{% endblock %}

@@ -1,0 +1,136 @@
+{% extends "base.html" %}
+{% block title %}{{ action.title }}{% endblock %}
+{% block content %}
+<p><a href="{{ url_for('clients.dashboard', client_id=client.id) }}">← {{ client.name }}</a></p>
+<h1>{{ action.title }} <span class="status">{{ action.status|label }}</span></h1>
+{% if plan %}<p class="muted">From plan {{ '%02d'|format(plan.id) }} — {{ plan.title }}</p>{% endif %}
+{% if action.hypothesis %}<p class="description">{{ action.hypothesis }}</p>{% endif %}
+
+<div class="two">
+<section>
+    <h2>The plan</h2>
+    <dl>
+        <dt>Discipline · stage</dt><dd>{{ action.discipline|label }} · {{ action.lifecycle_stage|label }}</dd>
+        <dt>Benefit type</dt><dd>{{ action.benefit_type|label }}</dd>
+        <dt>Primary metric</dt><dd>{{ action.primary_metric|label }}</dd>
+        <dt>Guardrails</dt><dd>margin % and refund rate (always)</dd>
+        <dt>Comparison</dt><dd>{{ action.comparison|label }}{% if groups %} · {{ groups.get('test', 0) }} test, {{ groups.get('control', 0) }} control customers{% endif %}</dd>
+        <dt>Window</dt><dd>{{ action.window_start or '—' }} to {{ action.window_end or '—' }}, post-period {{ action.post_period_days if action.post_period_days is not none else '—' }} days</dd>
+        <dt>Measurement ends</dt><dd>{{ measurement_end or '—' }}</dd>
+        <dt>Expected benefit</dt><dd>{{ action.expected_benefit_eur|eur }}</dd>
+        <dt>Investment</dt><dd>{{ invested|eur }} <span class="muted">(setup {{ action.setup_cost_eur|eur }} + {{ action.setup_hours|num(1) }} h, operating {{ action.operating_cost_eur|eur }} + {{ action.operating_hours|num(1) }} h, at {{ client.hourly_rate_eur|eur }}/h)</span></dd>
+        <dt>Hurdle</dt><dd>{{ action.hurdle_eur|eur }} net</dd>
+        <dt>People</dt><dd>requested by {{ people.get(action.requester_id) }}, owned by {{ people.get(action.owner_id, '—') }}, reviewed by {{ people.get(action.reviewer_id, '—') }}</dd>
+    </dl>
+</section>
+<section>
+    <h2>The result</h2>
+    {% if action.status == 'closed' %}
+        <dl>
+            <dt>Measured benefit</dt><dd>{{ action.measured_benefit_eur|eur }}{% if action.confidence %} · <strong>{{ action.confidence|label }}</strong>{% endif %}</dd>
+            <dt>Net benefit</dt><dd>{{ net|eur }} against a hurdle of {{ action.hurdle_eur|eur }}</dd>
+            <dt>ROI</dt><dd>{{ roi_value|pct(0) }}</dd>
+            <dt>Decision</dt><dd><strong>{{ action.decision|label }}</strong></dd>
+            {% if action.early_stop_reason %}<dt>Stopped early</dt><dd>{{ action.early_stop_reason|label }}</dd>{% endif %}
+            {% if action.decision_note %}<dt>Decision note</dt><dd>{{ action.decision_note }}</dd>{% endif %}
+            {% if action.evidence_note %}<dt>Evidence</dt><dd>{{ action.evidence_note }}</dd>{% endif %}
+        </dl>
+        {% if action.confidence == 'before_after' %}<p class="muted">Before/after is weaker evidence: the period before may differ for reasons other than the action.</p>{% endif %}
+    {% elif measured %}
+        <p>So far: {{ measured.benefit_eur|eur }} ({{ measured.confidence|label }}){% if measured.incomplete %} — <span class="flag">incomplete</span>: orders with a missing cost{% endif %}.</p>
+        {% if measurement_end and measurement_end.isoformat() > today %}<p class="flag-text">Partial: the measurement period runs until {{ measurement_end }}.</p>{% endif %}
+        <p class="muted">{{ measured.detail }}</p>
+    {% elif action.window_start and action.window_start > today %}
+        <p class="muted">The window starts on {{ action.window_start }}; no result before then.</p>
+    {% else %}
+        <p class="muted">No result yet.</p>
+    {% endif %}
+    {% if guardrails %}
+    <h3>Guardrails over the window</h3>
+    <ul>{% for gr in guardrails %}<li>{{ gr.metric|label }}: {{ gr.current|pct(1, false) }} against {{ gr.baseline|pct(1, false) }} — {% if gr.breached %}<span class="flag">breached</span>{% elif gr.current is none or gr.baseline is none %}not enough data{% else %}within tolerance{% endif %}</li>{% endfor %}</ul>
+    {% endif %}
+</section>
+</div>
+
+{% if action.status in ('submitted', 'assigned') %}
+<p><a href="{{ url_for('actions.edit', action_id=action.id) }}">Edit the action</a></p>
+{% endif %}
+
+<section>
+    <h2>Next step</h2>
+    {% if not allowed %}<p class="muted">This action is {{ action.status }}; it cannot move any further.</p>{% endif %}
+    <div class="steps">
+    {% if 'assigned' in allowed and action.status == 'submitted' or (action.status == 'assigned') %}
+        <form method="post" action="{{ url_for('actions.assign', action_id=action.id) }}" class="box">
+            <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+            <h3>Assign</h3>
+            <label for="owner_id">Owner</label>
+            <select id="owner_id" name="owner_id">{% for p in choices.people %}<option value="{{ p.id }}" {% if action.owner_id == p.id %}selected{% endif %}>{{ p.full_name }} ({{ p.roles }})</option>{% endfor %}</select>
+            <label for="reviewer_id">Named reviewer (a lead, neither requester nor owner)</label>
+            <select id="reviewer_id" name="reviewer_id"><option value="">—</option>{% for p in choices.people if 'lead' in p.roles %}<option value="{{ p.id }}" {% if action.reviewer_id == p.id %}selected{% endif %}>{{ p.full_name }}</option>{% endfor %}</select>
+            <button type="submit">Assign</button>
+        </form>
+    {% endif %}
+    {% if 'in_review' in allowed %}
+        <form method="post" action="{{ url_for('actions.send_to_review', action_id=action.id) }}" class="box">
+            <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+            <h3>Send to review</h3>
+            <p class="small">The owner sends it. Fixes the prediction.</p>
+            <button type="submit">Send to the named reviewer</button>
+        </form>
+    {% endif %}
+    {% if action.status == 'in_review' %}
+        <form method="post" action="{{ url_for('actions.approve', action_id=action.id) }}" class="box">
+            <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+            <h3>Approve</h3><label for="note-a">Note</label><input type="text" id="note-a" name="note">
+            <button type="submit">Approve</button>
+        </form>
+        <form method="post" action="{{ url_for('actions.reject', action_id=action.id) }}" class="box">
+            <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+            <h3>Reject</h3><label for="note-r">Note</label><input type="text" id="note-r" name="note">
+            <button type="submit">Reject</button>
+        </form>
+    {% endif %}
+    {% if action.status == 'approved' %}
+        <form method="post" action="{{ url_for('actions.close', action_id=action.id) }}" class="box wide">
+            <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+            <h3>Close with the result</h3>
+            {% if action.benefit_type == 'contribution' %}<p class="small">The benefit is the app's own figure from the shop data ({{ action.comparison|label }}); it is not typed.</p>{% endif %}
+            {% if action.benefit_type == 'avoided_cost' %}
+                <label for="measured_benefit_eur">Avoided paid cost over the window (€)</label><input type="number" step="0.01" min="0" id="measured_benefit_eur" name="measured_benefit_eur">
+                <label for="evidence_note">Evidence note: which invoices show the cost falling</label><textarea id="evidence_note" name="evidence_note" rows="2"></textarea>
+            {% endif %}
+            {% if action.benefit_type == 'enabler' %}<p class="small">An enabler carries no benefit: adopt means its acceptance criterion was met.</p>{% endif %}
+            <label for="decision">Decision</label>
+            <select id="decision" name="decision"><option value="">—</option>{% for d in ('adopt', 'revise', 'reject', 'inconclusive') %}<option value="{{ d }}">{{ d }}</option>{% endfor %}</select>
+            <label for="decision_note">Decision note (required to adopt despite a breached guardrail)</label><textarea id="decision_note" name="decision_note" rows="2"></textarea>
+            <label for="early_stop_reason">Early-stop reason (only before {{ measurement_end }})</label>
+            <select id="early_stop_reason" name="early_stop_reason"><option value="">—</option>{% for r in ('data_quality_failure', 'technical_failure', 'customer_harm', 'financial_risk', 'legal_risk') %}<option value="{{ r }}">{{ r|label }}</option>{% endfor %}</select>
+            <label><input type="checkbox" name="add_component" value="1"> On adopt, add to the growth system</label>
+            <label for="measurement">Measured monthly by</label>
+            <select id="measurement" name="measurement">
+                {% if action.benefit_type == 'contribution' %}<option value="holdout_kept">holdout kept (small permanent control group)</option><option value="pilot_estimate">pilot estimate (re-test after six months)</option>{% elif action.benefit_type == 'avoided_cost' %}<option value="invoice">invoice</option>{% else %}<option value="">— (enabler)</option>{% endif %}
+            </select>
+            <button type="submit">Close</button>
+        </form>
+    {% endif %}
+    {% if 'cancelled' in allowed %}
+        <form method="post" action="{{ url_for('actions.cancel', action_id=action.id) }}" class="box">
+            <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+            <h3>Cancel</h3><label for="note-c">Reason</label><input type="text" id="note-c" name="note">
+            <button type="submit">Cancel the action</button>
+        </form>
+    {% endif %}
+    </div>
+</section>
+
+<section>
+    <h2>History <span class="muted small">(append-only)</span></h2>
+    <table class="compact">
+        <tr><th>When</th><th>Change</th><th>By</th><th>Note</th></tr>
+        {% for h in history %}
+        <tr><td>{{ h.created_at[:16]|replace('T', ' ') }}</td><td>{{ h.from_status or '—' }} → {{ h.to_status }}</td><td>{{ people.get(h.actor_id) }}</td><td>{{ h.note or '' }}</td></tr>
+        {% endfor %}
+    </table>
+</section>
+{% endblock %}

@@ -1,0 +1,28 @@
+{% extends "base.html" %}
+{% block title %}Admin · people{% endblock %}
+{% block content %}
+<h1>People and automations</h1>
+<table>
+    <tr><th>Name</th><th>Email</th><th>Roles</th><th>Clients</th><th>Status</th></tr>
+    {% for p in people %}
+    <tr {% if not p.is_active %}class="muted"{% endif %}>
+        <td>{{ p.full_name }}{% if p.is_service %} <span class="badge">automation: {{ p.automation_name }}</span>{% endif %}</td>
+        <td>{{ p.email }}</td><td>{{ p.roles or '—' }}</td><td>{{ p.client_names or '—' }}</td>
+        <td>{{ 'active' if p.is_active else 'deactivated' }}</td>
+    </tr>
+    {% endfor %}
+</table>
+<p class="muted">Automations have no password and cannot sign in; they reach the app only through the signed API.</p>
+<h2>Add a person</h2>
+<form method="post">
+    <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+    <div class="grid">
+        <div><label for="full_name">Name</label><input type="text" id="full_name" name="full_name" required></div>
+        <div><label for="email">Email</label><input type="text" id="email" name="email" required></div>
+        <div><label for="password">Password (12+ characters)</label><input type="password" id="password" name="password" minlength="12" required autocomplete="new-password"></div>
+    </div>
+    <fieldset><legend>Roles</legend>{% for r in roles %}<label class="check"><input type="checkbox" name="roles" value="{{ r }}"> {{ r }}</label>{% endfor %}</fieldset>
+    <fieldset><legend>Clients</legend>{% for c in clients %}<label class="check"><input type="checkbox" name="clients" value="{{ c.id }}"> {{ c.name }}</label>{% endfor %}</fieldset>
+    <button type="submit">Add person</button>
+</form>
+{% endblock %}

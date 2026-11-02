@@ -1,202 +1,73 @@
-import math
+"""MarketingOps v2 — a growth consultancy tool for online stores.
+
+Flask application factory. The rules live in lifecycle.py (workflow), roi.py
+(economics) and measure.py (figures from the shop data); the routes only load
+data, check access and call them.
+
+    flask --app app init-db          # empty database with the 72 plan templates
+    python scripts/generate_shop_data.py   # or: the fictional demo database
+    flask --app app run
+"""
+
 import os
-import secrets
-import sqlite3
-from contextlib import closing
-from pathlib import Path
 
-import click
-from flask import (
-    Flask,
-    abort,
-    flash,
-    g,
-    redirect,
-    render_template,
-    request,
-    url_for,
-)
+from flask import Flask, render_template
 
-from lifecycle import ALLOWED
-from roi import investment
-
-HOURLY_RATE = 35.0
-
-LEVERS = (
-    "paid_prospecting",
-    "seo_content",
-    "email_traffic",
-    "checkout_friction",
-    "product_page",
-    "trust_signals",
-    "bundles",
-    "cross_sell",
-    "free_shipping",
-)
-
-app = Flask(__name__)
-
-# Never a known default: anyone who knows the key can forge the session
-# cookie. Without one, a random key lasts until the process stops, which is
-# enough for this week's flash messages and fails safe if a deploy forgets it.
-secret_key = os.environ.get("SECRET_KEY")
-if not secret_key:
-    secret_key = secrets.token_hex(32)
-    app.logger.warning("SECRET_KEY is not set; using a random key for this run")
-
-app.config.from_mapping(
-    SECRET_KEY=secret_key,
-    DATABASE=os.environ.get(
-        "DATABASE_PATH", os.path.join(app.root_path, "marketingops.db")
-    ),
-)
+import auth
+import config
+import db
+from routes import actions, admin, api, clients, components, reports, review
 
 
-def get_db():
-    if "db" not in g:
-        # mode=rw: a missing file is an error that says what to do, not a new
-        # empty database on which every page fails with "no such table".
-        path = Path(app.config["DATABASE"]).resolve()
-        try:
-            g.db = sqlite3.connect(f"{path.as_uri()}?mode=rw", uri=True)
-        except sqlite3.OperationalError as error:
-            raise RuntimeError(
-                f"No database at {path}. Create it with: flask --app app init-db"
-            ) from error
-        g.db.row_factory = sqlite3.Row
-    return g.db
+def create_app(overrides: dict | None = None) -> Flask:
+    app = Flask(__name__)
+    settings = config.load(overrides)
+    app.config.from_mapping(settings)
+    if settings.get("SECRET_KEY_IS_RANDOM"):
+        app.logger.warning("SECRET_KEY is not set; using a random key for this run")
+
+    db.init_app(app)
+    auth.init_app(app)
+    for module in (clients, actions, review, components, reports, admin, api):
+        app.register_blueprint(module.bp)
+
+    app.jinja_env.filters.update(eur=fmt_eur, pct=fmt_pct, num=fmt_num, label=fmt_label)
+
+    @app.errorhandler(404)
+    def not_found(error):
+        return render_template("error.html", code=404, message="Not found."), 404
+
+    @app.errorhandler(403)
+    def forbidden(error):
+        return render_template("error.html", code=403,
+                               message=getattr(error, "description", "Not allowed.")), 403
+
+    return app
 
 
-@app.cli.command("init-db")
-def init_db():
-    """Create the tables from schema.sql. Safe to run again."""
-    schema = Path(app.root_path, "schema.sql").read_text(encoding="utf-8")
-    with closing(sqlite3.connect(app.config["DATABASE"])) as db:
-        db.executescript(schema)
-    click.echo(f"Database ready at {app.config['DATABASE']}")
+def fmt_eur(value, decimals: int = 0) -> str:
+    if value is None:
+        return "—"
+    sign = "−" if value < 0 else ""
+    return f"{sign}€{abs(value):,.{decimals}f}"
 
 
-@app.teardown_appcontext
-def close_db(exception):
-    db = g.pop("db", None)
-    if db is not None:
-        db.close()
+def fmt_pct(value, decimals: int = 1, ratio: bool = True) -> str:
+    """A ratio (0.0183) or a percentage (31.2) shown as a percentage."""
+    if value is None:
+        return "—"
+    return f"{value * 100 if ratio else value:.{decimals}f}%"
 
 
-def get_action(action_id):
-    action = get_db().execute(
-        "SELECT * FROM actions WHERE id = ?", (action_id,)
-    ).fetchone()
-    if action is None:
-        abort(404)
-    return action
+def fmt_num(value, decimals: int = 0) -> str:
+    if value is None:
+        return "—"
+    return f"{value:,.{decimals}f}"
 
 
-def parse_cost(value):
-    try:
-        cost = float(value or 0)
-    except ValueError:
-        return None
-    # float() also accepts "inf" and "nan"; neither is a cost.
-    if not math.isfinite(cost) or cost < 0:
-        return None
-    return cost
-
-
-@app.route("/")
-def index():
-    rows = get_db().execute(
-        "SELECT * FROM actions ORDER BY created_at DESC, id DESC"
-    ).fetchall()
-    actions = [
-        {
-            **dict(row),
-            "investment": investment(row["cost_eur"], row["cost_hours"], HOURLY_RATE),
-        }
-        for row in rows
-    ]
-    return render_template("index.html", actions=actions)
-
-
-@app.route("/action/new")
-def new_action():
-    return render_template("new.html", levers=LEVERS, form={})
-
-
-@app.route("/action", methods=["POST"])
-def create_action():
-    title = request.form.get("title", "").strip()
-    description = request.form.get("description", "").strip()
-    lever = request.form.get("lever", "")
-    cost_eur = parse_cost(request.form.get("cost_eur"))
-    cost_hours = parse_cost(request.form.get("cost_hours"))
-
-    errors = []
-    if not title:
-        errors.append("Title is required.")
-    elif len(title) > 200:
-        errors.append("Title must be 200 characters or fewer.")
-    if len(description) > 2000:
-        errors.append("Description must be 2000 characters or fewer.")
-    if lever not in LEVERS:
-        errors.append("Choose a valid lever.")
-    if cost_eur is None:
-        errors.append("Cost in euros must be a number of zero or more.")
-    if cost_hours is None:
-        errors.append("Cost in hours must be a number of zero or more.")
-
-    if errors:
-        for error in errors:
-            flash(error, "error")
-        return render_template("new.html", levers=LEVERS, form=request.form), 400
-
-    db = get_db()
-    db.execute(
-        "INSERT INTO actions (title, description, lever, cost_eur, cost_hours)"
-        " VALUES (?, ?, ?, ?, ?)",
-        (title, description or None, lever, cost_eur, cost_hours),
-    )
-    db.commit()
-    flash("Action created.", "success")
-    return redirect(url_for("index"))
-
-
-@app.route("/action/<int:action_id>")
-def show_action(action_id):
-    action = get_action(action_id)
-    next_stages = sorted(ALLOWED.get(action["status"], frozenset()))
-    return render_template(
-        "detail.html",
-        action=action,
-        investment=investment(action["cost_eur"], action["cost_hours"], HOURLY_RATE),
-        hourly_rate=HOURLY_RATE,
-        next_stages=next_stages,
-    )
-
-
-@app.route("/action/<int:action_id>/status", methods=["POST"])
-def change_status(action_id):
-    action = get_action(action_id)
-    new_status = request.form.get("status", "")
-
-    if new_status not in ALLOWED.get(action["status"], frozenset()):
-        flash(f"Cannot move from {action['status']} to {new_status}.", "error")
-        return redirect(url_for("show_action", action_id=action_id))
-
-    # The WHERE on the old status makes check and write one step: if someone
-    # else moved the action since it was read, nothing is written.
-    db = get_db()
-    cursor = db.execute(
-        "UPDATE actions SET status = ? WHERE id = ? AND status = ?",
-        (new_status, action_id, action["status"]),
-    )
-    db.commit()
-    if cursor.rowcount == 0:
-        flash("This action changed while you were looking at it. Try again.", "error")
-        return redirect(url_for("show_action", action_id=action_id))
-    flash(f"Status changed to {new_status}.", "success")
-    return redirect(url_for("show_action", action_id=action_id))
+def fmt_label(value) -> str:
+    return "—" if value is None else str(value).replace("_", " ")
 
 
 if __name__ == "__main__":
-    app.run(debug=os.environ.get("FLASK_DEBUG") == "1")
+    create_app().run(debug=os.environ.get("FLASK_DEBUG") == "1")
