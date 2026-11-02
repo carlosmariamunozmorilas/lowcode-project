@@ -1,104 +1,96 @@
 # Week 3 · Block A — forum posts
 
-Drafted before the live session of 28 October 2026, for the Block A forum:
-the chosen domain for a scope sanity-check, and the three required answers.
+Posted on **27 October 2026 at 13:43** to the course's Discussion & Posting
+Forum, thread *Output posting*, as one reply ("Re: Output posting") holding both
+the domain post and the three required answers. The text below is transcribed
+from the forum's notification email.
 
-These are the pre-session drafts. Every claim is evidenced elsewhere in this
-repository — the bind-address finding and the dependency pinning come from
-[`week02-tool-comparison.md`](week02-tool-comparison.md), the lifecycle and the
-exclusion list from [`specification.md`](specification.md). What was actually
-posted was rewritten from these in my own words.
+**How it was written:** drafted with Claude Code and posted essentially
+unchanged — not rewritten in my own words. An earlier draft of this file said
+the opposite; that was not true, and this version replaces it.
 
----
+Every claim is evidenced elsewhere in this repository: the bind-address finding
+comes from [`week02-tool-comparison.md`](week02-tool-comparison.md), the
+workflow and the exclusion list from [`specification.md`](specification.md).
 
-## Post 0 — chosen domain, for the scope sanity-check
-
-**Domain:** marketing operations with an ROI layer — a system of record in
-which every piece of marketing work states the KPI it is meant to move, by how
-much and at what cost, and is closed with what it actually achieved. ROI is
-computed on gross profit with people's time counted as a cost, not as ROAS.
-
-**What a user does with it (three things):** propose an action and name the
-lever it pulls, with a hypothesis and a cost in money and hours; take it through
-review and approval against a type-specific checklist; close it with the actual
-result and a confidence label, so the project's real return is on the record.
-Every status change, target and measurement is append-only, so "who signed this
-off, and who moved the target afterwards?" always has an answer.
-
-**Out of scope, deliberately:** no formula builder, no live connections to ad
-platforms, no causal attribution or forecasting, no timesheets, no comment
-threads, no file attachments, no multi-tenancy, no email sent by the app itself.
-These are listed in the spec so the generated code does not quietly acquire
-them.
-
-**What I would like sanity-checked:** three things.
-
-1. Is an ROI layer on top of a request workflow the right size for ten weeks?
-   The KPI tree is fixed — revenue = sessions × conversion × order value — and
-   the figures arrive by hand or from one automation, never from live APIs.
-2. Attribution: I don't claim to prove what caused a change. Each result
-   carries a label — holdout, before/after, or correlated — and the interface
-   never shows a correlated result as proven. Is that an honest enough answer
-   for this course, or should I narrow it further?
-3. My rule that whoever requested or did the work cannot approve it — or
-   certify its result — deadlocks in a three-person team. Is an admin override
-   that logs loudly the normal answer, or is the rule itself wrong?
-
-**And one ask:** is there a route through the Industry Engagement Forum to
-attach this to a real company's approval process? It would make the Week 12
-presentation about something lived rather than something invented.
+**Since posting:** on 30 October the project moved to v2, a tool for an agency
+advising several fictional online stores
+([`product-definition-v2.md`](product-definition-v2.md)). The counts in Post 1
+describe the v1 design as it stood on 27 October; v2 has 18 tables and four
+roles ([`specification-v2.md`](specification-v2.md)). The approval deadlock in
+question 2 was decided on 28 October: the action stays blocked and admin has
+no bypass.
 
 ---
 
-## Answer 1 — why create a branch *before* generating code, not after
+WEEK 3 BLOCK A
 
-Because the branch is what makes the generated code reversible. An agent working
-from a specification does not touch one file, it writes twenty at once, and if
-that lands directly on `main` there is no boundary left between the state that
-worked and the state the model produced. Branch first and the undo is
-`git switch main`, costing nothing; branch afterwards and you are picking
-generated hunks out of a dirty working tree, guessing which ones you meant to
-keep. The practical version for me is next week: Week 3 generates the whole
-multi-file application from my spec in one session, and `main` needs to stay the
-branch that still passes a clean clone while I find out how much of that output
-is actually right.
+## Post 1: your domain
 
-## Answer 2 — what a pull request is for, if you are the only person on the project
+My domain: MarketingOps, ROI for marketing work
 
-It is the point at which I am forced to read code I would otherwise skim. The
-diff view is the difference between accepting twenty generated files and
-reviewing them, and reviewing them is the thing Week 8 actually grades — an
-authorisation bug is invisible in a running app and obvious in a diff. The PR
-description is also the only place the *why* survives: a commit says what
-changed, the PR says what I was trying to do and what I decided against, which
-is what Week 12 asks me to explain. And it is the hook everything later hangs
-on, since tests and security scanners run against a pull request, not against a
-push to `main`.
+What it's for:
+An ecommerce marketing team logs each piece of work as an "action" that states
+which KPI it should move, by how much, and what it costs in money and people's
+hours. Each action is closed with what it actually achieved. The app plans and
+measures the return of every action on gross profit (not ROAS), and keeps a
+record nobody can quietly rewrite.
 
-The honest caveat: a solo PR can be a rubber stamp I approve without reading.
-What stops that is having something mechanical to pass before merging — for me,
-the clean-clone test and, from Week 7, the test suite.
+What a user does with it:
 
-## Answer 3 — two things a specification must state that a one-line request does not
+1. Propose an action: pick the lever (checkout fix, paid campaign, bundles...),
+   write the hypothesis and the expected change, and state the cost. Before
+   saving, a preview shows the action's own ROI, its break-even point, and what
+   it would do to the whole project's ROI.
+2. Get it approved by one named reviewer, who can be neither the person who
+   asked for it nor the person who does it.
+3. Close it with the result: what really changed, how sure we are (holdout,
+   before/after or correlated), and whether to scale, hold, redesign or retire
+   it. The app shows expected against realised ROI.
 
-**The runtime environment.** My Week 2 comparison is the evidence: Claude and
-Gemini were given the same prompt, which never said where the app would run, and
-they filled that silence with opposite defaults. Claude bound to `127.0.0.1`,
-which works on a laptop and fails inside a container in Week 9. Gemini, twice,
-bound to `0.0.0.0`, which works in a container and on a laptop exposes the
-development server to everyone on the same Wi-Fi. Neither tool was at fault —
-the gap was in the request, and a specification closes it by stating the bind
-address, the port and the fact that this thing eventually lives behind a WSGI
-server.
+Out of scope:
+Live ad-platform connections, forecasting or causal attribution, custom
+formulas, file attachments, comment threads, multi-tenancy. All data is
+invented.
 
-**What is excluded.** A one-line request can only add; it has no way of saying
-*not this*. Generated code fills silence with plausible features, so a spec that
-does not say "no live ad-platform connections, no forecasting, no attachments"
-will get them eventually, and then they need testing, securing and explaining. The exclusion
-list is the cheapest section in my spec and the one that will save the most work.
+Two questions:
 
-*(A third, if a third is wanted: who is allowed to do what. A one-liner that says
-"add an approve button" produces authentication — are you logged in? — and skips
-authorisation — are you allowed to approve *this* request? That is the single
-most reliable failure in AI-generated CRUD, and it is why my spec names a role
-per route.)*
+1. This is my own idea rather than one of the brief's twenty. It covers the six
+   minimums: 12 related tables; Make automations of all three types (a scheduled
+   Monday data intake, a drift alert triggered when a figure lands off target,
+   and approval routing to the named reviewer); five roles enforced
+   server-side; plus a DFD, a STRIDE table and a GDPR write-up. Is it OK to
+   build?
+2. The approval rule deadlocks in a three-person team, where nobody may be
+   eligible to approve. Is an admin override that is logged loudly the usual
+   answer?
+
+## Post 2: the three answers
+
+**1. Why should you create a branch before generating code rather than after?**
+
+Because the branch is what makes generated code reversible. An assistant writes
+a dozen files at once, and if they land on main nothing separates what worked
+from what the model produced. Branch first and undoing it is one command; branch
+afterwards and you are picking generated changes out of a messy working copy. It
+also lets you commit the raw scaffold first, which is the honest record of what
+the AI produced unaided.
+
+**2. What is a pull request for, if you are the only person on the project?**
+
+It is the point where I am forced to read code I would otherwise skim. An
+authorisation bug that is invisible in the running app is obvious in a diff, and
+the PR description keeps the why: what I tried and what I knowingly left. It is
+also where tests and scanners will run from Week 7. A solo PR can become a
+rubber stamp; what stops that is having something to pass before merging, like a
+clean-clone test now and the test suite later.
+
+**3. Name two things a specification must state that a one-line request does not.**
+
+Where it runs: in Week 2 I gave three assistants the same one-line prompt, and
+two of them bound the app to 127.0.0.1, which fails inside a container, while
+Gemini used 0.0.0.0, which exposes a laptop's dev server to everyone on the same
+Wi-Fi. What is out of scope: a one-line request can only add, and generated code
+fills silence with plausible features that then need testing and securing. The
+Session 3 solution sheet makes the same point: the out-of-scope list is the most
+useful part of a specification.
