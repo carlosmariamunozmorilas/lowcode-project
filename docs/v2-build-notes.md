@@ -33,7 +33,13 @@ All 23 core tests of §11 and most stretch ones have a counterpart; test names
 carry the spec's number (`test_13_…`). The suite also checks that the seeded
 history obeys the app's own closing rules.
 
-## Where the build departs from the spec — for my decision
+## Where the build departs from the spec
+
+**Decided 2 November:** 1–7 and 9 accepted and written into the
+specification, with a trigger that refuses a component month whose client
+differs from its component's (point 3) and a sentence on how a running
+component's monthly holdout is counted. Point 8 was settled by reading the six
+featured plans (below).
 
 1. **CSRF protection** on every form (a session token, checked before any
    form POST; the signed API is exempt). The spec never named it; the global
@@ -62,6 +68,25 @@ history obeys the app's own closing rules.
    The other 66 use defaults; they cannot start an action.
 9. **Fictional names** for the agency team (Ana Ruiz, Marta Gil, Diego Sanz,
    Lucía Vega, Pablo Ortiz) and an ROI target of 0.20 for Brote and Roble.
+
+### Point 8 settled: the six featured plans, read on 2 November
+
+| Plan | Window | Post-period | Setup hours | Hurdle | From the plan |
+|---|---|---|---|---|---|
+| 03 Discounts | 14 | 14 | 12 | €500 (app default) | 14-day promotion and 14-day post-promotion period; targets are relative (+10% contribution per visitor) |
+| 20 Email segmentation | 14 | 0 | 26 | €500 (app default) | 14-day outcome window from the first of two weekly sends; target relative (+10%) |
+| 30 Search terms | 42 | 30 | 24 | €500 (app default) | Days 15–56, returns reconciled on Day 87; targets relative (+10% net, 25% ROI) |
+| 43 Purchase frequency | 28 | 180 | 40 | €500 (plan) | 28-day enrolment, 180 days of follow-up per customer |
+| 50 Analytics agents | 90 | 14 | 64 | €500 (plan) | 90-day supervised operation, invoices reconciled 14 days later |
+| 65 Cart recovery | 90 | 44 | 80 | €500 (plan) | 90-day pilot, 14-day purchase window plus 30 days of returns |
+
+Three plans set relative targets rather than a euro hurdle; the app keeps its
+€500 default for them and says so in `values_source`. The demo's seeded
+pilots are smaller than these defaults (Luna Home's cart pilot ran 28 days,
+not 90) — they are the fictional team's own choices, not the template's.
+Plan 65 also notes that an email captured at checkout is not, by itself,
+permission for a marketing reminder (Irish DPC guidance) — material for the
+Week 11 GDPR page.
 
 ## What went wrong while building — and was fixed
 

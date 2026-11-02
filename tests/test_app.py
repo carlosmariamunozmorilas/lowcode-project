@@ -31,7 +31,7 @@ def test_21_a_service_account_cannot_sign_in(client):
     assert client.get("/").status_code == 302
 
 
-def test_forms_without_the_csrf_token_are_refused(client, app_conn):
+def test_43_forms_without_the_csrf_token_are_refused(client, app_conn):
     login(client, CONSULTANT)
     action = add_action(app_conn)
     app_conn.commit()

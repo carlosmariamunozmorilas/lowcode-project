@@ -206,6 +206,12 @@ CREATE UNIQUE INDEX component_months_benefit_once
     ON component_months (client_id, month, benefit_key)
     WHERE measured_benefit_eur IS NOT NULL AND supersedes_id IS NULL;
 
+-- client_id is stored on the row for the index above; it must be the
+-- component's own client.
+CREATE TRIGGER component_months_client_matches BEFORE INSERT ON component_months
+WHEN NEW.client_id IS NOT (SELECT client_id FROM components WHERE id = NEW.component_id)
+BEGIN SELECT RAISE(ABORT, 'component_months.client_id must match its component'); END;
+
 CREATE TRIGGER component_months_no_update BEFORE UPDATE ON component_months
 BEGIN SELECT RAISE(ABORT, 'component_months is append-only'); END;
 CREATE TRIGGER component_months_no_delete BEFORE DELETE ON component_months
