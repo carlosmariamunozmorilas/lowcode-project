@@ -67,8 +67,15 @@ tests/                  see §11
 
 ## 3 · Entities
 
-Seventeen tables. Money is stored in euros as REAL, rounded only for display;
+Eighteen tables. Money is stored in euros as REAL, rounded only for display;
 dates are ISO 8601 text, UTC.
+
+**Nothing is deleted** (decided 2 November). Every foreign key is `ON DELETE
+RESTRICT`; clients and users are deactivated (`is_active = 0`) and drop out of
+lists and sign-in, actions are cancelled, and history and monthly records are
+append-only. Shoppers exist only as pseudonymous codes, so the only personal
+data is the team's own user records; how long a deactivated user is kept is
+set in the Week 11 GDPR page.
 
 ### People and access
 
@@ -101,9 +108,10 @@ contradiction between "NOT NULL" and password-less service accounts.
 | `purchase_frequency` | TEXT | CHECK in (`rare`, `occasional`, `monthly`) |
 | `monthly_budget_eur` | REAL | ≥ 0 |
 | `roi_target` | REAL | e.g. 0.20 |
-| `hourly_rate_eur` | REAL | ≥ 0, default 35 ❓ (the action plans use 25) |
-| `business_model` | TEXT | CHECK in (`dtc`, `b2c`, `b2b`, `marketplace`, `subscription`, `omnichannel`) — helps choose which plans fit |
+| `hourly_rate_eur` | REAL | ≥ 0, default 35 — the agency's cost of an hour (decided 2 November); the action plans' €25 stays in their own examples and is never used in a calculation |
+| `business_model` | TEXT | CHECK in (`dtc`, `b2c`, `b2b`, `marketplace`, `subscription`, `omnichannel`) — with `purchase_frequency`, the only basis for matching plans to a store |
 | `is_fictional` | INTEGER | NOT NULL DEFAULT 1 — shown on screen |
+| `is_active` | INTEGER | NOT NULL DEFAULT 1 — a client is deactivated, never deleted |
 | `created_at` | TEXT | |
 
 **`plan_templates`** — reference data loaded from `data/plan_templates.json`,
@@ -112,8 +120,19 @@ CHECK in (`ecommerce`, `digital_marketing`, `performance_marketing`,
 `digital_growth`, `agentic_ai`, `automations`) · `title` · `summary` ·
 `benefit_type` · `default_window_days` · `default_post_period_days` (how long
 after the window the plan's effect is still counted, e.g. 14, 30 or 90 days) ·
-`default_hurdle_eur` · `setup_hours` ·
-`store_fit` (which profiles it suits) · `featured` 0/1 · `source_file`.
+`default_hurdle_eur` · `setup_hours` · `data_fit` CHECK in (`yes`, `partial`,
+`no`) — whether the app's data can show what the plan moves, from
+[`plan-lever-map.md`](plan-lever-map.md) · `featured` 0/1 (only featured plans
+can start an action in the MVP; the rest are read-only reference) ·
+`source_file`. All 72 plans are loaded.
+
+**`plan_template_tags`** — what each plan moves and which stores it suits, one
+fact per row instead of lists in a column. `plan_template_id` FK →
+plan_templates · `kind` CHECK in (`moves`, `business_model`,
+`purchase_frequency`) · `value` — a metric from the vocabulary (§4) for
+`moves`, or one of the client's own CHECK values for the other two, validated
+when the file is loaded · PK (`plan_template_id`, `kind`, `value`). A plan
+with no `business_model` or `purchase_frequency` row suits any store.
 
 ### The work
 
@@ -125,10 +144,9 @@ after the window the plan's effect is still counted, e.g. 14, 30 or 90 days) ·
 | `client_id` | INTEGER | FK → clients, NOT NULL |
 | `plan_template_id` | INTEGER | FK → plan_templates, nullable |
 | `discipline` | TEXT | same CHECK as templates — `digital_growth` labels growth initiatives such as retention or referral; growth is also the loop every action follows |
-| `lifecycle_stage` | TEXT | CHECK in (`acquisition`, `activation`, `conversion`, `engagement`, `retention`, `repeat`, `expansion`, `referral`, `reactivation`) — required before review; shows where in the customer lifecycle a client's growth system is strong or weak |
-| `title`, `hypothesis` | TEXT | title NOT NULL; hypothesis required before review — written as *if [change], then [primary metric] will [move], because [mechanism], without worsening [guardrails]*; for an `enabler`, it states the acceptance criterion instead (e.g. *purchase capture ≥ 98%, duplicates ≤ 0.5%*) |
-| `primary_metric` | TEXT | exactly one, required before review except for an `enabler` (NULL): CHECK in (`contribution`, `revenue`, `orders`, `conversion`, `average_order_value`, `repeat_rate`, `cac`, `cpa`, `refund_rate`, `avoided_cost`) — what the action is expected to move; adoption is still decided on net benefit |
-| `guardrail_metrics` | TEXT | at least one, required before review: a comma-separated list from (`margin_pct`, `refund_rate`, `refund_value`, `cpa`), validated in code; default `margin_pct,refund_rate` |
+| `lifecycle_stage` | TEXT | CHECK in (`acquisition`, `activation`, `conversion`, `engagement`, `retention`, `repeat`, `expansion`, `referral`, `reactivation`, `operations`) — required before review; shows where in the customer lifecycle a client's growth system is strong or weak. `operations` is for work that serves the business rather than a customer step (27 of the 72 plans, including featured plan 50) and is shown as *"Operations (no customer stage)"* |
+| `title`, `hypothesis` | TEXT | title NOT NULL; hypothesis required before review — written as *if [change], then [primary metric] will [move], because [mechanism], without worsening margin or refunds*; for an `enabler`, it states the acceptance criterion instead (e.g. *purchase capture ≥ 98%, duplicates ≤ 0.5%*) |
+| `primary_metric` | TEXT | exactly one, required before review except for an `enabler` (NULL): CHECK in the metric vocabulary (§4) — what the action is expected to move; adoption is still decided on net benefit. Every action is also checked on the two fixed guardrails, margin % and refund rate (§4) |
 | `benefit_type` | TEXT | CHECK in (`contribution`, `avoided_cost`, `enabler`) — see §4 |
 | `expected_benefit_eur` | REAL | required before review, except for `enabler` |
 | `setup_cost_eur`, `setup_hours` | REAL | ≥ 0 — one-off |
@@ -314,14 +332,31 @@ the key; one carries the benefit, the other records cost only.
 | **Driver** | Explains the outcome | Revenue, orders, conversion (orders ÷ sessions), average order value, repeat-purchase rate (customers with two or more orders in the trailing 90 days ÷ customers with one or more) |
 | **Efficiency** | Cost of the result | CAC (paid acquisition spend ÷ new customers), CPA by channel (spend ÷ orders) |
 | **Diagnostic** | Helps find causes | ROAS by channel (channel revenue ÷ channel spend) |
-| **Guardrail** | Stops destructive optimisation | Contribution margin % (Growth P&L), refund rate (refunded orders ÷ orders), refund value |
+| **Guardrail** | Stops destructive optimisation | Contribution margin % (Growth P&L) and refund rate (refunded orders ÷ orders) — the two fixed guardrails every action is checked on; refund value shown beside them |
 | **Quality and risk** | Watches the system itself | Rejected and duplicate intake batches (intake quality = accepted ÷ received batches), incomplete cost data, failed automation and agent runs, report correction and rejection rates and cost per draft (§8), open alerts |
 
-Only **outcome** metrics decide anything. A guardrail breach — margin % or
-refund rate worse than the client's average over the previous three months — is
-flagged next to the outcome even
-when ROI looks good. ROAS stays a diagnostic. `hours_freed` is reported as
-capacity beside quality metrics, never as money.
+Only **outcome** metrics decide anything. A **guardrail breach** is margin %
+more than **2 percentage points** below, or refund rate more than **1
+percentage point** above, the client's average over the previous three months;
+it is flagged next to the outcome even when ROI looks good. The two tolerances
+are illustrative constants in `measure.py`, stated here so that random
+variation in the data does not count as a breach. ROAS stays a diagnostic.
+`hours_freed` is reported as capacity beside quality metrics, never as money.
+
+**The metric vocabulary** — one set of names used by `primary_metric`, the
+plan templates' `moves` tags and the dashboard: `contribution`, `revenue`,
+`orders`, `sessions`, `conversion`, `average_order_value`, `new_customers`,
+`repeat_rate`, `cac`, `cpa`, `refund_rate`, `margin_pct`, `avoided_cost`.
+
+**Where to grow** — the rule behind the dashboard panel (§7). For the month, a
+driver or efficiency metric counts as *weak* when it is worse than the client's
+own average over the previous three months by more than the guardrail
+tolerance for percentages, or by more than 5% for the others (illustrative,
+in `measure.py`). The panel lists, for each weak metric, the plans whose
+`moves` tags include it, that suit the client's business model and purchase
+frequency, and whose `data_fit` is not `no`. It never compares a store with an
+invented benchmark, and it says *"plans that target this metric"* — never
+"the app recommends". A consultant decides whether to start one.
 
 **What the app never does:** count saved hours as money; treat ROAS or
 platform-attributed revenue as a result; add ROI percentages together; add up
@@ -335,11 +370,15 @@ figures the code has calculated.
 `submitted → assigned → in_review → approved → closed`, or `rejected` /
 `cancelled`.
 
-- **To enter review:** owner, hypothesis, primary metric (unless enabler), at
-  least one guardrail metric, lifecycle stage, benefit type, expected benefit
-  (unless enabler), a comparison that matches the benefit type, measurement
-  window and post-period, and a named reviewer who is a lead assigned to the
-  client and is neither requester nor owner.
+- **To enter review:** owner, hypothesis, primary metric (unless enabler),
+  lifecycle stage, benefit type, expected benefit (unless enabler), a
+  comparison that matches the benefit type, measurement window and
+  post-period, and a named reviewer who is a lead assigned to the client and is
+  neither requester nor owner.
+- **The prediction is fixed in review.** Once an action enters review, its
+  window, post-period, expected benefit, primary metric, comparison and hurdle
+  cannot change. To change one, the action is cancelled and a new one opened,
+  so the history shows both.
 - **To close:** measured benefit and confidence (unless enabler), an
   `evidence_note` for an avoided cost, and a decision, certified by the named
   reviewer. For an enabler the decision records whether the acceptance
@@ -348,8 +387,9 @@ figures the code has calculated.
   ends (`window_end` plus `post_period_days`) unless an
   `early_stop_reason` is recorded — "the metric looks good" is not one — and an
   action stopped early cannot be adopted.
-- **Guardrails at close.** The reviewer sees each guardrail over the window
-  against the client's previous three months. If one is breached, `inconclusive`,
+- **Guardrails at close.** The reviewer sees margin % and refund rate over the
+  window against the client's previous three months, with the tolerances of
+  §4. If one is breached, `inconclusive`,
   `revise` or `reject` may be chosen even when net benefit clears the hurdle;
   `adopt` needs a `decision_note` saying why the breach is acceptable.
 - **On `adopt`,** the reviewer is offered "add to the growth system", which
@@ -386,7 +426,8 @@ reviewer the action stays blocked. `lifecycle.User` becomes multi-role
 | GET/POST | `/login` · POST `/logout` | anyone · signed in | session |
 | GET | `/` | signed in | the client portfolio: assigned clients with profile and system ROI against target |
 | GET | `/clients/<id>` | assigned | **the growth-system dashboard** (§7) |
-| GET | `/clients/<id>/plans` | assigned | plan templates, ordered by fit to this client's profile |
+| GET | `/clients/<id>/details` | assigned | the dashboard's Details tab (§7) |
+| GET | `/clients/<id>/plans` | assigned | all 72 plans, those that suit this client first; only featured plans offer "start an action" |
 | GET/POST | `/clients/<id>/actions/new` | assigned consultant | new action, optionally from a template |
 | GET | `/actions/<id>` | assigned | the action, its history and its measured result |
 | POST | `/actions/<id>/assign`, `/review`, `/approve`, `/reject`, `/close`, `/cancel` | per §5 | stage changes through `lifecycle.py` |
@@ -404,25 +445,31 @@ reviewer the action stays blocked. `lifecycle.User` becomes multi-role
 - **Portfolio** — each assigned client: name, business model, profile (average
   order, margin, frequency, budget), system ROI against its target, and a
   "fictional" badge.
-- **Growth-system dashboard**, one client and month, laid out by the six metric
-  classes (§4):
+- **Growth-system dashboard**, one client and month. The main view follows the
+  storyline — diagnose, levers, proof, growth — and holds five panels:
   - **Store health — the Growth P&L** at the top: sessions, orders, conversion,
     average order, net revenue, contribution before and after marketing, and
     margin %, with *incomplete* lines marked; labelled as the store's figures,
     not the agency's result;
+  - **Where to grow:** each weak metric with the plans that target it (§4);
   - **Outcome (the scoreboard):** monthly operating cost, benefit, net, system
     ROI against target, ROI by month, and setup payback;
+  - **Guardrail flags:** margin % and refund rate, flagged when beyond the
+    tolerance;
+  - **Components:** discipline, lifecycle stage, monthly cost, benefit, ROI,
+    measurement, confidence and status (a `pilot_estimate` benefit is shown as
+    *"estimate from the pilot of <month>"*), with pilots in progress.
+- **Details tab** of the dashboard, the other metric classes (§4):
   - **Drivers:** revenue, orders, conversion, average order, repeat rate;
   - **Efficiency:** CAC and CPA by channel;
   - **Diagnostics:** ROAS by channel, labelled diagnostic;
-  - **Guardrails:** margin and refunds, flagged when worse than baseline;
   - **Quality and risk:** rejected intake rows, failed runs, open alerts;
-  - **Components:** discipline, lifecycle stage, monthly cost, benefit, ROI,
-    measurement, confidence and status (a `pilot_estimate` benefit is shown as
-    *"estimate from the pilot of <month>"*), with pilots in progress;
-  - **By lifecycle stage:** investment and benefit per stage, so the consultant
-    sees where the system is strong or weak.
-- **Plans** — templates that fit this client, with a "start an action" button.
+  - **By lifecycle stage:** investment and benefit per stage, with
+    *"Operations (no customer stage)"* as its own row, so the consultant sees
+    where the system is strong or weak.
+- **Plans** — all 72, those that suit this client first, each with what it
+  moves and its data fit; the six featured plans carry a "start an action"
+  button.
 - **Action** — the plan, primary metric and guardrails, costs, comparison,
   history, measured result, guardrails against baseline, net benefit against
   the hurdle, and decision (with the early-stop reason, if any).
@@ -492,20 +539,30 @@ that, and the label above is not a compliance conclusion.
 for three stores, with a fixed random seed so every run produces the same data
 and tests can rely on it.
 
-| Store | Average order | Margin | Frequency | Budget/month | Baseline |
-|---|---|---|---|---|---|
-| Luna Home (homeware) | €65 | 35% | occasional | €5,000 | ~12,300 sessions/week, 1.8% conversion |
-| Brote Cosmetics (skincare subscription) | ~€30 | ~60% | monthly | ~€2,000 | to set ❓ |
-| Roble Muebles (furniture) | ~€600 | ~25% | rare | ~€12,000 | to set ❓ |
+| Store | Average order | Margin | Frequency | Budget/month | Sessions/week | Conversion | Orders/week | Revenue/year | Refund rate | Returning share of orders |
+|---|---|---|---|---|---|---|---|---|---|---|
+| Luna Home (homeware) | €65 | 35% | occasional | €5,000 | 12,300 | 1.8% | ~221 | ~€750k | ~6% | moderate |
+| Brote Cosmetics (skincare subscription) | €30 | 60% | monthly | €2,000 | 4,000 | 2.5% | ~100 | ~€156k | ~3% | ~45% |
+| Roble Muebles (furniture) | €600 | 25% | rare | €12,000 | 6,000 | 0.6% | ~36 | ~€1.1M | ~8% | almost none |
+
+All figures are fictional (baselines for Brote and Roble decided 2 November);
+ad spend is roughly 8–15% of revenue in each store.
 
 The generator produces daily sessions and ad spend by channel, orders with
-pseudonymous customers and realistic cost fields, refunds, noise, weekly and
-seasonal patterns, and **effects written in for a set of past actions** — some
-measured with a holdout group (with their `assignments`, including assigned
-customers who never buy, such as cart abandoners), some before/after, and some
-that fail, such as Luna Home's promotional campaign (ROAS 3.0, ROI −0.17). It also writes the
-matching actions, components and monthly records, so the dashboards have a
-history on day one.
+pseudonymous customers and realistic cost fields, refunds, noise, and weekly and
+seasonal patterns for **all three stores**. **Effects for past actions** are
+written in where the demo needs them, not everywhere:
+
+- **Luna Home** — about four closed actions, measured with a holdout (with
+  their `assignments`, including assigned customers who never buy, such as cart
+  abandoners) or before/after, among them a failure: the promotional campaign
+  (ROAS 3.0, ROI −0.17); and two running components with their monthly records;
+- **Brote Cosmetics** — one action closed with a holdout (an email plan), so the
+  same kind of action can be compared across two stores;
+- **Roble Muebles** — one pilot still in progress.
+
+The matching actions, components and monthly records are written with them, so
+the dashboards have a history on day one.
 
 **Honesty rule:** the demo proves the app measures correctly, not that any
 tactic works. Every fictional client carries `is_fictional = 1`, and the screen
@@ -517,21 +574,33 @@ calculations.
 
 ## 10 · Plan templates in the MVP
 
-Six featured templates, one per discipline; the other 66 may be loaded as
-reference later.
+All 72 plans are loaded as read-only reference, with their `moves` tags and
+data fit from [`plan-lever-map.md`](plan-lever-map.md), so "where to grow" can
+point at any of them. Six are **featured**, one per discipline, and only those
+can start an action in the MVP.
 
 | Plan | Discipline | Typical benefit type | Why it is in the MVP |
 |---|---|---|---|
 | 03 Discounts | Ecommerce | contribution | Shows why discounts are never subtracted twice |
 | 20 Email segmentation | Digital marketing | contribution | Fits the repeat-purchase store — chosen by title, to verify against the full plan ❓ |
 | 30 Search terms | Performance marketing | contribution | Media saved and contribution in one result |
-| 38 Experiment prioritisation | Digital growth | — | Shapes the planning screen: compare candidates before committing |
+| 43 Purchase frequency | Digital growth | contribution | A reorder shortcut that moves the repeat rate; fully measurable from the fictional orders, and it fills the thin "repeat" stage |
 | 50 Analytics agents | Agentic AI | avoided_cost | Also the design of the read-only client report |
 | 65 Cart recovery | Automations | contribution | The classic running component; per-customer holdout |
+
+Plan 38 (experiment prioritisation) is not a featured template: it is a method
+for comparing ideas rather than an action, and it shapes the planning screen
+instead.
 
 ## 11 · Tests (Week 7)
 
 Fixtures are small and separate from the generated demo data.
+
+**Core and stretch** (decided 2 November). The **core** tests are built in Week
+7 whatever happens: 1, 2, 4, 5, 6, 7, 8, 10, 11, 12, 13, 14, 15, 16, 17, 18,
+20, 21, 23, 24, 27, 34 and 40 — correct money, security, independent sign-off
+and human review of the AI. The rest are **stretch**, built if Week 7 leaves
+time; the spec keeps them so the design stays complete.
 
 1. Contribution of an order subtracts costs and refunds, adds restocked cost, and never subtracts the discount again
 2. Holdout benefit uses every customer in `assignments`, including those who bought nothing, and a customer assigned to two actions counts in each
@@ -556,14 +625,14 @@ Fixtures are small and separate from the generated demo data.
 21. A service account cannot sign in or approve anything
 22. The generator with the fixed seed produces identical data twice
 23. A person without a password hash, or a service account with one, is refused by the schema
-24. Every connection has `foreign_keys` on; deleting a client with actions is refused ❓ *(pending the delete rule)*
+24. Every connection has `foreign_keys` on; deleting a client, user or action is refused (`ON DELETE RESTRICT`), and a deactivated client leaves the portfolio but keeps its history
 25. An action cannot enter review without a lifecycle stage
-26. A guardrail breach is flagged on the dashboard even when the client's system ROI meets its target
+26. A guardrail breach (margin % more than 2 points below, or refund rate more than 1 point above, the previous three months' average) is flagged on the dashboard even when the client's system ROI meets its target, and a smaller change is not flagged
 27. A shop-data batch whose row count or revenue total misses its control totals (a €0.01 difference included), or that has one invalid row, is rejected whole: no row is written, and the event is kept with its reason and counted in the quality metrics
 28. The Growth P&L for a fixture month adds up line by line, shows the discount without subtracting it again, and its identity (sessions × conversion × average order = net revenue) holds
 29. An order with a missing product cost makes the dependent Growth P&L lines *incomplete*, never computed as zero, and a contribution result built on it cannot close an action
 30. Store-level contribution never enters an action's benefit or the system ROI: changing it leaves both unchanged
-31. An action cannot enter review without a primary metric and at least one guardrail metric
+31. An action cannot enter review without a primary metric from the vocabulary (unless it is an enabler), and margin % and refund rate are checked on every action
 32. Closing before the measurement period ends is refused without an `early_stop_reason`, and an action stopped early cannot be adopted
 33. With a breached guardrail, `inconclusive` is accepted even when net benefit clears the hurdle, and `adopt` is refused without a `decision_note`
 34. A report cannot be sent or rejected without a person's review; a rejected report keeps its reason, and only then can a new draft for that month be stored
@@ -572,6 +641,8 @@ Fixtures are small and separate from the generated demo data.
 37. The comparison must match the benefit type (`contribution` → `holdout` or `before_after`, `avoided_cost` → `invoice`, `enabler` → `none`), and an enabler enters review without a primary metric
 38. A component month for a `holdout_kept` or `pilot_estimate` component ignores a typed benefit and stores the app's figure; an `invoice` month recorded by the origin action's requester or owner is refused
 39. A `pilot_estimate` component becomes `review_due` six months after it started
+40. Once an action is in review, a change to its window, post-period, expected benefit, primary metric, comparison or hurdle is refused
+41. "Where to grow" lists a plan only when its `moves` include a weak metric, it suits the client's business model and purchase frequency, and its `data_fit` is not `no`; a metric within tolerance lists nothing
 
 ## 12 · Security surface — what Week 8 should find
 
@@ -609,8 +680,8 @@ From the growth research, excluded on purpose:
 
 ## 14 · Open decisions ❓
 
-1. **People time:** €35/hour (the app's default) or €25/hour (all 72 plans); now a per-client setting, so the choice is the default.
-2. **The delete rule** for clients and actions — decided on paper, as Week 5 requires.
-3. **Baselines for Brote Cosmetics and Roble Muebles**, set when the generator is written.
-4. **Real users and the lecturer's agreement** to v2.
-5. **The design pack** — ERD and roles for Week 5, DFD and STRIDE for Week 8, GDPR for Week 11.
+1. **Real users and the lecturer's agreement** to v2.
+
+Decided on 2 November and written above: the €35 default rate, the delete
+rule, and the Brote and Roble baselines. The design pack keeps its schedule —
+ERD and roles for Week 5, DFD and STRIDE for Week 8, GDPR for Week 11.
