@@ -120,14 +120,26 @@ def _client_exists(client_id) -> bool:
 
 
 def _reject(conn, source, client_id, event_type, external_id, event, reason, status, **totals):
-    with transaction(conn):
-        conn.execute(
-            """INSERT INTO automation_events (source, client_id, event_type, external_id, payload,
-                   status, reason, expected_rows, parsed_rows, expected_revenue_eur,
-                   parsed_revenue_eur) VALUES (?, ?, ?, ?, ?, 'rejected', ?, ?, ?, ?, ?)""",
-            (source, client_id, event_type, external_id, json.dumps(event)[:20000], reason,
-             totals.get("expected_rows"), totals.get("parsed_rows"),
-             totals.get("expected_revenue"), totals.get("parsed_revenue")))
+    try:
+        with transaction(conn):
+            conn.execute(
+                """INSERT INTO automation_events (source, client_id, event_type, external_id,
+                       payload, status, reason, expected_rows, parsed_rows, expected_revenue_eur,
+                       parsed_revenue_eur) VALUES (?, ?, ?, ?, ?, 'rejected', ?, ?, ?, ?, ?)""",
+                (source, client_id, event_type, external_id, json.dumps(event)[:20000], reason,
+                 totals.get("expected_rows"), totals.get("parsed_rows"),
+                 totals.get("expected_revenue"), totals.get("parsed_revenue")))
+    except sqlite3.IntegrityError:
+        # Two copies of the same event raced past the duplicate check and the
+        # other one was recorded first: this one is a redelivery, not an error.
+        # (Found by the 2 November code review: it used to end in an error 500.)
+        with transaction(conn):
+            conn.execute(
+                """INSERT INTO automation_events (source, client_id, event_type, external_id,
+                       payload, status, reason) VALUES (?, ?, ?, ?, '{}', 'duplicate',
+                       'redelivered while the first copy was being processed')""",
+                (source, client_id, event_type, external_id))
+        return jsonify({"status": "duplicate"}), 200
     return jsonify({"status": "rejected", "reason": reason}), status
 
 

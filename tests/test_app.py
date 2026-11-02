@@ -168,6 +168,37 @@ def test_38b_owner_of_the_origin_action_cannot_record_an_invoice_month(client, a
     assert row["measured_benefit_eur"] == 650 and row["confidence"] == "documented"
 
 
+def test_review_a_second_component_sharing_a_key_records_its_cost(client, app_conn):
+    """Review fix A: the month used to be refused, losing its cost and hours."""
+    from conftest import add_order, assign_customers
+    pilot = add_action(app_conn, comparison="holdout", status="closed")
+    assign_customers(app_conn, pilot, ["T1", "T2"], ["C1", "C2"], day="2026-08-03")
+    add_order(app_conn, "2026-08-10", "T1")
+    first = _component(app_conn, origin=pilot)
+    second = _component(app_conn, origin=pilot)
+    login(client, CONSULTANT)
+    post(client, f"/components/{first}/months", {"month": "2026-08", "operating_cost_eur": "100"})
+    post(client, f"/components/{second}/months", {"month": "2026-08", "operating_cost_eur": "60"})
+    rows = app_conn.execute(
+        "SELECT component_id, operating_cost_eur, measured_benefit_eur FROM component_months "
+        "ORDER BY component_id").fetchall()
+    assert [r["component_id"] for r in rows] == [first, second]
+    assert rows[1]["operating_cost_eur"] == 60 and rows[1]["measured_benefit_eur"] is None
+    assert rows[0]["measured_benefit_eur"] is not None
+
+
+def test_review_c_reactivated_component_has_no_retirement_date(client, app_conn):
+    component = _component(app_conn)
+    login(client, LEAD_A)
+    post(client, f"/components/{component}/status", {"status": "retired"})
+    assert app_conn.execute("SELECT retired_on FROM components WHERE id = ?",
+                            (component,)).fetchone()[0] is not None
+    post(client, f"/components/{component}/status", {"status": "running"})
+    row = app_conn.execute("SELECT status, retired_on FROM components WHERE id = ?",
+                           (component,)).fetchone()
+    assert row["status"] == "running" and row["retired_on"] is None
+
+
 def _draft(app_conn, month="2026-10", cost=0.02):
     app_conn.execute("""INSERT INTO client_reports (client_id, month, draft_text, model,
                             prompt_version, generation_cost_eur)

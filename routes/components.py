@@ -116,6 +116,18 @@ def record_month(component_id):
                 (component_id, month)).fetchone()
             if existing:
                 raise ValueError("this month is already recorded; record a correction instead")
+        # Each benefit is counted once: when another component already carries
+        # this benefit for the month, this one records its cost and hours only.
+        # (Found by the 2 November code review: refusing the whole month lost
+        # the cost.)
+        shared = benefit is not None and component["benefit_key"] and conn.execute(
+            """SELECT 1 FROM component_months cm
+               WHERE cm.client_id = ? AND cm.month = ? AND cm.benefit_key = ?
+                 AND cm.measured_benefit_eur IS NOT NULL AND cm.component_id <> ?
+                 AND NOT EXISTS (SELECT 1 FROM component_months n WHERE n.supersedes_id = cm.id)""",
+            (component["client_id"], month, component["benefit_key"], component_id)).fetchone()
+        if shared:
+            benefit, confidence = None, None
         with transaction(conn):
             conn.execute(
                 """INSERT INTO component_months (component_id, client_id, month,
@@ -130,7 +142,12 @@ def record_month(component_id):
     except (ValueError, lifecycle.TransitionError) as error:
         flash(f"Refused: {error}", "error")
     else:
-        flash("Month recorded.", "success")
+        if shared:
+            flash("Month recorded with cost and hours only: another component already "
+                  "carries this benefit for the month, and each benefit is counted once.",
+                  "success")
+        else:
+            flash("Month recorded.", "success")
     return redirect(url_for("components.show", component_id=component_id))
 
 
@@ -146,8 +163,9 @@ def set_status(component_id):
     conn = get_db()
     with transaction(conn):
         conn.execute(
+            # A component brought back from retirement has no retirement date.
             "UPDATE components SET status = ?, retired_on = CASE WHEN ? = 'retired' "
-            "THEN date('now') ELSE retired_on END WHERE id = ?",
+            "THEN date('now') ELSE NULL END WHERE id = ?",
             (status, status, component_id))
     flash("Status updated.", "success")
     return redirect(url_for("components.show", component_id=component_id))
