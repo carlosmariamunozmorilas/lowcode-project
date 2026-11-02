@@ -159,6 +159,11 @@ def test_29_missing_cost_makes_dependent_lines_incomplete(conn):
     assert p["product_cost"].incomplete
     assert p["contribution_before_marketing"].incomplete
     assert not p["net_revenue"].incomplete
+    # Review fix D: an incomplete line carries no value, not a zero-assumed one.
+    for line in ("product_cost", "contribution_before_marketing",
+                 "contribution_after_marketing", "margin_pct"):
+        assert p[line].value is None, line
+    assert p["net_revenue"].value == 200
     # A plain SUM() would have reported €40 of product cost as if it were complete.
     contrib = measure.contribution_between(conn, LUNA, "2026-08-01", "2026-08-31")
     assert contrib.incomplete

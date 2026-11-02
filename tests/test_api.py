@@ -48,6 +48,29 @@ def test_18b_accepts_a_valid_batch_once_and_records_its_automation(client, app_c
     assert statuses == ["accepted", "duplicate"]
 
 
+def test_review_b_a_racing_copy_is_a_duplicate_not_a_crash(app, app_conn):
+    """Review fix B: two copies racing past the duplicate check used to end in a 500.
+
+    The race itself cannot be timed in a test, so this reproduces its last
+    step: the losing copy tries to record a rejection for an external id that
+    the winning copy has already recorded as accepted."""
+    from db import get_db
+    from routes import api
+
+    app_conn.execute(
+        """INSERT INTO automation_events (source, client_id, event_type, external_id, payload,
+               status) VALUES ('shop_intake', ?, 'shop_data', 'L-race', '{}', 'accepted')""",
+        (LUNA,))
+    app_conn.commit()
+    with app.test_request_context():
+        response, status = api._reject(get_db(), "shop_intake", LUNA, "shop_data", "L-race",
+                                       {}, "UNIQUE constraint failed: orders.external_id", 422)
+        assert status == 200 and response.get_json()["status"] == "duplicate"
+    statuses = [r[0] for r in app_conn.execute(
+        "SELECT status FROM automation_events WHERE external_id = 'L-race' ORDER BY id")]
+    assert statuses == ["accepted", "duplicate"]
+
+
 def test_19_unknown_order_or_client_is_refused(client, app_conn):
     bad_refund = batch(refunds=[{"external_id": "R-1", "order_external_id": "NOPE",
                                  "refunded_at": "2026-10-02", "amount_eur": 10}])

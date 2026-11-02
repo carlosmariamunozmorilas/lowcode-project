@@ -213,6 +213,13 @@ class Line:
     value: float | None
     incomplete: bool = False
 
+    def __post_init__(self):
+        # An incomplete line has no value at all, so nothing downstream (the
+        # API, an automation) can use a figure computed as if a cost were zero.
+        # (Found by the 2 November code review.)
+        if self.incomplete:
+            self.value = None
+
 
 def growth_pnl(conn: sqlite3.Connection, client_id: int, month: str) -> dict:
     """The store's health for one month — the context, not the agency's result."""
