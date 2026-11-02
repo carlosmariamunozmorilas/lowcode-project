@@ -51,7 +51,7 @@ orphaned.
 
 ```
 app.py                  Flask factory, blueprints, error pages
-config.py               settings from environment (SECRET_KEY, DATABASE_PATH, one API secret per automation)
+config.py               settings from environment (SECRET_KEY, DATABASE_PATH, one API secret per automation, keyed by automation name)
 db.py                   connection per request, PRAGMA foreign_keys, init-db command
 auth.py                 login, logout, session, role and client-access checks
 lifecycle.py            action stage rules and the identity rule for sign-off (exists)
@@ -73,19 +73,31 @@ dates are ISO 8601 text, UTC.
 **Nothing is deleted** (decided 2 November). Every foreign key is `ON DELETE
 RESTRICT`; clients and users are deactivated (`is_active = 0`) and drop out of
 lists and sign-in, actions are cancelled, and history and monthly records are
-append-only. Shoppers exist only as pseudonymous codes, so the only personal
-data is the team's own user records; how long a deactivated user is kept is
-set in the Week 11 GDPR page.
+append-only. How long a deactivated user is kept is set in the Week 11 GDPR
+page.
+
+**Personal data.** In a real deployment, `customer_ref` would be pseudonymised
+personal data under the GDPR (Article 4(5)): a code that tracks one shopper's
+orders and test groups over time still relates to a person, even without a
+name. In the MVP every customer is fictional, so the app holds no real
+shopper's data — but the design treats shop data as personal data, and the
+Week 11 GDPR page says so. The team's user records are personal data in any
+case. (Corrected 2 November after the second-assistant review, finding 7.)
 
 ### People and access
 
 **`users`** — `id` PK · `email` UNIQUE NOT NULL · `full_name` NOT NULL ·
-`password_hash` TEXT · `is_service` INTEGER NOT NULL DEFAULT 0 · `is_active`
+`password_hash` TEXT · `is_service` INTEGER NOT NULL DEFAULT 0 ·
+`automation_name` TEXT UNIQUE (e.g. `shop_intake`, `report_draft`) · `is_active`
 INTEGER NOT NULL DEFAULT 1 · `created_at`.
 `CHECK ((is_service = 1 AND password_hash IS NULL) OR (is_service = 0 AND password_hash IS NOT NULL))`
 — a person always has a password hash (Werkzeug scrypt, decided 28 October); an
 automation account never has one and cannot sign in. This settles the v1
 contradiction between "NOT NULL" and password-less service accounts.
+`CHECK ((is_service = 1) = (automation_name IS NOT NULL))` — **each automation
+is one service user**, named by `automation_name`; that name is how an API
+request says which automation it is (§8), and the service user is what the app
+records as the actor of everything the automation writes.
 
 **`user_roles`** — `user_id` FK → users · `role` CHECK in (`consultant`, `lead`,
 `admin`, `service`) · PK (`user_id`, `role`). Several roles per person (decided
@@ -294,6 +306,11 @@ action's measurement period (the window plus `post_period_days`):
   period immediately before, for the action's scope. Confidence `before_after`,
   shown as weaker evidence.
 
+**Which refunds count.** An action's result subtracts the refunds of orders in
+its measurement period that were recorded (`refunded_at`) by the end of that
+period. A refund recorded later never changes a closed action; it still counts
+in the Growth P&L of the month it is recorded, as every refund does.
+
 **Two economic views, never mixed:**
 
 | View | Formula | Used for |
@@ -437,8 +454,8 @@ reviewer the action stays blocked. `lifecycle.User` becomes multi-role
 | POST | `/components/<id>/status` | named lead | keep, mark for review, or retire |
 | GET/POST | `/clients/<id>/reports/<month>` | assigned | review and send the drafted report |
 | GET/POST | `/admin/clients`, `/admin/users` | admin | set-up |
-| POST | `/api/events` | HMAC signature | automation writes: `shop_data`, `alerts`, `report_draft`; idempotent |
-| GET | `/api/metrics` | HMAC signature | aggregates for automations 2–4 — never raw orders |
+| POST | `/api/events` | named automation + HMAC signature (§8) | automation writes: `shop_data`, `alerts`, `report_draft`; idempotent |
+| GET | `/api/metrics` | named automation + HMAC signature (§8) | aggregates for automations 2–4 — never raw orders |
 
 ## 7 · Screens
 
@@ -499,8 +516,14 @@ when it fails, how its output is checked, what it costs each month, and its main
 risk. Its runs and failed runs are recorded monthly (§3) and shown as quality
 metrics (§4).
 
-**Each automation has its own credentials and scope.** The API secret is per
-automation, and each is allowed only its own event types: the report automation
+**Each automation has its own credentials and scope.** Every API request
+carries two headers: `X-Automation`, the automation's name, and `X-Signature`,
+an HMAC-SHA256 of the request body made with that automation's secret. The app
+finds the active service user with that `automation_name`, takes the matching
+secret from `config.py`, and checks the signature with a constant-time
+comparison; an unknown or deactivated name, or a bad signature, is refused
+before anything is read or written, and the service user is recorded as the
+actor. Each automation is allowed only its own event types: the report automation
 may read `GET /api/metrics` and write `report_draft`, nothing else. No route the
 automations can reach changes ad budgets, bids or prices, publishes a report, or
 edits or deletes shop data.
@@ -547,6 +570,11 @@ and tests can rely on it.
 
 All figures are fictional (baselines for Brote and Roble decided 2 November);
 ad spend is roughly 8–15% of revenue in each store.
+
+**Build order.** The generator is the largest hidden piece of work in the MVP,
+so it is built for **Luna Home first**, complete with its past actions, and
+only then extended to Brote Cosmetics and Roble Muebles. If time runs short,
+the demo still works on one store.
 
 The generator produces daily sessions and ad spend by channel, orders with
 pseudonymous customers and realistic cost fields, refunds, noise, and weekly and
@@ -621,7 +649,7 @@ time; the spec keeps them so the design stays complete.
 15. A form posting `status`, `measured_benefit_eur` or `decision` directly is ignored — the mass-assignment test
 16. `action_history` and `component_months` refuse `UPDATE` and `DELETE`
 17. A status change and its history row are written together or not at all
-18. `POST /api/events` refuses a bad signature; a redelivered `external_id` changes nothing
+18. `POST /api/events` refuses a request with no `X-Automation` header, an unknown or deactivated automation name, or a bad signature, writing nothing; a valid request is recorded with that automation's service user as the actor; a redelivered `external_id` changes nothing
 19. A refund for an unknown order, or a row for an unknown client, is refused
 20. `GET /api/metrics` returns aggregates only — no order rows, no customer references
 21. A service account cannot sign in or approve anything
@@ -632,7 +660,7 @@ time; the spec keeps them so the design stays complete.
 26. A guardrail breach (margin % more than 2 points below, or refund rate more than 1 point above, the previous three months' average) is flagged on the dashboard even when the client's system ROI meets its target, and a smaller change is not flagged
 27. A shop-data batch whose row count or revenue total misses its control totals (a €0.01 difference included), or that has one invalid row, is rejected whole: no row is written, and the event is kept with its reason and counted in the quality metrics
 28. The Growth P&L for a fixture month adds up line by line, shows the discount without subtracting it again, and its identity (sessions × conversion × average order = net revenue) holds
-29. An order with a missing product cost makes the dependent Growth P&L lines *incomplete*, never computed as zero, and a contribution result built on it cannot close an action
+29. An order with a missing product cost makes the dependent Growth P&L lines *incomplete*, never computed as zero, and a contribution result built on it cannot close an action — a plain SQL `SUM()` silently skips missing values, so this is the failure the test exists to catch
 30. Store-level contribution never enters an action's benefit or the system ROI: changing it leaves both unchanged
 31. An action cannot enter review without a primary metric from the vocabulary (unless it is an enabler), and margin % and refund rate are checked on every action
 32. Closing before the measurement period ends is refused without an `early_stop_reason`, and an action stopped early cannot be adopted
@@ -645,6 +673,7 @@ time; the spec keeps them so the design stays complete.
 39. A `pilot_estimate` component becomes `review_due` six months after it started
 40. Once an action is in review, a change to its window, post-period, expected benefit, primary metric, comparison or hurdle is refused
 41. "Where to grow" lists a plan only when its `moves` include a weak metric, it suits the client's business model and purchase frequency, and its `data_fit` is not `no`; a metric within tolerance lists nothing
+42. An action's result subtracts refunds recorded by the end of its measurement period and ignores later ones; a refund recorded after the action closed leaves its result unchanged but appears in that month's Growth P&L
 
 ## 12 · Security surface — what Week 8 should find
 
@@ -652,7 +681,7 @@ time; the spec keeps them so the design stays complete.
 2. **Sign-off independence:** can anyone approve or close their own work, or record an `invoice` month for their own component, through the route, not just the button?
 3. **Mass assignment:** can a form set a status, a result or a decision directly?
 4. **The forwarded approval link:** does opening it as someone else refuse the decision?
-5. **API trust:** signatures, idempotency, unknown clients, oversized batches.
+5. **API trust:** signatures, idempotency, unknown clients, unknown automation names, oversized batches — and **replay**: a resent event is refused by its `external_id`, but a timestamp inside the signature, with old requests refused, is the stronger control to weigh here.
 6. **Prompt injection in the report:** only aggregates reach the model, and a person reviews every draft.
 7. **Rewriting history:** do the triggers hold, and does any route try an update?
 8. **Automation scope:** can one automation's secret write another's event types, or a partial batch slip past the control totals?
