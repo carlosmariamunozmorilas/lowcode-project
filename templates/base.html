@@ -9,8 +9,20 @@
 <body>
     <header>
         <nav>
-            <a href="{{ url_for('index') }}" class="brand">MarketingOps</a>
-            <a href="{{ url_for('new_action') }}">New action</a>
+            <a href="{{ url_for('clients.portfolio') }}" class="brand">MarketingOps</a>
+            {% if g.user %}
+                <a href="{{ url_for('clients.portfolio') }}">Clients</a>
+                {% if 'lead' in g.roles %}<a href="{{ url_for('review.queue') }}">Review queue</a>{% endif %}
+                {% if 'admin' in g.roles %}
+                    <a href="{{ url_for('admin.clients') }}">Admin: clients</a>
+                    <a href="{{ url_for('admin.users') }}">Admin: people</a>
+                {% endif %}
+                <span class="who">{{ g.user.full_name }} · {{ g.roles|sort|join(', ') }}</span>
+                <form method="post" action="{{ url_for('auth.logout') }}" class="inline">
+                    <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+                    <button type="submit" class="link">Sign out</button>
+                </form>
+            {% endif %}
         </nav>
     </header>
     <main>
@@ -18,7 +30,7 @@
             {% if messages %}
                 <ul class="flashes">
                     {% for category, message in messages %}
-                        <li class="flash flash-{{ category }}">{{ message }}</li>
+                        <li class="flash flash-{{ category }}" role="status">{{ message }}</li>
                     {% endfor %}
                 </ul>
             {% endif %}

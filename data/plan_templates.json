@@ -1,0 +1,1480 @@
+{
+  "source": "docs/plan-lever-map.md, 2 November 2026",
+  "plans": [
+    {
+      "id": 1,
+      "discipline": "ecommerce",
+      "title": "Product assortment",
+      "summary": "Curated category of up to 20 SKUs. Decides on: Contribution per eligible visitor.",
+      "benefit_type": "contribution",
+      "lifecycle_stage": "conversion",
+      "default_window_days": 28,
+      "default_post_period_days": 14,
+      "default_hurdle_eur": 500,
+      "setup_hours": 24,
+      "data_fit": "partial",
+      "featured": false,
+      "source_file": "ROI_Action_Plan_01",
+      "values_source": "defaults (reference plan, not startable in the MVP)",
+      "moves": [
+        "conversion",
+        "average_order_value"
+      ],
+      "fits": []
+    },
+    {
+      "id": 2,
+      "discipline": "ecommerce",
+      "title": "Pricing",
+      "summary": "One alternative price for one product. Decides on: Full-basket contribution per eligible visitor.",
+      "benefit_type": "contribution",
+      "lifecycle_stage": "conversion",
+      "default_window_days": 28,
+      "default_post_period_days": 14,
+      "default_hurdle_eur": 500,
+      "setup_hours": 24,
+      "data_fit": "yes",
+      "featured": false,
+      "source_file": "ROI_Action_Plan_02",
+      "values_source": "defaults (reference plan, not startable in the MVP)",
+      "moves": [
+        "margin_pct",
+        "conversion"
+      ],
+      "fits": []
+    },
+    {
+      "id": 3,
+      "discipline": "ecommerce",
+      "title": "Discounts",
+      "summary": "Discount policy change. Decides on: Contribution per assigned visitor.",
+      "benefit_type": "contribution",
+      "lifecycle_stage": "conversion",
+      "default_window_days": 28,
+      "default_post_period_days": 14,
+      "default_hurdle_eur": 500,
+      "setup_hours": 24,
+      "data_fit": "yes",
+      "featured": true,
+      "source_file": "ROI_Action_Plan_03",
+      "values_source": "default window; post-period for the post-promotion check — verify against plan 03",
+      "moves": [
+        "margin_pct",
+        "average_order_value"
+      ],
+      "fits": []
+    },
+    {
+      "id": 4,
+      "discipline": "ecommerce",
+      "title": "Product pages",
+      "summary": "One improved product-page package. Decides on: Contribution per eligible visitor.",
+      "benefit_type": "contribution",
+      "lifecycle_stage": "conversion",
+      "default_window_days": 28,
+      "default_post_period_days": 14,
+      "default_hurdle_eur": 500,
+      "setup_hours": 24,
+      "data_fit": "partial",
+      "featured": false,
+      "source_file": "ROI_Action_Plan_04",
+      "values_source": "defaults (reference plan, not startable in the MVP)",
+      "moves": [
+        "conversion"
+      ],
+      "fits": []
+    },
+    {
+      "id": 5,
+      "discipline": "ecommerce",
+      "title": "Navigation and search",
+      "summary": "Category hub, filters, query handling. Decides on: Contribution per eligible visitor.",
+      "benefit_type": "contribution",
+      "lifecycle_stage": "conversion",
+      "default_window_days": 28,
+      "default_post_period_days": 14,
+      "default_hurdle_eur": 500,
+      "setup_hours": 24,
+      "data_fit": "partial",
+      "featured": false,
+      "source_file": "ROI_Action_Plan_05",
+      "values_source": "defaults (reference plan, not startable in the MVP)",
+      "moves": [
+        "conversion"
+      ],
+      "fits": []
+    },
+    {
+      "id": 6,
+      "discipline": "ecommerce",
+      "title": "Mobile experience",
+      "summary": "Three mobile fixes. Decides on: Contribution per eligible mobile visitor.",
+      "benefit_type": "contribution",
+      "lifecycle_stage": "conversion",
+      "default_window_days": 28,
+      "default_post_period_days": 14,
+      "default_hurdle_eur": 500,
+      "setup_hours": 24,
+      "data_fit": "partial",
+      "featured": false,
+      "source_file": "ROI_Action_Plan_06",
+      "values_source": "defaults (reference plan, not startable in the MVP)",
+      "moves": [
+        "conversion"
+      ],
+      "fits": []
+    },
+    {
+      "id": 7,
+      "discipline": "ecommerce",
+      "title": "Checkout",
+      "summary": "Up to three checkout changes. Decides on: Contribution per checkout starter.",
+      "benefit_type": "contribution",
+      "lifecycle_stage": "conversion",
+      "default_window_days": 28,
+      "default_post_period_days": 14,
+      "default_hurdle_eur": 500,
+      "setup_hours": 24,
+      "data_fit": "partial",
+      "featured": false,
+      "source_file": "ROI_Action_Plan_07",
+      "values_source": "defaults (reference plan, not startable in the MVP)",
+      "moves": [
+        "conversion"
+      ],
+      "fits": []
+    },
+    {
+      "id": 8,
+      "discipline": "ecommerce",
+      "title": "Bundles",
+      "summary": "One complementary bundle. Decides on: Full-basket contribution per eligible visitor.",
+      "benefit_type": "contribution",
+      "lifecycle_stage": "expansion",
+      "default_window_days": 28,
+      "default_post_period_days": 14,
+      "default_hurdle_eur": 500,
+      "setup_hours": 24,
+      "data_fit": "yes",
+      "featured": false,
+      "source_file": "ROI_Action_Plan_08",
+      "values_source": "defaults (reference plan, not startable in the MVP)",
+      "moves": [
+        "average_order_value"
+      ],
+      "fits": []
+    },
+    {
+      "id": 9,
+      "discipline": "ecommerce",
+      "title": "Upselling and cross-selling",
+      "summary": "One upgrade and one add-on per anchor. Decides on: Full-basket contribution per eligible visitor.",
+      "benefit_type": "contribution",
+      "lifecycle_stage": "expansion",
+      "default_window_days": 28,
+      "default_post_period_days": 14,
+      "default_hurdle_eur": 500,
+      "setup_hours": 24,
+      "data_fit": "yes",
+      "featured": false,
+      "source_file": "ROI_Action_Plan_09",
+      "values_source": "defaults (reference plan, not startable in the MVP)",
+      "moves": [
+        "average_order_value"
+      ],
+      "fits": []
+    },
+    {
+      "id": 10,
+      "discipline": "ecommerce",
+      "title": "Inventory",
+      "summary": "Replenishment rules. Decides on: Inventory value −10% and stockout days −25%.",
+      "benefit_type": "contribution",
+      "lifecycle_stage": "operations",
+      "default_window_days": 28,
+      "default_post_period_days": 14,
+      "default_hurdle_eur": 500,
+      "setup_hours": 24,
+      "data_fit": "no",
+      "featured": false,
+      "source_file": "ROI_Action_Plan_10",
+      "values_source": "defaults (reference plan, not startable in the MVP)",
+      "moves": [],
+      "fits": []
+    },
+    {
+      "id": 11,
+      "discipline": "ecommerce",
+      "title": "Fulfilment",
+      "summary": "Pick-pack-carrier changes. Decides on: Fulfilment cost per order −10%.",
+      "benefit_type": "avoided_cost",
+      "lifecycle_stage": "operations",
+      "default_window_days": 28,
+      "default_post_period_days": 14,
+      "default_hurdle_eur": 500,
+      "setup_hours": 24,
+      "data_fit": "partial",
+      "featured": false,
+      "source_file": "ROI_Action_Plan_11",
+      "values_source": "defaults (reference plan, not startable in the MVP)",
+      "moves": [
+        "margin_pct"
+      ],
+      "fits": []
+    },
+    {
+      "id": 12,
+      "discipline": "ecommerce",
+      "title": "Returns",
+      "summary": "Prevent avoidable returns. Decides on: Avoidable returns −20%, return-adjusted contribution held.",
+      "benefit_type": "contribution",
+      "lifecycle_stage": "operations",
+      "default_window_days": 28,
+      "default_post_period_days": 14,
+      "default_hurdle_eur": 500,
+      "setup_hours": 24,
+      "data_fit": "yes",
+      "featured": false,
+      "source_file": "ROI_Action_Plan_12",
+      "values_source": "defaults (reference plan, not startable in the MVP)",
+      "moves": [
+        "refund_rate"
+      ],
+      "fits": []
+    },
+    {
+      "id": 13,
+      "discipline": "digital_marketing",
+      "title": "Customer research",
+      "summary": "Interviews, segment, one tested application. Decides on: Contribution per eligible visitor.",
+      "benefit_type": "contribution",
+      "lifecycle_stage": "acquisition",
+      "default_window_days": 28,
+      "default_post_period_days": 14,
+      "default_hurdle_eur": 500,
+      "setup_hours": 24,
+      "data_fit": "partial",
+      "featured": false,
+      "source_file": "ROI_Action_Plan_13",
+      "values_source": "defaults (reference plan, not startable in the MVP)",
+      "moves": [
+        "conversion"
+      ],
+      "fits": []
+    },
+    {
+      "id": 14,
+      "discipline": "digital_marketing",
+      "title": "Positioning",
+      "summary": "One position applied to a landing page. Decides on: Contribution per eligible visitor.",
+      "benefit_type": "contribution",
+      "lifecycle_stage": "acquisition",
+      "default_window_days": 28,
+      "default_post_period_days": 14,
+      "default_hurdle_eur": 500,
+      "setup_hours": 24,
+      "data_fit": "partial",
+      "featured": false,
+      "source_file": "ROI_Action_Plan_14",
+      "values_source": "defaults (reference plan, not startable in the MVP)",
+      "moves": [
+        "conversion"
+      ],
+      "fits": []
+    },
+    {
+      "id": 15,
+      "discipline": "digital_marketing",
+      "title": "Messaging",
+      "summary": "Promise, benefits, objections on one page. Decides on: Contribution per eligible visitor.",
+      "benefit_type": "contribution",
+      "lifecycle_stage": "conversion",
+      "default_window_days": 28,
+      "default_post_period_days": 14,
+      "default_hurdle_eur": 500,
+      "setup_hours": 24,
+      "data_fit": "partial",
+      "featured": false,
+      "source_file": "ROI_Action_Plan_15",
+      "values_source": "defaults (reference plan, not startable in the MVP)",
+      "moves": [
+        "conversion"
+      ],
+      "fits": []
+    },
+    {
+      "id": 16,
+      "discipline": "digital_marketing",
+      "title": "Technical SEO",
+      "summary": "Fix up to three indexing root causes. Decides on: Organic-cohort contribution vs counterfactual.",
+      "benefit_type": "contribution",
+      "lifecycle_stage": "acquisition",
+      "default_window_days": 28,
+      "default_post_period_days": 14,
+      "default_hurdle_eur": 500,
+      "setup_hours": 24,
+      "data_fit": "partial",
+      "featured": false,
+      "source_file": "ROI_Action_Plan_16",
+      "values_source": "defaults (reference plan, not startable in the MVP)",
+      "moves": [
+        "sessions"
+      ],
+      "fits": []
+    },
+    {
+      "id": 17,
+      "discipline": "digital_marketing",
+      "title": "Commercial SEO",
+      "summary": "Improve five commercial pages. Decides on: Organic-cohort contribution vs counterfactual.",
+      "benefit_type": "contribution",
+      "lifecycle_stage": "acquisition",
+      "default_window_days": 28,
+      "default_post_period_days": 14,
+      "default_hurdle_eur": 500,
+      "setup_hours": 24,
+      "data_fit": "partial",
+      "featured": false,
+      "source_file": "ROI_Action_Plan_17",
+      "values_source": "defaults (reference plan, not startable in the MVP)",
+      "moves": [
+        "sessions"
+      ],
+      "fits": []
+    },
+    {
+      "id": 18,
+      "discipline": "digital_marketing",
+      "title": "Content strategy",
+      "summary": "Three buying-question answers on a category page. Decides on: Contribution per eligible visitor.",
+      "benefit_type": "contribution",
+      "lifecycle_stage": "conversion",
+      "default_window_days": 28,
+      "default_post_period_days": 14,
+      "default_hurdle_eur": 500,
+      "setup_hours": 24,
+      "data_fit": "partial",
+      "featured": false,
+      "source_file": "ROI_Action_Plan_18",
+      "values_source": "defaults (reference plan, not startable in the MVP)",
+      "moves": [
+        "conversion"
+      ],
+      "fits": []
+    },
+    {
+      "id": 19,
+      "discipline": "digital_marketing",
+      "title": "Organic social",
+      "summary": "Twelve-post pilot. Decides on: Incremental contribution; ROI ≥ 25%.",
+      "benefit_type": "contribution",
+      "lifecycle_stage": "acquisition",
+      "default_window_days": 28,
+      "default_post_period_days": 14,
+      "default_hurdle_eur": 500,
+      "setup_hours": 24,
+      "data_fit": "partial",
+      "featured": false,
+      "source_file": "ROI_Action_Plan_19",
+      "values_source": "defaults (reference plan, not startable in the MVP)",
+      "moves": [
+        "sessions"
+      ],
+      "fits": []
+    },
+    {
+      "id": 20,
+      "discipline": "digital_marketing",
+      "title": "Email segmentation",
+      "summary": "Four groups: lapsed, recent repeat, recent first-time, prospects. Decides on: Contribution per assigned contact, 14 days.",
+      "benefit_type": "contribution",
+      "lifecycle_stage": "retention",
+      "default_window_days": 14,
+      "default_post_period_days": 0,
+      "default_hurdle_eur": 500,
+      "setup_hours": 24,
+      "data_fit": "yes",
+      "featured": true,
+      "source_file": "ROI_Action_Plan_20",
+      "values_source": "window from the plan's 14-day decision; hurdle and setup hours default — verify",
+      "moves": [
+        "repeat_rate"
+      ],
+      "fits": [
+        {
+          "kind": "purchase_frequency",
+          "value": "occasional"
+        },
+        {
+          "kind": "purchase_frequency",
+          "value": "monthly"
+        }
+      ]
+    },
+    {
+      "id": 21,
+      "discipline": "digital_marketing",
+      "title": "Lifecycle marketing",
+      "summary": "Welcome-to-first-purchase journey. Decides on: 30-day contribution per entrant.",
+      "benefit_type": "contribution",
+      "lifecycle_stage": "activation",
+      "default_window_days": 28,
+      "default_post_period_days": 14,
+      "default_hurdle_eur": 500,
+      "setup_hours": 24,
+      "data_fit": "partial",
+      "featured": false,
+      "source_file": "ROI_Action_Plan_21",
+      "values_source": "defaults (reference plan, not startable in the MVP)",
+      "moves": [
+        "new_customers"
+      ],
+      "fits": []
+    },
+    {
+      "id": 22,
+      "discipline": "digital_marketing",
+      "title": "Partnerships and affiliates",
+      "summary": "Up to two commissioned partners. Decides on: Incremental net profit after all commissions.",
+      "benefit_type": "contribution",
+      "lifecycle_stage": "referral",
+      "default_window_days": 28,
+      "default_post_period_days": 14,
+      "default_hurdle_eur": 500,
+      "setup_hours": 24,
+      "data_fit": "partial",
+      "featured": false,
+      "source_file": "ROI_Action_Plan_22",
+      "values_source": "defaults (reference plan, not startable in the MVP)",
+      "moves": [
+        "new_customers",
+        "cac"
+      ],
+      "fits": []
+    },
+    {
+      "id": 23,
+      "discipline": "digital_marketing",
+      "title": "Trust building",
+      "summary": "Verified proof module near the buy button. Decides on: Contribution per eligible visitor, 14 days.",
+      "benefit_type": "contribution",
+      "lifecycle_stage": "conversion",
+      "default_window_days": 28,
+      "default_post_period_days": 14,
+      "default_hurdle_eur": 500,
+      "setup_hours": 24,
+      "data_fit": "partial",
+      "featured": false,
+      "source_file": "ROI_Action_Plan_23",
+      "values_source": "defaults (reference plan, not startable in the MVP)",
+      "moves": [
+        "conversion"
+      ],
+      "fits": []
+    },
+    {
+      "id": 24,
+      "discipline": "digital_marketing",
+      "title": "Channel allocation",
+      "summary": "Move up to 10% of flexible budget between channels. Decides on: Net marketing contribution; ROI ≥ 25%.",
+      "benefit_type": "contribution",
+      "lifecycle_stage": "acquisition",
+      "default_window_days": 28,
+      "default_post_period_days": 14,
+      "default_hurdle_eur": 500,
+      "setup_hours": 24,
+      "data_fit": "yes",
+      "featured": false,
+      "source_file": "ROI_Action_Plan_24",
+      "values_source": "defaults (reference plan, not startable in the MVP)",
+      "moves": [
+        "cpa",
+        "cac"
+      ],
+      "fits": []
+    },
+    {
+      "id": 25,
+      "discipline": "performance_marketing",
+      "title": "Conversion tracking",
+      "summary": "Tested purchase and refund measurement. Decides on: Capture ≥ 98%, duplicates ≤ 0.5%, values correct.",
+      "benefit_type": "enabler",
+      "lifecycle_stage": "operations",
+      "default_window_days": 28,
+      "default_post_period_days": 14,
+      "default_hurdle_eur": 500,
+      "setup_hours": 24,
+      "data_fit": "partial",
+      "featured": false,
+      "source_file": "ROI_Action_Plan_25",
+      "values_source": "defaults (reference plan, not startable in the MVP)",
+      "moves": [],
+      "fits": []
+    },
+    {
+      "id": 26,
+      "discipline": "performance_marketing",
+      "title": "Optimization signals",
+      "summary": "Contribution values instead of revenue values for bidding. Decides on: Contribution after media.",
+      "benefit_type": "contribution",
+      "lifecycle_stage": "acquisition",
+      "default_window_days": 28,
+      "default_post_period_days": 14,
+      "default_hurdle_eur": 500,
+      "setup_hours": 24,
+      "data_fit": "partial",
+      "featured": false,
+      "source_file": "ROI_Action_Plan_26",
+      "values_source": "defaults (reference plan, not startable in the MVP)",
+      "moves": [
+        "margin_pct"
+      ],
+      "fits": []
+    },
+    {
+      "id": 27,
+      "discipline": "performance_marketing",
+      "title": "Campaign structure",
+      "summary": "Restructured campaigns. Decides on: Contribution after media.",
+      "benefit_type": "contribution",
+      "lifecycle_stage": "acquisition",
+      "default_window_days": 28,
+      "default_post_period_days": 14,
+      "default_hurdle_eur": 500,
+      "setup_hours": 24,
+      "data_fit": "partial",
+      "featured": false,
+      "source_file": "ROI_Action_Plan_27",
+      "values_source": "defaults (reference plan, not startable in the MVP)",
+      "moves": [
+        "cpa"
+      ],
+      "fits": []
+    },
+    {
+      "id": 28,
+      "discipline": "performance_marketing",
+      "title": "Budget allocation",
+      "summary": "Budget moved by marginal contribution. Decides on: Contribution after media.",
+      "benefit_type": "contribution",
+      "lifecycle_stage": "acquisition",
+      "default_window_days": 28,
+      "default_post_period_days": 14,
+      "default_hurdle_eur": 500,
+      "setup_hours": 24,
+      "data_fit": "yes",
+      "featured": false,
+      "source_file": "ROI_Action_Plan_28",
+      "values_source": "defaults (reference plan, not startable in the MVP)",
+      "moves": [
+        "cpa",
+        "cac"
+      ],
+      "fits": []
+    },
+    {
+      "id": 29,
+      "discipline": "performance_marketing",
+      "title": "Bidding",
+      "summary": "One target change within the existing strategy. Decides on: Contribution after media.",
+      "benefit_type": "contribution",
+      "lifecycle_stage": "acquisition",
+      "default_window_days": 28,
+      "default_post_period_days": 14,
+      "default_hurdle_eur": 500,
+      "setup_hours": 24,
+      "data_fit": "partial",
+      "featured": false,
+      "source_file": "ROI_Action_Plan_29",
+      "values_source": "defaults (reference plan, not startable in the MVP)",
+      "moves": [
+        "orders",
+        "cpa"
+      ],
+      "fits": []
+    },
+    {
+      "id": 30,
+      "discipline": "performance_marketing",
+      "title": "Search terms",
+      "summary": "Query exclusions. Decides on: Contribution after media, media saved.",
+      "benefit_type": "contribution",
+      "lifecycle_stage": "acquisition",
+      "default_window_days": 42,
+      "default_post_period_days": 30,
+      "default_hurdle_eur": 500,
+      "setup_hours": 32,
+      "data_fit": "partial",
+      "featured": true,
+      "source_file": "ROI_Action_Plan_30",
+      "values_source": "Days 15-56 and Day-87 reconciliation, as in plans 26-31; verify against plan 30",
+      "moves": [
+        "cpa"
+      ],
+      "fits": []
+    },
+    {
+      "id": 31,
+      "discipline": "performance_marketing",
+      "title": "Audience strategy",
+      "summary": "Exclude recent purchasers from prospecting. Decides on: Contribution after media.",
+      "benefit_type": "contribution",
+      "lifecycle_stage": "acquisition",
+      "default_window_days": 28,
+      "default_post_period_days": 14,
+      "default_hurdle_eur": 500,
+      "setup_hours": 24,
+      "data_fit": "partial",
+      "featured": false,
+      "source_file": "ROI_Action_Plan_31",
+      "values_source": "defaults (reference plan, not startable in the MVP)",
+      "moves": [
+        "cac",
+        "cpa"
+      ],
+      "fits": []
+    },
+    {
+      "id": 32,
+      "discipline": "performance_marketing",
+      "title": "Creative testing",
+      "summary": "One challenger ad package. Decides on: Contribution after media and project cost.",
+      "benefit_type": "contribution",
+      "lifecycle_stage": "acquisition",
+      "default_window_days": 28,
+      "default_post_period_days": 14,
+      "default_hurdle_eur": 500,
+      "setup_hours": 24,
+      "data_fit": "partial",
+      "featured": false,
+      "source_file": "ROI_Action_Plan_32",
+      "values_source": "defaults (reference plan, not startable in the MVP)",
+      "moves": [
+        "cpa"
+      ],
+      "fits": []
+    },
+    {
+      "id": 33,
+      "discipline": "performance_marketing",
+      "title": "Product feeds",
+      "summary": "Feed repairs and one title policy. Decides on: Contribution after media and project cost.",
+      "benefit_type": "contribution",
+      "lifecycle_stage": "acquisition",
+      "default_window_days": 28,
+      "default_post_period_days": 14,
+      "default_hurdle_eur": 500,
+      "setup_hours": 24,
+      "data_fit": "partial",
+      "featured": false,
+      "source_file": "ROI_Action_Plan_33",
+      "values_source": "defaults (reference plan, not startable in the MVP)",
+      "moves": [
+        "sessions"
+      ],
+      "fits": []
+    },
+    {
+      "id": 34,
+      "discipline": "performance_marketing",
+      "title": "Landing pages",
+      "summary": "One module change on a paid-traffic template. Decides on: Contribution per assigned visitor, 28 days.",
+      "benefit_type": "contribution",
+      "lifecycle_stage": "conversion",
+      "default_window_days": 28,
+      "default_post_period_days": 14,
+      "default_hurdle_eur": 500,
+      "setup_hours": 24,
+      "data_fit": "partial",
+      "featured": false,
+      "source_file": "ROI_Action_Plan_34",
+      "values_source": "defaults (reference plan, not startable in the MVP)",
+      "moves": [
+        "conversion"
+      ],
+      "fits": []
+    },
+    {
+      "id": 35,
+      "discipline": "performance_marketing",
+      "title": "Remarketing",
+      "summary": "7-day vs 30-day recency window. Decides on: Contribution after media and project cost.",
+      "benefit_type": "contribution",
+      "lifecycle_stage": "reactivation",
+      "default_window_days": 28,
+      "default_post_period_days": 14,
+      "default_hurdle_eur": 500,
+      "setup_hours": 24,
+      "data_fit": "partial",
+      "featured": false,
+      "source_file": "ROI_Action_Plan_35",
+      "values_source": "defaults (reference plan, not startable in the MVP)",
+      "moves": [
+        "cpa",
+        "conversion"
+      ],
+      "fits": []
+    },
+    {
+      "id": 36,
+      "discipline": "performance_marketing",
+      "title": "Incrementality testing",
+      "summary": "Activity on vs withheld in matched regions. Decides on: Study-horizon net gain ≥ €500.",
+      "benefit_type": "contribution",
+      "lifecycle_stage": "operations",
+      "default_window_days": 28,
+      "default_post_period_days": 14,
+      "default_hurdle_eur": 500,
+      "setup_hours": 24,
+      "data_fit": "partial",
+      "featured": false,
+      "source_file": "ROI_Action_Plan_36",
+      "values_source": "defaults (reference plan, not startable in the MVP)",
+      "moves": [],
+      "fits": []
+    },
+    {
+      "id": 37,
+      "discipline": "digital_growth",
+      "title": "Bottleneck diagnosis",
+      "summary": "Reconciled funnel and order-economics bridge. Decides on: One constraint or a repair gate.",
+      "benefit_type": "enabler",
+      "lifecycle_stage": "operations",
+      "default_window_days": 28,
+      "default_post_period_days": 14,
+      "default_hurdle_eur": 500,
+      "setup_hours": 24,
+      "data_fit": "partial",
+      "featured": false,
+      "source_file": "ROI_Action_Plan_37",
+      "values_source": "defaults (reference plan, not startable in the MVP)",
+      "moves": [],
+      "fits": []
+    },
+    {
+      "id": 38,
+      "discipline": "digital_growth",
+      "title": "Experiment prioritization",
+      "summary": "Compare candidates before committing. Decides on: Ranked brief.",
+      "benefit_type": "enabler",
+      "lifecycle_stage": "operations",
+      "default_window_days": 28,
+      "default_post_period_days": 14,
+      "default_hurdle_eur": 500,
+      "setup_hours": 24,
+      "data_fit": "yes",
+      "featured": false,
+      "source_file": "ROI_Action_Plan_38",
+      "values_source": "defaults (reference plan, not startable in the MVP)",
+      "moves": [],
+      "fits": []
+    },
+    {
+      "id": 39,
+      "discipline": "digital_growth",
+      "title": "Activation",
+      "summary": "Optional product-fit selector. Decides on: Contribution per entrant; net ≥ €500.",
+      "benefit_type": "contribution",
+      "lifecycle_stage": "activation",
+      "default_window_days": 28,
+      "default_post_period_days": 14,
+      "default_hurdle_eur": 500,
+      "setup_hours": 24,
+      "data_fit": "partial",
+      "featured": false,
+      "source_file": "ROI_Action_Plan_39",
+      "values_source": "defaults (reference plan, not startable in the MVP)",
+      "moves": [
+        "new_customers"
+      ],
+      "fits": []
+    },
+    {
+      "id": 40,
+      "discipline": "digital_growth",
+      "title": "Onboarding",
+      "summary": "Product-use guide after purchase. Decides on: Contribution per customer, 45 days.",
+      "benefit_type": "contribution",
+      "lifecycle_stage": "engagement",
+      "default_window_days": 28,
+      "default_post_period_days": 14,
+      "default_hurdle_eur": 500,
+      "setup_hours": 24,
+      "data_fit": "partial",
+      "featured": false,
+      "source_file": "ROI_Action_Plan_40",
+      "values_source": "defaults (reference plan, not startable in the MVP)",
+      "moves": [
+        "refund_rate",
+        "repeat_rate"
+      ],
+      "fits": []
+    },
+    {
+      "id": 41,
+      "discipline": "digital_growth",
+      "title": "Time to value",
+      "summary": "Direct link to the purchased product's guide. Decides on: Contribution per customer, 30 days.",
+      "benefit_type": "contribution",
+      "lifecycle_stage": "engagement",
+      "default_window_days": 28,
+      "default_post_period_days": 14,
+      "default_hurdle_eur": 500,
+      "setup_hours": 24,
+      "data_fit": "partial",
+      "featured": false,
+      "source_file": "ROI_Action_Plan_41",
+      "values_source": "defaults (reference plan, not startable in the MVP)",
+      "moves": [
+        "repeat_rate"
+      ],
+      "fits": []
+    },
+    {
+      "id": 42,
+      "discipline": "digital_growth",
+      "title": "Retention",
+      "summary": "Named case owner for first-order issues. Decides on: Contribution per customer, 90 days.",
+      "benefit_type": "contribution",
+      "lifecycle_stage": "retention",
+      "default_window_days": 28,
+      "default_post_period_days": 14,
+      "default_hurdle_eur": 500,
+      "setup_hours": 24,
+      "data_fit": "partial",
+      "featured": false,
+      "source_file": "ROI_Action_Plan_42",
+      "values_source": "defaults (reference plan, not startable in the MVP)",
+      "moves": [
+        "repeat_rate"
+      ],
+      "fits": []
+    },
+    {
+      "id": 43,
+      "discipline": "digital_growth",
+      "title": "Purchase frequency",
+      "summary": "Reorder-previous-basket shortcut. Decides on: Contribution per customer, 180 days.",
+      "benefit_type": "contribution",
+      "lifecycle_stage": "repeat",
+      "default_window_days": 28,
+      "default_post_period_days": 152,
+      "default_hurdle_eur": 500,
+      "setup_hours": 24,
+      "data_fit": "yes",
+      "featured": true,
+      "source_file": "ROI_Action_Plan_43",
+      "values_source": "180-day decision horizon from the plan; window and setup hours default — verify",
+      "moves": [
+        "repeat_rate"
+      ],
+      "fits": [
+        {
+          "kind": "purchase_frequency",
+          "value": "occasional"
+        },
+        {
+          "kind": "purchase_frequency",
+          "value": "monthly"
+        }
+      ]
+    },
+    {
+      "id": 44,
+      "discipline": "digital_growth",
+      "title": "Referral programmes",
+      "summary": "Capped friend and advocate reward. Decides on: Incremental net gain after rewards.",
+      "benefit_type": "contribution",
+      "lifecycle_stage": "referral",
+      "default_window_days": 28,
+      "default_post_period_days": 14,
+      "default_hurdle_eur": 500,
+      "setup_hours": 24,
+      "data_fit": "partial",
+      "featured": false,
+      "source_file": "ROI_Action_Plan_44",
+      "values_source": "defaults (reference plan, not startable in the MVP)",
+      "moves": [
+        "new_customers"
+      ],
+      "fits": []
+    },
+    {
+      "id": 45,
+      "discipline": "digital_growth",
+      "title": "Growth loops",
+      "summary": "Shareable product collections. Decides on: Incremental net gain; loop ratio.",
+      "benefit_type": "contribution",
+      "lifecycle_stage": "referral",
+      "default_window_days": 28,
+      "default_post_period_days": 14,
+      "default_hurdle_eur": 500,
+      "setup_hours": 24,
+      "data_fit": "partial",
+      "featured": false,
+      "source_file": "ROI_Action_Plan_45",
+      "values_source": "defaults (reference plan, not startable in the MVP)",
+      "moves": [
+        "new_customers"
+      ],
+      "fits": []
+    },
+    {
+      "id": 46,
+      "discipline": "digital_growth",
+      "title": "Monetization",
+      "summary": "Optional paid service. Decides on: Contribution per shopper, 28 days.",
+      "benefit_type": "contribution",
+      "lifecycle_stage": "expansion",
+      "default_window_days": 28,
+      "default_post_period_days": 14,
+      "default_hurdle_eur": 500,
+      "setup_hours": 24,
+      "data_fit": "partial",
+      "featured": false,
+      "source_file": "ROI_Action_Plan_46",
+      "values_source": "defaults (reference plan, not startable in the MVP)",
+      "moves": [
+        "average_order_value",
+        "margin_pct"
+      ],
+      "fits": []
+    },
+    {
+      "id": 47,
+      "discipline": "digital_growth",
+      "title": "Market expansion",
+      "summary": "One new country. Decides on: Full-cost pilot net gain.",
+      "benefit_type": "contribution",
+      "lifecycle_stage": "acquisition",
+      "default_window_days": 28,
+      "default_post_period_days": 14,
+      "default_hurdle_eur": 500,
+      "setup_hours": 24,
+      "data_fit": "no",
+      "featured": false,
+      "source_file": "ROI_Action_Plan_47",
+      "values_source": "defaults (reference plan, not startable in the MVP)",
+      "moves": [
+        "new_customers"
+      ],
+      "fits": []
+    },
+    {
+      "id": 48,
+      "discipline": "digital_growth",
+      "title": "Cohort analysis",
+      "summary": "Reconciled first-order cohorts at D30/60/90. Decides on: One decision brief or repair.",
+      "benefit_type": "enabler",
+      "lifecycle_stage": "operations",
+      "default_window_days": 28,
+      "default_post_period_days": 14,
+      "default_hurdle_eur": 500,
+      "setup_hours": 24,
+      "data_fit": "yes",
+      "featured": false,
+      "source_file": "ROI_Action_Plan_48",
+      "values_source": "defaults (reference plan, not startable in the MVP)",
+      "moves": [],
+      "fits": []
+    },
+    {
+      "id": 49,
+      "discipline": "agentic_ai",
+      "title": "Research agents",
+      "summary": "Read-only public research briefs. Decides on: Avoided paid research, quality gates.",
+      "benefit_type": "avoided_cost",
+      "lifecycle_stage": "operations",
+      "default_window_days": 28,
+      "default_post_period_days": 14,
+      "default_hurdle_eur": 500,
+      "setup_hours": 24,
+      "data_fit": "yes",
+      "featured": false,
+      "source_file": "ROI_Action_Plan_49",
+      "values_source": "defaults (reference plan, not startable in the MVP)",
+      "moves": [
+        "avoided_cost"
+      ],
+      "fits": []
+    },
+    {
+      "id": 50,
+      "discipline": "agentic_ai",
+      "title": "Analytics agents",
+      "summary": "Read-only analytics report. Decides on: Avoided paid analysis.",
+      "benefit_type": "avoided_cost",
+      "lifecycle_stage": "operations",
+      "default_window_days": 28,
+      "default_post_period_days": 0,
+      "default_hurdle_eur": 500,
+      "setup_hours": 24,
+      "data_fit": "yes",
+      "featured": true,
+      "source_file": "ROI_Action_Plan_50",
+      "values_source": "defaults — verify against plan 50",
+      "moves": [
+        "avoided_cost"
+      ],
+      "fits": []
+    },
+    {
+      "id": 51,
+      "discipline": "agentic_ai",
+      "title": "Campaign audit agents",
+      "summary": "Read-only campaign audits. Decides on: Avoided audit fees.",
+      "benefit_type": "avoided_cost",
+      "lifecycle_stage": "operations",
+      "default_window_days": 28,
+      "default_post_period_days": 14,
+      "default_hurdle_eur": 500,
+      "setup_hours": 24,
+      "data_fit": "partial",
+      "featured": false,
+      "source_file": "ROI_Action_Plan_51",
+      "values_source": "defaults (reference plan, not startable in the MVP)",
+      "moves": [
+        "avoided_cost"
+      ],
+      "fits": []
+    },
+    {
+      "id": 52,
+      "discipline": "agentic_ai",
+      "title": "Experiment agents",
+      "summary": "Experiment protocol drafts. Decides on: Avoided preparation cost.",
+      "benefit_type": "avoided_cost",
+      "lifecycle_stage": "operations",
+      "default_window_days": 28,
+      "default_post_period_days": 14,
+      "default_hurdle_eur": 500,
+      "setup_hours": 24,
+      "data_fit": "yes",
+      "featured": false,
+      "source_file": "ROI_Action_Plan_52",
+      "values_source": "defaults (reference plan, not startable in the MVP)",
+      "moves": [
+        "avoided_cost"
+      ],
+      "fits": []
+    },
+    {
+      "id": 53,
+      "discipline": "agentic_ai",
+      "title": "Creative agents",
+      "summary": "Claim-grounded ad drafts. Decides on: Avoided copy production.",
+      "benefit_type": "avoided_cost",
+      "lifecycle_stage": "operations",
+      "default_window_days": 28,
+      "default_post_period_days": 14,
+      "default_hurdle_eur": 500,
+      "setup_hours": 24,
+      "data_fit": "partial",
+      "featured": false,
+      "source_file": "ROI_Action_Plan_53",
+      "values_source": "defaults (reference plan, not startable in the MVP)",
+      "moves": [
+        "avoided_cost"
+      ],
+      "fits": []
+    },
+    {
+      "id": 54,
+      "discipline": "agentic_ai",
+      "title": "Merchandising agents",
+      "summary": "Reviewed collection ranking. Decides on: Whole-store contribution per visitor.",
+      "benefit_type": "contribution",
+      "lifecycle_stage": "conversion",
+      "default_window_days": 28,
+      "default_post_period_days": 14,
+      "default_hurdle_eur": 500,
+      "setup_hours": 24,
+      "data_fit": "partial",
+      "featured": false,
+      "source_file": "ROI_Action_Plan_54",
+      "values_source": "defaults (reference plan, not startable in the MVP)",
+      "moves": [
+        "conversion"
+      ],
+      "fits": []
+    },
+    {
+      "id": 55,
+      "discipline": "agentic_ai",
+      "title": "Shopping assistants",
+      "summary": "Recommendation-only product finder. Decides on: Whole-store contribution per visitor.",
+      "benefit_type": "contribution",
+      "lifecycle_stage": "conversion",
+      "default_window_days": 28,
+      "default_post_period_days": 14,
+      "default_hurdle_eur": 500,
+      "setup_hours": 24,
+      "data_fit": "partial",
+      "featured": false,
+      "source_file": "ROI_Action_Plan_55",
+      "values_source": "defaults (reference plan, not startable in the MVP)",
+      "moves": [
+        "conversion"
+      ],
+      "fits": []
+    },
+    {
+      "id": 56,
+      "discipline": "agentic_ai",
+      "title": "Support agents",
+      "summary": "Staff-facing support drafts. Decides on: Avoided paid preparation.",
+      "benefit_type": "avoided_cost",
+      "lifecycle_stage": "operations",
+      "default_window_days": 28,
+      "default_post_period_days": 14,
+      "default_hurdle_eur": 500,
+      "setup_hours": 24,
+      "data_fit": "no",
+      "featured": false,
+      "source_file": "ROI_Action_Plan_56",
+      "values_source": "defaults (reference plan, not startable in the MVP)",
+      "moves": [
+        "avoided_cost"
+      ],
+      "fits": []
+    },
+    {
+      "id": 57,
+      "discipline": "agentic_ai",
+      "title": "Sales research agents",
+      "summary": "Company-level B2B research. Decides on: Avoided paid research.",
+      "benefit_type": "avoided_cost",
+      "lifecycle_stage": "operations",
+      "default_window_days": 28,
+      "default_post_period_days": 14,
+      "default_hurdle_eur": 500,
+      "setup_hours": 24,
+      "data_fit": "no",
+      "featured": false,
+      "source_file": "ROI_Action_Plan_57",
+      "values_source": "defaults (reference plan, not startable in the MVP)",
+      "moves": [
+        "avoided_cost"
+      ],
+      "fits": [
+        {
+          "kind": "business_model",
+          "value": "b2b"
+        }
+      ]
+    },
+    {
+      "id": 58,
+      "discipline": "agentic_ai",
+      "title": "Operations agents",
+      "summary": "Delayed-order investigation packs. Decides on: Avoided paid investigation.",
+      "benefit_type": "avoided_cost",
+      "lifecycle_stage": "operations",
+      "default_window_days": 28,
+      "default_post_period_days": 14,
+      "default_hurdle_eur": 500,
+      "setup_hours": 24,
+      "data_fit": "no",
+      "featured": false,
+      "source_file": "ROI_Action_Plan_58",
+      "values_source": "defaults (reference plan, not startable in the MVP)",
+      "moves": [
+        "avoided_cost"
+      ],
+      "fits": []
+    },
+    {
+      "id": 59,
+      "discipline": "agentic_ai",
+      "title": "Knowledge access",
+      "summary": "Permission-aware procedure answers. Decides on: Avoided specialist hours.",
+      "benefit_type": "avoided_cost",
+      "lifecycle_stage": "operations",
+      "default_window_days": 28,
+      "default_post_period_days": 14,
+      "default_hurdle_eur": 500,
+      "setup_hours": 24,
+      "data_fit": "no",
+      "featured": false,
+      "source_file": "ROI_Action_Plan_59",
+      "values_source": "defaults (reference plan, not startable in the MVP)",
+      "moves": [
+        "avoided_cost"
+      ],
+      "fits": []
+    },
+    {
+      "id": 60,
+      "discipline": "agentic_ai",
+      "title": "Agent economics",
+      "summary": "Unit economics of agents. Decides on: Cost per accepted output.",
+      "benefit_type": "enabler",
+      "lifecycle_stage": "operations",
+      "default_window_days": 28,
+      "default_post_period_days": 14,
+      "default_hurdle_eur": 500,
+      "setup_hours": 24,
+      "data_fit": "yes",
+      "featured": false,
+      "source_file": "ROI_Action_Plan_60",
+      "values_source": "defaults (reference plan, not startable in the MVP)",
+      "moves": [],
+      "fits": []
+    },
+    {
+      "id": 61,
+      "discipline": "automations",
+      "title": "System integration",
+      "summary": "Intake between systems. Decides on: Avoided paid rekeying.",
+      "benefit_type": "avoided_cost",
+      "lifecycle_stage": "operations",
+      "default_window_days": 28,
+      "default_post_period_days": 14,
+      "default_hurdle_eur": 500,
+      "setup_hours": 24,
+      "data_fit": "yes",
+      "featured": false,
+      "source_file": "ROI_Action_Plan_61",
+      "values_source": "defaults (reference plan, not startable in the MVP)",
+      "moves": [
+        "avoided_cost"
+      ],
+      "fits": []
+    },
+    {
+      "id": 62,
+      "discipline": "automations",
+      "title": "Lead capture",
+      "summary": "Form to deduplicated CRM inquiry. Decides on: Avoided paid capture.",
+      "benefit_type": "avoided_cost",
+      "lifecycle_stage": "operations",
+      "default_window_days": 28,
+      "default_post_period_days": 14,
+      "default_hurdle_eur": 500,
+      "setup_hours": 24,
+      "data_fit": "no",
+      "featured": false,
+      "source_file": "ROI_Action_Plan_62",
+      "values_source": "defaults (reference plan, not startable in the MVP)",
+      "moves": [
+        "avoided_cost"
+      ],
+      "fits": [
+        {
+          "kind": "business_model",
+          "value": "b2b"
+        }
+      ]
+    },
+    {
+      "id": 63,
+      "discipline": "automations",
+      "title": "Lead routing",
+      "summary": "Deterministic advisor assignment. Decides on: Avoided paid admin.",
+      "benefit_type": "avoided_cost",
+      "lifecycle_stage": "operations",
+      "default_window_days": 28,
+      "default_post_period_days": 14,
+      "default_hurdle_eur": 500,
+      "setup_hours": 24,
+      "data_fit": "no",
+      "featured": false,
+      "source_file": "ROI_Action_Plan_63",
+      "values_source": "defaults (reference plan, not startable in the MVP)",
+      "moves": [
+        "avoided_cost"
+      ],
+      "fits": [
+        {
+          "kind": "business_model",
+          "value": "b2b"
+        }
+      ]
+    },
+    {
+      "id": 64,
+      "discipline": "automations",
+      "title": "Follow-up triggers",
+      "summary": "Two opted-in emails after an inquiry. Decides on: Contribution per assigned person, 30 days.",
+      "benefit_type": "contribution",
+      "lifecycle_stage": "conversion",
+      "default_window_days": 28,
+      "default_post_period_days": 14,
+      "default_hurdle_eur": 500,
+      "setup_hours": 24,
+      "data_fit": "no",
+      "featured": false,
+      "source_file": "ROI_Action_Plan_64",
+      "values_source": "defaults (reference plan, not startable in the MVP)",
+      "moves": [
+        "conversion"
+      ],
+      "fits": [
+        {
+          "kind": "business_model",
+          "value": "b2b"
+        }
+      ]
+    },
+    {
+      "id": 65,
+      "discipline": "automations",
+      "title": "Cart recovery",
+      "summary": "Cart-abandonment email flow. Decides on: Contribution per customer, holdout.",
+      "benefit_type": "contribution",
+      "lifecycle_stage": "conversion",
+      "default_window_days": 28,
+      "default_post_period_days": 14,
+      "default_hurdle_eur": 500,
+      "setup_hours": 24,
+      "data_fit": "partial",
+      "featured": true,
+      "source_file": "ROI_Action_Plan_65",
+      "values_source": "defaults — verify against plan 65",
+      "moves": [
+        "conversion"
+      ],
+      "fits": []
+    },
+    {
+      "id": 66,
+      "discipline": "automations",
+      "title": "Post-purchase journeys",
+      "summary": "Two opted-in emails after delivery. Decides on: 90-day post-assignment contribution.",
+      "benefit_type": "contribution",
+      "lifecycle_stage": "engagement",
+      "default_window_days": 28,
+      "default_post_period_days": 14,
+      "default_hurdle_eur": 500,
+      "setup_hours": 24,
+      "data_fit": "partial",
+      "featured": false,
+      "source_file": "ROI_Action_Plan_66",
+      "values_source": "defaults (reference plan, not startable in the MVP)",
+      "moves": [
+        "repeat_rate"
+      ],
+      "fits": []
+    },
+    {
+      "id": 67,
+      "discipline": "automations",
+      "title": "Inventory and feed updates",
+      "summary": "Price and stock sync to the feed. Decides on: Avoided feed maintenance.",
+      "benefit_type": "avoided_cost",
+      "lifecycle_stage": "operations",
+      "default_window_days": 28,
+      "default_post_period_days": 14,
+      "default_hurdle_eur": 500,
+      "setup_hours": 24,
+      "data_fit": "no",
+      "featured": false,
+      "source_file": "ROI_Action_Plan_67",
+      "values_source": "defaults (reference plan, not startable in the MVP)",
+      "moves": [
+        "avoided_cost"
+      ],
+      "fits": []
+    },
+    {
+      "id": 68,
+      "discipline": "automations",
+      "title": "Order operations",
+      "summary": "Draft warehouse preparation packets. Decides on: Avoided preparation admin.",
+      "benefit_type": "avoided_cost",
+      "lifecycle_stage": "operations",
+      "default_window_days": 28,
+      "default_post_period_days": 14,
+      "default_hurdle_eur": 500,
+      "setup_hours": 24,
+      "data_fit": "no",
+      "featured": false,
+      "source_file": "ROI_Action_Plan_68",
+      "values_source": "defaults (reference plan, not startable in the MVP)",
+      "moves": [
+        "avoided_cost"
+      ],
+      "fits": []
+    },
+    {
+      "id": 69,
+      "discipline": "automations",
+      "title": "Reporting",
+      "summary": "Weekly reconciled review pack. Decides on: Avoided reporting work.",
+      "benefit_type": "avoided_cost",
+      "lifecycle_stage": "operations",
+      "default_window_days": 28,
+      "default_post_period_days": 14,
+      "default_hurdle_eur": 500,
+      "setup_hours": 24,
+      "data_fit": "yes",
+      "featured": false,
+      "source_file": "ROI_Action_Plan_69",
+      "values_source": "defaults (reference plan, not startable in the MVP)",
+      "moves": [
+        "avoided_cost"
+      ],
+      "fits": []
+    },
+    {
+      "id": 70,
+      "discipline": "automations",
+      "title": "Exception alerts",
+      "summary": "Three alert families with ownership. Decides on: Avoided paid checking.",
+      "benefit_type": "avoided_cost",
+      "lifecycle_stage": "operations",
+      "default_window_days": 28,
+      "default_post_period_days": 14,
+      "default_hurdle_eur": 500,
+      "setup_hours": 24,
+      "data_fit": "yes",
+      "featured": false,
+      "source_file": "ROI_Action_Plan_70",
+      "values_source": "defaults (reference plan, not startable in the MVP)",
+      "moves": [
+        "avoided_cost"
+      ],
+      "fits": []
+    },
+    {
+      "id": 71,
+      "discipline": "automations",
+      "title": "Data quality",
+      "summary": "Layered validation and quarantine. Decides on: Avoided checking and correction.",
+      "benefit_type": "avoided_cost",
+      "lifecycle_stage": "operations",
+      "default_window_days": 28,
+      "default_post_period_days": 14,
+      "default_hurdle_eur": 500,
+      "setup_hours": 24,
+      "data_fit": "yes",
+      "featured": false,
+      "source_file": "ROI_Action_Plan_71",
+      "values_source": "defaults (reference plan, not startable in the MVP)",
+      "moves": [
+        "avoided_cost"
+      ],
+      "fits": []
+    },
+    {
+      "id": 72,
+      "discipline": "automations",
+      "title": "Workflow reliability",
+      "summary": "Idempotency, bounded retries, recovery. Decides on: Avoided rework.",
+      "benefit_type": "avoided_cost",
+      "lifecycle_stage": "operations",
+      "default_window_days": 28,
+      "default_post_period_days": 14,
+      "default_hurdle_eur": 500,
+      "setup_hours": 24,
+      "data_fit": "yes",
+      "featured": false,
+      "source_file": "ROI_Action_Plan_72",
+      "values_source": "defaults (reference plan, not startable in the MVP)",
+      "moves": [
+        "avoided_cost"
+      ],
+      "fits": []
+    }
+  ]
+}

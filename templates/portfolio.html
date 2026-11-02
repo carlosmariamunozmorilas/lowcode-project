@@ -1,0 +1,31 @@
+{% extends "base.html" %}
+{% block title %}Clients{% endblock %}
+{% block content %}
+<h1>Your clients</h1>
+{% if not cards %}<p>No clients are assigned to you yet.</p>{% endif %}
+<div class="cards">
+{% for card in cards %}
+    {% set c = card.client %}
+    <article class="card">
+        <h2><a href="{{ url_for('clients.dashboard', client_id=c.id) }}">{{ c.name }}</a>
+            {% if c.is_fictional %}<span class="badge">fictional</span>{% endif %}</h2>
+        <p class="muted">{{ c.sector }} · {{ c.business_model|upper }} · {{ c.purchase_frequency }} purchases</p>
+        <dl>
+            <dt>Average order</dt><dd>{{ c.avg_order_value_eur|eur }}</dd>
+            <dt>Margin</dt><dd>{{ c.contribution_margin|pct(0) }}</dd>
+            <dt>Budget</dt><dd>{{ c.monthly_budget_eur|eur }}/month</dd>
+            <dt>System ROI</dt>
+            <dd>
+                {% if card.system and card.system.roi is not none %}
+                    <strong>{{ card.system.roi|pct(0) }}</strong> against a target of {{ c.roi_target|pct(0) }}
+                    {% if card.system.roi < c.roi_target %}<span class="flag">below target</span>{% else %}<span class="ok">on target</span>{% endif %}
+                    <span class="muted">({{ card.month }})</span>
+                {% else %}
+                    <span class="muted">no running components yet</span>
+                {% endif %}
+            </dd>
+        </dl>
+    </article>
+{% endfor %}
+</div>
+{% endblock %}

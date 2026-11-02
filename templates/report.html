@@ -1,0 +1,37 @@
+{% extends "base.html" %}
+{% block title %}{{ client.name }} · report {{ month }}{% endblock %}
+{% block content %}
+{% set tab = 'report' %}{% set months = none %}
+{% include "_client_header.html" %}
+<h2>Monthly client report, {{ month }}</h2>
+<p class="muted">Drafted by a read-only AI automation from aggregates only, and never sent until a person reviews it.</p>
+{% if live and live.status == 'draft' %}
+    <form method="post" class="box wide">
+        <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+        <p class="small">Draft by {{ live.model or 'unknown model' }}, prompt {{ live.prompt_version or '—' }}, cost {{ live.generation_cost_eur|eur(2) }}</p>
+        <div class="two">
+            <div><h3>AI draft</h3><div class="description draft">{{ live.draft_text }}</div></div>
+            <div><label for="final_text"><h3>Final text (edit to correct)</h3></label>
+                <textarea id="final_text" name="final_text" rows="14">{{ live.draft_text }}</textarea></div>
+        </div>
+        <p class="label-preview">Will be sent with: <em>{{ label }}</em></p>
+        <button type="submit" name="decision" value="send">Approve for sending</button>
+        <label for="rejection_reason">Or reject, with a reason</label>
+        <input type="text" id="rejection_reason" name="rejection_reason">
+        <button type="submit" name="decision" value="reject">Reject the draft</button>
+    </form>
+{% elif live and live.status == 'sent' %}
+    <div class="description draft">{{ live.final_text }}
+
+{{ label }}</div>
+    <p class="muted">Approved by a reviewer{% if live.was_corrected %}, with corrections{% endif %}.</p>
+{% else %}
+    <p>No draft for this month yet. The report automation writes one through the signed API; it has not run for this fictional store.</p>
+{% endif %}
+{% if history|length > 1 or (history and history[0].status == 'rejected') %}
+<h3>Earlier drafts</h3>
+<ul>{% for r in history if r.status == 'rejected' %}<li>Rejected by {{ r.reviewer }}: {{ r.rejection_reason }}</li>{% endfor %}</ul>
+{% endif %}
+<h3>Report quality, all months</h3>
+<p>{{ quality.reports_drafted }} drafts · correction rate {{ quality.correction_rate|pct(0) }} · rejection rate {{ quality.rejection_rate|pct(0) }} · cost per draft {{ quality.cost_per_draft|eur(2) }}</p>
+{% endblock %}
