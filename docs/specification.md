@@ -6,6 +6,8 @@ The brief's six minimum requirements — ERD, role table, data flow diagram, STR
 
 > **The pitch:** every piece of marketing work has to justify itself, and the record shows whether it did.
 
+> **The front door** *(decided 30 October 2026, not yet built):* the home screen shows the project's ROI and six disciplines — ecommerce, digital marketing, performance marketing, digital growth, agentic AI, automations — each with a catalogue of operations drawn from Carlos's influence models. Every operation started from the catalogue becomes an action in the same workflow ([§3, `disciplines` and `operations`](#disciplines-and-operations--the-catalogue-decided-30-october-2026-not-yet-built)).
+
 Companion documents: [`overview.md`](overview.md) explains the application in plain English; [`project-definition.md`](project-definition.md) covers the why, the scope boundaries and the weekly plan. This one is the technical surface.
 
 ---
@@ -143,6 +145,55 @@ gross_profit = revenue × gross_margin
 `kpis`: `key` PK · `name` · `unit` · `parent_key` → `kpis`
 `levers`: `id` PK · `key` UNIQUE · `name` · `kpi_key` → `kpis` — every lever moves exactly one leaf KPI.
 
+### `disciplines` and `operations` — the catalogue (decided 30 October 2026, not yet built)
+
+The application's front door. The home screen shows the project's ROI and **six disciplines**; each discipline opens a **catalogue of operations** a marketing team can run for an ecommerce business, and choosing an operation starts an action that follows the same workflow as any other. The catalogue is reference data, like the KPI tree: loaded by an import, never edited in the app.
+
+`disciplines` — six fixed rows, one per source influence model:
+
+| `key` PK | `name` | `source_model` | `position` |
+|---|---|---|---|
+| `ecommerce` | Ecommerce | 01 Ecommerce | 1 |
+| `digital_marketing` | Digital marketing | 02 Digital Marketing | 2 |
+| `performance_marketing` | Performance marketing | 09 Performance Marketing / CRO / Experimentation | 3 |
+| `digital_growth` | Digital growth | 12 Digital Growth, Revenue and Business Systems | 4 |
+| `agentic_ai` | Agentic AI | 11 AI-Powered and Agentic Business Models | 5 |
+| `automations` | Automations and marketing operations | 07 Marketing Operations | 6 |
+
+`operations` — one row per layer of those six models, **179 in all** (40 + 40 + 24 + 25 + 25 + 25):
+
+| Field | Type | Constraint |
+|---|---|---|
+| `id` | TEXT | PK — the layer's ID in the influence model, e.g. `M07.L24` |
+| `discipline_key` | TEXT | FK → disciplines, NOT NULL |
+| `layer_no` | INTEGER | NOT NULL — order within its model |
+| `title` | TEXT | NOT NULL — English |
+| `kind` | TEXT | NOT NULL, CHECK in (`lever`,`enabler`,`governance`) — see below |
+| `lever_id` | INTEGER | FK → levers, **required when `kind = 'lever'`, NULL otherwise** |
+| `featured` | INTEGER | 0 or 1 — shown first in its discipline; 6–10 per discipline ❓ |
+| `mechanism`, `intervention`, `cost`, `metrics`, `bridge`, `ai_role`, `evidence`, `guardrail`, `decision_rule`, `owner` | TEXT | the layer's **full ROI investment card**, English; empty where the source card is empty |
+| `source_version` | TEXT | NOT NULL — the build the row came from, e.g. `influence-model 2026-10-27` |
+
+**What `kind` means for ROI.** A `lever` operation moves one of the nine levers, so its actions are predicted and measured in a leaf KPI and the app computes their ROI. An `enabler` is work the other operations depend on (data, tracking, tooling): its actions carry their full cost and **no invented revenue**. A `governance` operation is a control — privacy, approval, security — recorded as cost and requirement, never as a bet. Classifying each of the 179 layers is part of building the import; it is a judgement, recorded in the data file, not computed.
+
+**Where the catalogue comes from.** The source is Carlos's unified influence-model build (`influence-model/model/layers.json`, built 27 October 2026 from the *AI-Era Influence Model* and *ROI AI Influence Model* series in Google Drive; checked against Drive on 30 October — no source file was newer). A script, `scripts/import_catalogue.py`, writes a committed snapshot to `data/catalogue/operations.json` (with `kind`, `lever_id` and `featured` added by hand) and loads it into the two tables. Loading is idempotent — re-running replaces rows by `id` and never touches actions. The cards for models 01 and 02 are English translations of Spanish originals and are reviewed by Carlos before publication. The calculators' figures are **not** imported.
+
+**Licence.** The catalogue is Carlos María Muñoz Morillas's own research, published in this repository by his decision under **CC BY-NC 4.0** (credit required, no commercial use) ❓ *to confirm*. The code keeps its own terms.
+
+**Model 07 is also the workflow.** Model 07 describes how a marketing operations function runs, and the application's workflow is built on those layers — they are the Automations section's content *and* the structure every action follows:
+
+| Workflow step in this app | Model 07 layer |
+|---|---|
+| Request intake and the action form | M07.L03 Demand Intake, Prioritization and Capacity |
+| `lifecycle.py` transition and review rules | M07.L11 Workflow and Business Rule Design |
+| The intake API and the outbox to Make | M07.L09 Integration, API and Event Architecture |
+| The application itself, low-code and AI-assisted | M07.L13 Low-Code and No-Code Application Design · M07.L14 AI-Assisted Building and Vibe Coding |
+| Approval by the named reviewer | M07.L17 Human-in-the-Loop and Approval Architecture |
+| History, logs and incident handling | M07.L19 Observability, Reliability and Incident Response |
+| Closing with a measured result and a decision | M07.L24 Measurement, Value Realization and Optimization |
+
+**Not yet built:** both tables, the import script, the data file, the home screen and the discipline pages. Planned with the schema in Week 5 and the interface in Week 6.
+
 ### `requests` — the actions
 
 A request is now an **action**: marketing work that names the lever it pulls and what it costs, and is closed with what it actually produced.
@@ -161,6 +212,7 @@ A request is now an **action**: marketing work that names the lever it pulls and
 | `reviewer_id` | INTEGER | FK → users, nullable — named by the owner when sending to review; must have role `reviewer` or `admin` (checked by the route) and be neither requester nor owner (checked by the table) |
 | `due_date` | TEXT | nullable |
 | `lever_id` | INTEGER | FK → levers — required before review |
+| `operation_id` | TEXT | FK → operations, nullable — the catalogue operation the action was started from; its discipline places the action on the home screen. *Planned with the catalogue, not yet built* |
 | `hypothesis` | TEXT | required before review — *"removing forced sign-up lifts conversion by 0.3 points"* |
 | `expected_delta` | REAL | in the lever's KPI unit — sessions +8000 · conversion +0.003 · AOV +3.00 — **required before review**, so the prediction is fixed before any result exists |
 | `cost_eur` | REAL | cash, ≥ 0, default 0 |
@@ -234,6 +286,9 @@ Written in the same transaction as the change it announces. Not part of the reco
 |---|---|---|---|
 | GET/POST | `/login` | anyone | session start |
 | POST | `/logout` | signed in | session end |
+| GET | `/` | signed in | **home**: the project's ROI strip (invested, contribution gained, realised ROI against `roi_target`, approvals waiting) and the six discipline cards — actions, investment, realised ROI, best and worst action. *Planned with the catalogue* |
+| GET | `/disciplines/<key>` | signed in | one discipline: its featured operations, the full catalogue, and its actions with ROAS beside ROI and the confidence label. *Planned* |
+| GET | `/operations/<id>` | signed in | one operation's full ROI card, and the actions started from it. *Planned* |
 | GET | `/projects` | signed in | list |
 | POST | `/projects` | admin | create |
 | GET | `/projects/<id>` | signed in | the KPI tree, KPIs against target, actions with expected and realised ROI, the project's planned ROI |
@@ -306,6 +361,9 @@ After the commit, the dispatcher posts every undelivered row, oldest first, to `
 |---|---|
 | `base.html` | nav, flash region, skip link, landmarks |
 | `login.html` | email + password, labelled inputs |
+| `home.html` | the ROI strip and the six discipline cards; ROI below target shown as text, not colour alone. *Planned* |
+| `discipline.html` | featured operations, the catalogue, the discipline's actions. *Planned* |
+| `operation.html` | the full ROI card and a "Start an action" button that opens the action form with the operation's lever and discipline filled in. *Planned* |
 | `project_detail.html` | the KPI tree; each KPI against target, as text *and* a chart; actions with expected and realised ROI; planned and realised project ROI against `roi_target`; each lever's track record |
 | `requests_list.html` | my queue; status as text *and* colour, never colour alone |
 | `request_new.html` | title, type, priority, due date, description, lever, hypothesis, expected change, cost in euros and hours, measurement window; a **Preview** button and, once pressed, the before-action panel (below) |
@@ -382,7 +440,14 @@ Week 7 asks for at least eight covering valid, invalid, empty and boundary input
 38. A lever with no closed actions, or whose expected changes sum to zero, has no realisation (`None`), not zero
 39. The preview route writes nothing: after `POST /requests/preview` the requests, transitions and outbound tables are unchanged
 
-Thirty-nine. Deliberately more than eight, and 1–7, 16–20, 24–28 and 31–38 run in milliseconds. The AI fields (§3) bring their own tests when they are built.
+**`test_catalogue.py`** — planned with the catalogue (decided 30 October 2026)
+40. The import loads 179 operations across exactly six disciplines, and running it twice changes nothing
+41. Every `lever` operation has a lever; no `enabler` or `governance` operation has one
+42. An action started from an `enabler` or `governance` operation shows its full cost and no ROI figure — never an invented benefit
+43. A discipline card's investment and realised ROI equal those computed from its own actions — totals divided, never ratios summed
+44. No route writes to `disciplines` or `operations`
+
+Thirty-nine, plus five for the catalogue when it is built. Deliberately more than eight, and 1–7, 16–20, 24–28 and 31–38 run in milliseconds. The AI fields (§3) bring their own tests when they are built.
 
 ### The worked example — the numbers the tests use
 
@@ -405,7 +470,7 @@ Already verified against `roi.py`. B looks healthy on ROAS and loses money; A co
 
 Stated so nobody, human or generated code, quietly adds them back:
 
-- **Saved hours as a benefit.** Time is counted as a cost. Hours an action "frees up" become money only when spending actually falls, and the app has no way to know that.
+- **Saved hours as a benefit.** Time is counted as a cost. Hours an action "frees up" become money only when spending actually falls, and the app has no way to know that. *Confirmed 30 October 2026 for the Agentic AI and Automations sections:* their operations show a return only through a KPI lever; otherwise they are enablers, shown at full cost. The same rule runs through the influence models — freed hours are capacity, not a saving, until spend falls.
 - **ROAS or platform-attributed revenue as a result.** Only the measured change in the store's own KPIs is a result.
 - **ROI percentages added together.** A project's ROI is total profit change against total investment, never a sum or average of the actions' ratios.
 - **A result as more certain than it is.** Every realised figure carries its confidence label.
@@ -556,6 +621,11 @@ Scanners will not find most of these. Bandit and Semgrep catch injection, hardco
 11. **Lecturer agreement.** An own idea must be agreed before building starts — before the 28 October lab generates anything.
 12. **One role per person.** ✅ *Decided 28 October 2026:* a person may hold several roles (§3, "Multiple roles per user"), and the approval restriction applies by identity — nobody reviews an action they requested or own, `admin` included. In the hypothetical scenario: founder `admin` + `reviewer`; ecommerce manager `requester` + `reviewer`; account manager `requester` + `owner`; paid media specialist and designer/developer `owner`. **Not yet built:** the schema, `lifecycle.py`, route checks and tests listed in §3 change when authentication is built.
 
+13. **The featured operations.** Which 6–10 operations per discipline appear first. Carlos's choice, recorded as `featured` in `data/catalogue/operations.json`.
+14. **The licence for the catalogue.** CC BY-NC 4.0 is the working choice; to confirm before the data file is published.
+15. **The translated cards.** Models 01 and 02 were written in Spanish; their English cards are reviewed by Carlos before publication.
+16. **Classifying the 179 layers** as `lever`, `enabler` or `governance`, and mapping each lever operation to one of the nine levers.
+
 **Agreed future requirements** (28 October 2026), recorded now and built in their planned weeks: actions **above €500**, and any budget increase, need the founder's approval (amount-based routing, a separate rule from the monthly budget) — and **if the founder requested or owns such an action, it stays blocked**, because that approval would break the identity rule and the ecommerce manager cannot substitute for it; a **monthly budget of about €5,000** never overrides the reviewer rules; and automation 3 **reminds after 2 business days and escalates after 5**, to the founder, or flags the action for the admin when the founder is already its reviewer. Nothing is ever auto-approved.
 
 ---
@@ -573,3 +643,5 @@ Stated so the generated code does not acquire them:
 - No Gantt or dependencies, no timesheets — an action records its total hours as a cost, nothing finer
 - No chat or threaded comments, no file attachments, no email sent by the app itself — its only outward call is the signed, ids-only announcement to Make — no auto-assignment beyond a default owner per type, no public API beyond the two machine routes, no mobile app
 - No approve or reject buttons in emails: approval is always made signed in to the app, by the named reviewer
+- **No editing the catalogue in the app**, no custom disciplines, and no ROI per layer or per discipline added together: the catalogue changes only through the import, and a discipline's ROI is computed from its own actions' totals
+- **No figures from the influence models' calculators**: the catalogue imports the cards' text, never their worked-example numbers

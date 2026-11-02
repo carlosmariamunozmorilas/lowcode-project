@@ -56,7 +56,7 @@ answered:
 
 | Requirement | Here |
 |---|---|
-| Data model, ≥ 3 related tables | 12 tables — [ERD](docs/design/erd.md) |
+| Data model, ≥ 3 related tables | 12 tables, plus 2 for the catalogue (designed) — [ERD](docs/design/erd.md) |
 | Automations: scheduled, event-triggered, human approval | Monday intake · drift alert on each new figure · approval routing to a named reviewer, plus an AI weekly report — [portfolio plan](docs/portfolio/portfolio-plan.md) |
 | ≥ 2 roles, enforced on the data | 5 roles, four layers of enforcement — [roles](docs/design/roles.md) |
 | Level-1 data flow diagram | [DFD](docs/design/dfd.md) |

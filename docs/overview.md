@@ -28,6 +28,13 @@ starts: *what is this meant to move, by how much, and what will it cost?* After:
 
 ## What it is — and what it is not
 
+**The front door: six disciplines** *(decided, not yet built).* Opening the
+application shows the project's return first, then six sections — ecommerce,
+digital marketing, performance marketing, digital growth, agentic AI and
+automations. Each holds a catalogue of operations a team can run for an online
+store, drawn from my influence models: pick one, and it becomes an action with
+a prediction, a cost, an approval and, at the end, a measured result.
+
 **Project management for return on investment.** It looks like a project tool —
 pieces of work with an owner, tasks, stages and an approval — but it judges
 success differently. A normal project tool asks *was it delivered?* This one

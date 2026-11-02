@@ -1,7 +1,9 @@
 # Data model — entity relationship diagram
 
 Brief requirement 1: *at least 3 related tables, each with a primary key and the
-foreign keys that link them.* MarketingOps has twelve. The DDL is
+foreign keys that link them.* MarketingOps has fourteen: twelve in the DDL
+today, plus `disciplines` and `operations`, the catalogue decided on
+30 October 2026 and not yet built. The DDL is
 [`schema/001_initial.sql`](../../schema/001_initial.sql); field-level detail is in
 [`specification.md` §3](../specification.md#3--entities).
 
@@ -30,7 +32,25 @@ erDiagram
     kpi_measurements |o--o| kpi_measurements : "supersedes"
     requests |o--o{ automation_events : "is opened by"
     requests |o--o{ outbound_events : "announces"
+    disciplines ||--o{ operations : "catalogues"
+    levers |o--o{ operations : "is pulled by"
+    operations |o--o{ requests : "starts"
 
+    disciplines {
+        text key PK
+        text name
+        text source_model
+        int position
+    }
+    operations {
+        text id PK "e.g. M07.L24"
+        text discipline_key FK
+        text title
+        text kind "lever, enabler, governance"
+        int lever_id FK "lever operations only"
+        int featured
+        text card "full ROI card, ten text fields"
+    }
     users {
         int id PK
         text email "unique"
@@ -152,6 +172,15 @@ every number stays visible.
 **`kpis` and `levers` are fixed reference data.** The KPI tree (gross profit ←
 revenue ← sessions × conversion rate × average order value) is seeded by the
 schema and never edited by users; each lever moves exactly one leaf KPI.
+
+**`disciplines` and `operations` are the catalogue** *(decided, not yet
+built)*. Six disciplines, one per source influence model, and 179 operations,
+one per layer, each carrying its full ROI card. Like the KPI tree, they are
+reference data loaded by an import and never edited in the app. An action may
+point at the operation it was started from, which is how the home screen
+groups actions by discipline. A `lever` operation points at one of the nine
+levers; `enabler` and `governance` operations point at none, so they never
+carry a revenue estimate.
 
 **Two tables belong to the automations.** `automation_events` is where the
 automations' writes land, unique on `(source, external_id)` so a redelivery

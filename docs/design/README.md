@@ -32,7 +32,7 @@ approval and an audit trail.
 
 | # | Requirement | Minimum | Evidence | Page |
 |---|---|---|---|---|
-| 1 | Data model | ≥ 3 related tables, PKs and FKs | 12 tables; the action table links to users three times — requester, owner, named reviewer | [`erd.md`](erd.md) |
+| 1 | Data model | ≥ 3 related tables, PKs and FKs | 12 tables, plus 2 for the operations catalogue (decided 30 Oct, not yet built); the action table links to users three times — requester, owner, named reviewer | [`erd.md`](erd.md) |
 | 2 | Automations | ≥ 3: one scheduled, one event-triggered, one with a human approval step | 4: intake (scheduled) · drift alert (event) · approval routing (approval) · weekly ROI narrative (scheduled, AI) | [`../portfolio/portfolio-plan.md`](../portfolio/portfolio-plan.md) |
 | 3 | Role-based access | ≥ 2 roles, enforced on the data | 5 roles; every write passes a server-side check, and the record tables are protected by database triggers | [`roles.md`](roles.md) |
 | 4 | Data flow diagram | Level 1, trust boundaries | 7 processes, 2 data stores, 4 external entities, 15 numbered flows, 11 crossing a boundary | [`dfd.md`](dfd.md) |

@@ -66,6 +66,7 @@ enforces or a number it computes.
 |---|---|---|
 | 1 · Influence Models | The habit of thought: every action pulls **one lever**, which moves **one KPI**, inside a fixed tree — revenue = sessions × conversion rate × average order value | [`specification.md` §3](specification.md), [`roi.py`](../roi.py) |
 | 2 · AI-Era Influence Models | The **review checklist** — claims evidenced, brand and disclosure, permitted data use, audience eligibility — from the governance layer of the digital marketing model; and the rule that **automations reach the application only through its API and never decide**, from the layer on automation | [`specification.md` §3](specification.md), [`portfolio/portfolio-plan.md`](portfolio/portfolio-plan.md) |
+| 2 + 3 · six models together (01, 02, 07, 09, 11, 12) | **The operations catalogue**: one discipline per model, one operation per layer, each with its full ROI card — mechanism, intervention, costs, metrics, bridge to contribution, role of AI, evidence, guardrail, decision rule and owner. Model 07 also shapes the workflow itself. Published under CC BY-NC 4.0 ❓ | [`specification.md` §3](specification.md) |
 | 3 · ROI AI Influence Models | The rules around the return: the prediction is **fixed before review**; every action is **closed with a decision**; each one shows its **break-even** point; and the application **never counts** saved hours as money, ROAS as a result, or ROI percentages added together | [`specification.md`](specification.md), [`roi.py`](../roi.py), [`lifecycle.py`](../lifecycle.py) |
 
 Three models matter most, each for a different part of the application:
@@ -76,8 +77,14 @@ levers.
 
 ## What it deliberately does not take
 
-- **The layer cards themselves.** Each model has 25 to 40 of them. They explain
-  *why* a lever might work; the application records *whether* it did.
+- ~~**The layer cards themselves.**~~ *Changed on 30 October 2026.* The
+  application now takes the full ROI investment cards of six models — 01, 02,
+  07, 09, 11 and 12, 179 layers — as the catalogue behind its six disciplines
+  ([`specification.md` §3](specification.md)). The reason for the change: the
+  cards say *what* a team can do and how to judge it, which is exactly what an
+  empty action form lacks. What stays true is the division of labour — the
+  cards explain *why* an operation might work; the application records
+  *whether* it did.
 - **Influence weights or maturity scores.** They are diagnostic structures, not
   measured relationships, and turning them into numbers in software would
   present a hypothesis as a fact.
