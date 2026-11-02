@@ -148,15 +148,15 @@ they are **templates and requirements, not a catalogue to load in full**:
 
 ## Data model for the MVP
 
-Sixteen tables; fields, constraints and formulas are in
+Seventeen tables; fields, constraints and formulas are in
 [`specification-v2.md`](specification-v2.md).
 
 | Tables | Hold |
 |---|---|
 | `users`, `user_roles`, `client_assignments` | people, their roles, and which clients each one works on — the basis of "you see only your clients" |
 | `clients`, `plan_templates` | the store profiles, each with its business model (DTC, B2C, B2B, marketplace, subscription or omnichannel), and the action-plan templates |
-| `actions`, `action_history` | the pilots — benefit type, expected benefit, setup and operating costs, hurdle, comparison, window, named reviewer, measured result, confidence, decision — and their append-only history |
-| `components`, `component_months` | a client's running growth-system components and their append-only monthly cost and benefit |
+| `actions`, `action_history`, `assignments` | the pilots — benefit type, expected benefit, setup and operating costs, hurdle, comparison, window and post-period, named reviewer, measured result, confidence, decision — their append-only history, and which customers are in each holdout's test or control group, buyers or not |
+| `components`, `component_months` | a client's running growth-system components, how each one's benefit is measured, and their append-only monthly cost and benefit |
 | `client_reports` | the monthly report drafts and what was sent |
 | `orders`, `refunds`, `sessions`, `ad_spend` | the fictional shop data, per client |
 | `automation_events`, `outbound_events` | what automations write in, and the outbox of announcements to Make |
@@ -195,7 +195,7 @@ the append-only history with database triggers, and Werkzeug scrypt passwords.
 
 | Requirement | v2 answer |
 |---|---|
-| ≥ 3 related tables | Sixteen, linked through clients, actions and components |
+| ≥ 3 related tables | Seventeen, linked through clients, actions and components |
 | ≥ 3 automations, one scheduled, one event-triggered, one with human approval | The four above |
 | ≥ 2 roles enforced on the data | Consultant, lead and admin; client isolation and reviewer independence on every query |
 | DFD, STRIDE, GDPR | To revise for v2; GDPR becomes simpler — the fictional orders hold no customer names or contact details, only staff data is personal |
