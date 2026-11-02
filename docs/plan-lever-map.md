@@ -147,8 +147,12 @@ panel (spec v2 §3, §4); nothing here is built yet.
    at all. The "where to grow" view can only point at metrics the app measures:
    conversion, average order, repeat rate, new customers, CAC, CPA, refund rate,
    margin and sessions by channel.
-5. **Plan 20 is verified.** Email segmentation suits a repeat-purchase store:
-   its four groups need customer history, which the fictional orders hold.
+5. **Plan 20 is verified.** Email segmentation suits a repeat-purchase store.
+   Three of its four groups (lapsed, recent repeat, recent first-time) come from
+   customer history, which the fictional orders hold. The fourth, prospects who
+   have never bought, has no orders: the generator creates them as fictional
+   pseudonymous contacts in `assignments` (decided 2 November), standing in for
+   an email platform's contact list.
 6. **Plans 26, 27, 29 and 31 were reread on 2 November 2026.** 27 was right;
    26 (contribution-value signals change the margin mix of paid orders, not
    CPA), 29 (the worked change relaxes a target to buy useful volume) and 31
