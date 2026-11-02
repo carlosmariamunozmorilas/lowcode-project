@@ -53,7 +53,7 @@ orphaned.
 app.py                  Flask factory, blueprints, error pages
 config.py               settings from environment (SECRET_KEY, DATABASE_PATH, one API secret per automation, keyed by automation name)
 db.py                   connection per request, PRAGMA foreign_keys, init-db command
-auth.py                 login, logout, session, role and client-access checks
+auth.py                 login, logout, session, role and client-access checks, CSRF tokens
 lifecycle.py            action stage rules and the identity rule for sign-off (exists)
 roi.py                  investment, net gain, ROI, break-even (exists; extended)
 measure.py              contribution from orders, the Growth P&L, an action's measured benefit, system and KPI figures
@@ -130,7 +130,8 @@ records as the actor of everything the automation writes.
 never edited in the app. `id` INTEGER PK (the plan number, 1–72) · `discipline`
 CHECK in (`ecommerce`, `digital_marketing`, `performance_marketing`,
 `digital_growth`, `agentic_ai`, `automations`) · `title` · `summary` ·
-`benefit_type` · `default_window_days` · `default_post_period_days` (how long
+`benefit_type` · `lifecycle_stage` (from the plan map; the default for an
+action started from the plan) · `default_window_days` · `default_post_period_days` (how long
 after the window the plan's effect is still counted, e.g. 14, 30 or 90 days) ·
 `default_hurdle_eur` · `setup_hours` · `data_fit` CHECK in (`yes`, `partial`,
 `no`) — whether the app's data can show what the plan moves, from
@@ -199,7 +200,9 @@ only for seeded history · `name` · `discipline` · `lifecycle_stage` ·
 `retired_on` · `benefit_key`.
 
 **`component_months`** — append-only monthly record. `id` PK · `component_id` FK
-· `month` (`YYYY-MM`) · `operating_cost_eur` · `operating_hours` ·
+· `client_id` FK (stored on the row so the "each benefit once" index can work
+per client; a trigger refuses a value that differs from the component's own
+client) · `month` (`YYYY-MM`) · `operating_cost_eur` · `operating_hours` ·
 `measured_benefit_eur` (NULL for an enabler, or when the benefit is recorded
 under another component; computed by the app unless the component's
 measurement is `invoice`) · `confidence` CHECK in (`holdout`,
@@ -208,7 +211,10 @@ measurement · `benefit_key` · for automation and
 agent components: `runs`, `failed_runs` and `hours_freed` — **`hours_freed` is
 capacity and never enters any benefit** · `supersedes_id` FK → component_months ·
 `recorded_by` FK → users · `created_at`. Triggers abort `UPDATE` and `DELETE`; a
-correction is a new row that supersedes the old one.
+correction is a new row that supersedes the old one. The unique index covers
+original rows (`supersedes_id` NULL); that a correction replaces the current
+row of the same component and month is checked in code, since an index cannot
+see which row a correction replaces.
 
 **`client_reports`** — `id` PK · `client_id` FK · `month` · `draft_text` (from
 automation 4) · `final_text` · `status` CHECK in (`draft`, `rejected`, `sent`)
@@ -241,9 +247,12 @@ stock returns). The original order is never edited.
 ### Automations
 
 **`automation_events`** — what the automations write: `id`, `source`,
-`client_id`, `external_id`, `payload`, `status` CHECK in (`accepted`,
-`rejected`, `duplicate`), `reason`, `received_at`, UNIQUE (`source`,
-`external_id`); for shop-data batches also the control totals
+`client_id`, `event_type` (`shop_data`, `alerts`, `report_draft`),
+`external_id`, `payload`, `status` CHECK in (`accepted`, `rejected`,
+`duplicate`), `reason`, `received_at`. A partial unique index allows one row
+per `source` and `external_id` that is not a `duplicate`: a redelivered event
+changes nothing, but is still recorded as `duplicate`, so the quality metrics
+can count it. For shop-data batches also the control totals
 `expected_rows`, `parsed_rows`, `expected_revenue_eur` and
 `parsed_revenue_eur`. **A batch is all or nothing:** if the row count differs,
 the revenue totals differ once rounded to the cent, or any row
@@ -324,7 +333,7 @@ measured, chosen by the reviewer when it is adopted:
 
 | `measurement` | How each month's benefit is found | Confidence |
 |---|---|---|
-| `holdout_kept` | The component keeps a small permanent control group (for example 10%, as email flows and cart recovery allow); the app computes the month exactly as the pilot's holdout, from `assignments` | `holdout` |
+| `holdout_kept` | The component keeps a small permanent control group (for example 10%, as email flows and cart recovery allow); the app computes the month as the pilot's holdout, from `assignments`, over that month's new entrants only (customers assigned during the month) — so a buyer whose order falls in the next month is missed, and month-to-month figures are noisy | `holdout` |
 | `pilot_estimate` | No control can be kept (a checkout change applied to everyone): the pilot's measured monthly result is carried forward, shown as *"estimate from the pilot of <month>"*; six months after it started the component becomes `review_due` and should be re-tested | `pilot_estimate` |
 | `invoice` | An avoided cost: the paid cost before and after, recorded by an independent lead (§5) | `documented` |
 
@@ -349,7 +358,7 @@ the key; one carries the benefit, the other records cost only.
 | **Driver** | Explains the outcome | Revenue, orders, conversion (orders ÷ sessions), average order value, repeat-purchase rate (customers with two or more orders in the trailing 90 days ÷ customers with one or more) |
 | **Efficiency** | Cost of the result | CAC (paid acquisition spend ÷ new customers), CPA by channel (spend ÷ orders) |
 | **Diagnostic** | Helps find causes | ROAS by channel (channel revenue ÷ channel spend) |
-| **Guardrail** | Stops destructive optimisation | Contribution margin % (Growth P&L) and refund rate (refunded orders ÷ orders) — the two fixed guardrails every action is checked on; refund value shown beside them |
+| **Guardrail** | Stops destructive optimisation | Contribution margin % (Growth P&L) and refund rate (orders refunded in the period ÷ orders placed in the period, as the Growth P&L counts refunds — counting only the period's own orders would flatter every recent period, because refunds arrive days later) — the two fixed guardrails every action is checked on; refund value shown beside them |
 | **Quality and risk** | Watches the system itself | Rejected and duplicate intake batches (intake quality = accepted ÷ received batches), incomplete cost data, failed automation and agent runs, report correction and rejection rates and cost per draft (§8), open alerts |
 
 Only **outcome** metrics decide anything. A **guardrail breach** is margin %
@@ -368,8 +377,10 @@ plan templates' `moves` tags and the dashboard: `contribution`, `revenue`,
 **Where to grow** — the rule behind the dashboard panel (§7). For the month, a
 driver or efficiency metric counts as *weak* when it is worse than the client's
 own average over the previous three months by more than the guardrail
-tolerance for percentages, or by more than 5% for the others (illustrative,
-in `measure.py`). The panel lists, for each weak metric, the plans whose
+tolerance for margin and refund rate (2 and 1 points), or by more than 5% for
+every other metric, conversion and repeat rate included — two points of
+conversion would be a huge change for a store converting at 1.8%
+(illustrative, in `measure.py`). The panel lists, for each weak metric, the plans whose
 `moves` tags include it, that suit the client's business model and purchase
 frequency, and whose `data_fit` is not `no`. It never compares a store with an
 invented benchmark, and it says *"plans that target this metric"* — never
@@ -431,6 +442,11 @@ figures the code has calculated.
 consultant who changes an id in a URL gets `404`, not another client's data.
 Enforced in the data-access functions, not by hiding links.
 
+**Forms carry a CSRF token.** Every form POST includes a token tied to the
+session and is refused without it, so another site cannot submit an approval,
+a close or a month on a signed-in person's behalf. The signed API is exempt:
+it authenticates each request by its own signature.
+
 **The identity rule:** nobody approves, rejects or closes an action they
 requested or own, whatever their roles; admin is no exception; with no eligible
 reviewer the action stays blocked. `lifecycle.User` becomes multi-role
@@ -447,6 +463,7 @@ reviewer the action stays blocked. `lifecycle.User` becomes multi-role
 | GET | `/clients/<id>/plans` | assigned | all 72 plans, those that suit this client first; only featured plans offer "start an action" |
 | GET/POST | `/clients/<id>/actions/new` | assigned consultant | new action, optionally from a template |
 | GET | `/actions/<id>` | assigned | the action, its history and its measured result |
+| GET/POST | `/actions/<id>/edit` | requester, owner or assigned lead | change the action's fields before review; the prediction is then fixed |
 | POST | `/actions/<id>/assign`, `/review`, `/approve`, `/reject`, `/close`, `/cancel` | per §5 | stage changes through `lifecycle.py` |
 | GET | `/review` | lead | actions waiting for this lead |
 | GET | `/components/<id>` | assigned | month-by-month record |
@@ -454,6 +471,7 @@ reviewer the action stays blocked. `lifecycle.User` becomes multi-role
 | POST | `/components/<id>/status` | named lead | keep, mark for review, or retire |
 | GET/POST | `/clients/<id>/reports/<month>` | assigned | review and send the drafted report |
 | GET/POST | `/admin/clients`, `/admin/users` | admin | set-up |
+| POST | `/admin/clients/<id>/active` | admin | deactivate or reactivate a client — never delete |
 | POST | `/api/events` | named automation + HMAC signature (§8) | automation writes: `shop_data`, `alerts`, `report_draft`; idempotent |
 | GET | `/api/metrics` | named automation + HMAC signature (§8) | aggregates for automations 2–4 — never raw orders |
 
@@ -568,8 +586,11 @@ and tests can rely on it.
 | Brote Cosmetics (skincare subscription) | €30 | 60% | monthly | €2,000 | 4,000 | 2.5% | ~100 | ~€156k | ~3% | ~45% |
 | Roble Muebles (furniture) | €600 | 25% | rare | €12,000 | 6,000 | 0.6% | ~36 | ~€1.1M | ~8% | almost none |
 
-All figures are fictional (baselines for Brote and Roble decided 2 November);
-ad spend is roughly 8–15% of revenue in each store.
+All figures are fictional (baselines for Brote and Roble decided 2 November;
+both also get an ROI target of 0.20, like Luna Home). The agency team is
+fictional too: Ana Ruiz (admin), Marta Gil and Diego Sanz (leads), Lucía Vega
+and Pablo Ortiz (consultants), plus one service user per automation. Ad spend
+is roughly 8–15% of revenue in each store.
 
 **Build order.** The generator is the largest hidden piece of work in the MVP,
 so it is built for **Luna Home first**, complete with its past actions, and
@@ -674,10 +695,13 @@ time; the spec keeps them so the design stays complete.
 40. Once an action is in review, a change to its window, post-period, expected benefit, primary metric, comparison or hurdle is refused
 41. "Where to grow" lists a plan only when its `moves` include a weak metric, it suits the client's business model and purchase frequency, and its `data_fit` is not `no`; a metric within tolerance lists nothing
 42. An action's result subtracts refunds recorded by the end of its measurement period and ignores later ones; a refund recorded after the action closed leaves its result unchanged but appears in that month's Growth P&L
+43. A form POST without the session's CSRF token is refused and changes nothing
+44. A component month whose `client_id` differs from its component's client is refused by the schema
 
 ## 12 · Security surface — what Week 8 should find
 
 1. **Client isolation (IDOR):** can a consultant read or change another client's data by changing an id?
+1a. **Cross-site requests:** does every form refuse a POST without the session's CSRF token?
 2. **Sign-off independence:** can anyone approve or close their own work, or record an `invoice` month for their own component, through the route, not just the button?
 3. **Mass assignment:** can a form set a status, a result or a decision directly?
 4. **The forwarded approval link:** does opening it as someone else refuse the decision?

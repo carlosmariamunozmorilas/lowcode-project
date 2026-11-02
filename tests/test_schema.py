@@ -48,6 +48,18 @@ def test_24_foreign_keys_on_and_nothing_is_deleted(conn):
         conn.execute("DELETE FROM users WHERE id = ?", (CONSULTANT,))
 
 
+def test_44_a_month_row_must_carry_its_components_client(conn):
+    conn.execute("""INSERT INTO components (id, client_id, name, discipline, lifecycle_stage,
+                        benefit_type, measurement, started_on)
+                    VALUES (1, ?, 'C', 'automations', 'conversion', 'contribution',
+                            'holdout_kept', '2026-07-01')""", (LUNA,))
+    with pytest.raises(sqlite3.IntegrityError, match="must match"):
+        conn.execute("""INSERT INTO component_months (component_id, client_id, month, recorded_by)
+                        VALUES (1, 2, '2026-08', ?)""", (CONSULTANT,))
+    conn.execute("""INSERT INTO component_months (component_id, client_id, month, recorded_by)
+                    VALUES (1, ?, '2026-08', ?)""", (LUNA, CONSULTANT))
+
+
 def test_reviewer_is_never_requester_or_owner_in_the_schema(conn):
     with pytest.raises(sqlite3.IntegrityError):
         add_action(conn, owner_id=LEAD_A, reviewer_id=LEAD_A)
