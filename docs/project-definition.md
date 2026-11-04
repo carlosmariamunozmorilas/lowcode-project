@@ -131,8 +131,8 @@ The brief requires one scheduled automation, one triggered by an event and one w
 | 1 ✅ | 14 Oct | `app.py` · `requirements.txt` · `.gitignore` · `README.md` with the project note |
 | 2 ✅ | 21 Oct | `experiments/week02/` raw outputs from three tools · `docs/week02-tool-comparison.md` with measured scores and a reasoned choice |
 | 3 | 28 Oct | `docs/specification.md` with the ROI layer · `docs/design/` against the brief · `lifecycle.py` and `roi.py` · the Week 3 slice (`docs/week03-slice.md`) generated on a branch, merged via PR · `docs/week03-review.md` · clean-clone fixes |
-| 4 | 4 Nov | the `POST /api/events` handler for spend and revenue · `docs/portfolio/automation-01.md` · `docs/portfolio/img/` |
-| 5 | 11 Nov | `schema/001_initial.sql` final · `docs/design/erd.md` checked against the real schema, with the delete rule · CRUD with parameterised queries · string-formatted SQL removed · the outbox · `automation-02.md` |
+| 4 | 4 Nov | `docs/portfolio/automation-01.md` — the reply to a new inquiry (re-mapped 4 November) · `docs/portfolio/img/` |
+| 5 | 11 Nov | `schema/001_initial.sql` final · `docs/design/erd.md` checked against the real schema, with the delete rule · CRUD with parameterised queries · string-formatted SQL removed · the outbox · `automation-02.md` — the shop-data intake |
 | 6 | 18 Nov | Templates: responsive, accessible, Tailwind; the project page with KPI charts · `docs/week06-ui-review.md` · before/after screenshots |
 | 7 | 25 Nov | `ruff.toml` · `tests/` with the 39 tests · `docs/week07-bugs.md` · `automation-03.md` |
 | 8 | 2 Dec | `security/` scan evidence · `docs/security-report.md` with before/after table · dependencies upgraded · automation 4 built |
@@ -149,7 +149,7 @@ The brief requires one scheduled automation, one triggered by an event and one w
 2. **Who certifies results.** ✅ *Decided 28 October 2026:* the named reviewer, provided they are neither requester nor owner; `admin` status alone does not authorise closing. Others may prepare the analysis without certifying it ([`specification.md` §10](specification.md)).
 3. **The delete rule.** Week 5 requires this to be decided by hand, on paper, not by an AI — and the sheet asks it about projects directly. Nothing is ever deleted here; is "the question does not arise" defensible, or should a project be archivable?
 4. **The problem statement.** The 150 words in the README must describe something actually lived. Week 12 asks what is in the repository that could not be explained in an interview.
-5. **The real manual process for automation 1.** The Week 4 sheet: *"Bring a real one. Contrived scenarios are obvious and they mark badly."* Who copies platform numbers by hand, how often, and how long it takes — yours to supply.
+5. **The real manual process for automation 1.** The Week 4 sheet: *"Bring a real one. Contrived scenarios are obvious and they mark badly."* Since 4 November automation 1 is the reply to a new inquiry: who answers inquiries by hand, how many a week, and how long each reply takes — yours to supply.
 6. **An industry problem.** Whether this attaches to a real company's process, via the Industry Engagement Forum. Ask on the Week 3 forum post.
 7. **Lecturer agreement.** The project brief: an own idea is welcome but must be *"agreed with your lecturer before you start building"* — before the 28 October lab.
 8. **The named user group.** The brief asks for a real problem for a named group of users; the design pack leaves that cell for the project's owner to fill (`design/README.md`).
