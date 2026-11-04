@@ -96,6 +96,19 @@ def test_27_control_totals_reject_the_whole_batch(client, app_conn):
     assert len(rejected) == 3 and all(r["reason"] for r in rejected)
 
 
+def test_45_a_rejected_batch_frees_its_id_for_the_corrected_one(client, app_conn):
+    wrong = batch("L-2026-10-17", expected_revenue=162.90)
+    assert signed(client, "/api/events", wrong).status_code == 422
+    assert count(app_conn, "orders") == 0
+    corrected = signed(client, "/api/events", batch("L-2026-10-17"))
+    assert corrected.status_code == 201 and count(app_conn, "orders") == 2
+    again = signed(client, "/api/events", batch("L-2026-10-17"))
+    assert again.status_code == 200 and again.get_json()["status"] == "duplicate"
+    statuses = [r[0] for r in app_conn.execute(
+        "SELECT status FROM automation_events WHERE external_id = 'L-2026-10-17' ORDER BY id")]
+    assert statuses == ["rejected", "accepted", "duplicate"]
+
+
 def test_27b_missing_costs_stay_missing(client, app_conn):
     rows = batch()["orders"]
     rows[0] = {**rows[0], "product_cost_eur": None}

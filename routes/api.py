@@ -97,8 +97,7 @@ def events():
     conn = get_db()
     source = user["automation_name"]
     client_id = event.get("client_id")
-    if conn.execute("""SELECT 1 FROM automation_events WHERE source = ? AND external_id = ?
-                       AND status <> 'duplicate'""", (source, external_id)).fetchone():
+    if _already_accepted(conn, source, external_id):
         with transaction(conn):
             conn.execute(
                 """INSERT INTO automation_events (source, client_id, event_type, external_id,
@@ -119,19 +118,17 @@ def _client_exists(client_id) -> bool:
         "SELECT 1 FROM clients WHERE id = ? AND is_active = 1", (client_id,)).fetchone() is not None
 
 
+def _already_accepted(conn, source, external_id) -> bool:
+    # Only an accepted event holds its id. A rejected one stays on record with
+    # its reason, but the corrected batch may be resent under the same id.
+    return conn.execute("""SELECT 1 FROM automation_events WHERE source = ? AND external_id = ?
+                           AND status = 'accepted'""", (source, external_id)).fetchone() is not None
+
+
 def _reject(conn, source, client_id, event_type, external_id, event, reason, status, **totals):
-    try:
-        with transaction(conn):
-            conn.execute(
-                """INSERT INTO automation_events (source, client_id, event_type, external_id,
-                       payload, status, reason, expected_rows, parsed_rows, expected_revenue_eur,
-                       parsed_revenue_eur) VALUES (?, ?, ?, ?, ?, 'rejected', ?, ?, ?, ?, ?)""",
-                (source, client_id, event_type, external_id, json.dumps(event)[:20000], reason,
-                 totals.get("expected_rows"), totals.get("parsed_rows"),
-                 totals.get("expected_revenue"), totals.get("parsed_revenue")))
-    except sqlite3.IntegrityError:
+    if _already_accepted(conn, source, external_id):
         # Two copies of the same event raced past the duplicate check and the
-        # other one was recorded first: this one is a redelivery, not an error.
+        # other one was accepted first: this one is a redelivery, not an error.
         # (Found by the 2 November code review: it used to end in an error 500.)
         with transaction(conn):
             conn.execute(
@@ -140,6 +137,14 @@ def _reject(conn, source, client_id, event_type, external_id, event, reason, sta
                        'redelivered while the first copy was being processed')""",
                 (source, client_id, event_type, external_id))
         return jsonify({"status": "duplicate"}), 200
+    with transaction(conn):
+        conn.execute(
+            """INSERT INTO automation_events (source, client_id, event_type, external_id,
+                   payload, status, reason, expected_rows, parsed_rows, expected_revenue_eur,
+                   parsed_revenue_eur) VALUES (?, ?, ?, ?, ?, 'rejected', ?, ?, ?, ?, ?)""",
+            (source, client_id, event_type, external_id, json.dumps(event)[:20000], reason,
+             totals.get("expected_rows"), totals.get("parsed_rows"),
+             totals.get("expected_revenue"), totals.get("parsed_revenue")))
     return jsonify({"status": "rejected", "reason": reason}), status
 
 

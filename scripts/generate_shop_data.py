@@ -503,17 +503,23 @@ def generate(conn: sqlite3.Connection) -> None:
                    '2026-10-31T18:00:00Z')""",
         (agent_component,))
 
-    # Shop-data intake history: daily batches, one rejected for a total mismatch.
+    # Shop-data intake history: daily batches, one rejected for a total mismatch
+    # and resent corrected the same morning under the same id.
+    intake = """INSERT INTO automation_events (source, client_id, event_type, external_id,
+                    payload, status, reason, received_at)
+                VALUES ('shop_intake', ?, 'shop_data', ?, '{}', ?, ?, ?)"""
     for s in STORES:
         for day in days(date(2026, 10, 1), END):
-            rejected = s.id == 1 and day == date(2026, 10, 17)
-            conn.execute(
-                """INSERT INTO automation_events (source, client_id, event_type, external_id,
-                       payload, status, reason, received_at)
-                   VALUES ('shop_intake', ?, 'shop_data', ?, '{}', ?, ?, ?)""",
-                (s.id, f"{s.code}-{day.isoformat()}", "rejected" if rejected else "accepted",
-                 "revenue total differs from control total by €12.40" if rejected else None,
-                 f"{(day + timedelta(days=1)).isoformat()}T06:00:00Z"))
+            external_id, next_day = f"{s.code}-{day.isoformat()}", day + timedelta(days=1)
+            if s.id == 1 and day == date(2026, 10, 17):
+                conn.execute(intake, (s.id, external_id, "rejected",
+                                      "revenue total differs from control total by €12.40",
+                                      f"{next_day.isoformat()}T06:00:00Z"))
+                conn.execute(intake, (s.id, external_id, "accepted", None,
+                                      f"{next_day.isoformat()}T09:30:00Z"))
+                continue
+            conn.execute(intake, (s.id, external_id, "accepted", None,
+                                  f"{next_day.isoformat()}T06:00:00Z"))
 
 
 def main() -> None:
