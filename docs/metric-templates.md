@@ -2,11 +2,15 @@
 
 **Status:** proposal, 4 November 2026 — branch `docs/metric-templates`. Nothing
 here is loaded by the app or produced by the generator yet; the three decisions
-at the end (D1–D3) say what would change. **Source:** Carlos's *Unified ROI
-System — variables, KPIs, levers and objects* (A4 summary, 3 pages, 4 November
-2026), read in full. The machine-readable twin is
-[`data/metric_templates.json`](../data/metric_templates.json); the tables below
-mirror it.
+at the end say what would change (D1 decided: yes). **Source:** Carlos's
+*Unified ROI System — variables, KPIs, levers and objects* (A4 summary, 3 pages,
+4 November 2026), read in full and kept in the repository:
+[`sources/Unified_ROI_Variables_A4_EN.pdf`](sources/Unified_ROI_Variables_A4_EN.pdf).
+The machine-readable twin is
+[`data/metric_templates.json`](../data/metric_templates.json). **Both files are
+generated** by [`scripts/build_metric_templates.py`](../scripts/build_metric_templates.py),
+which also checks the catalogue against the app — edit the script, not the
+files; `--check` reports a file that is out of date.
 
 ## Why this page exists
 
@@ -27,8 +31,10 @@ reason.
 
 **Result:** 65 metric templates — 28 the app computes today,
 18 whose data already exists (a formula in `measure.py` is
-all they need — contribution after media also needs decision D1), and 19 that need one of six small fictional
-data extensions (E1–E6).
+all they need — contribution after media also needs decision D1), and
+19 that need one of six small fictional data extensions
+(E1–E6). **Only a core set of 22 is meant for the screens and the
+presentation** — [the core set](#the-core-set); the rest is reference.
 
 ## How the PDF maps onto the app
 
@@ -209,6 +215,25 @@ result, and the diagnostics that help find causes.
 | Guardrail | Contribution margin % · Refund rate |
 | Quality and risk | Run failure rate *(ready)* · Exception rate *(E6)* · Intake quality · Duplicate delivery rate *(ready)* · Orders with a missing cost · Hours freed (capacity) · Below-target alerts |
 
+## The core set
+
+Sixty-five metrics are a reference, not a screen. The dashboards and the Week
+12 presentation show only the **core set** below — the most representative
+three per discipline, plus the verdict and the two guardrails that every
+discipline shares (22 in all). Proposed on 4 November after Carlos
+asked for *"only the most representative"*; it is defined once in the build
+script and marked `core` in the JSON, so changing it is a one-line edit.
+
+| Shown for | Core metrics | Why these |
+|---|---|---|
+| Shared | ROI (action, full payback) · System ROI (continuation) · Contribution margin % · Refund rate | The verdict and the two guardrails — shown for every discipline. |
+| Ecommerce | Conversion rate · Average order value · Contribution per session *(ready)* | How many visits buy, how much they spend, and what each visit earns. |
+| Digital marketing and CRM | Sessions · New customers · Message click rate *(E3)* | Earned traffic, new buyers, and whether owned messages are read. |
+| Performance marketing | Incremental contribution after media *(ready)* *(D1)* · Customer acquisition cost (CAC) · ROAS | What media really earned (D1), what a new customer costs, and ROAS shown beside them to explain why it is not ROI. |
+| Digital growth | Repeat-purchase rate · Second-order rate within 90 days *(ready)* · 90-day contribution to CAC *(ready)* | Whether customers come back, how soon, and whether the first 90 days paid back their acquisition. |
+| Agentic AI | Output acceptance rate *(E6)* · Cost per accepted output *(E6)* · Report correction rate | How much agent work a person accepts, what it costs, and how often a person corrects it. |
+| Automations | Run failure rate *(ready)* · Cost per run *(ready)* · Intake quality | Whether the workflows run, what a run costs, and whether data arrives intact. |
+
 ## Metric catalogue
 
 Grouped by home discipline; the templates above borrow across groups. Plans are
@@ -323,14 +348,14 @@ Today's tables — `orders`, `refunds`, `sessions`, `ad_spend`, `assignments`,
 carry the other 19. All six add columns to existing tables,
 except E3, which is one new table.
 
-| | Adds | Unlocks | Effort | Changes the intake |
-|---|---|---|---|---|
-| **E1** Funnel steps and device | sessions.device (mobile or desktop), part of the row's key: client · date · channel · device<br>sessions.product_views, add_to_carts, checkouts_started — sessions that reached each step<br>sessions.tracked_purchases — purchases the analytics tag recorded<br>orders.device | `add_to_cart_rate`, `checkout_completion_rate`, `cart_abandonment_rate`, `mobile_conversion`, `tracking_capture_rate` | medium | yes |
-| **E2** Ad delivery and platform-reported purchases | ad_spend.impressions, clicks<br>ad_spend.platform_purchases, platform_revenue_eur — what the ad platform claims | `cpc`, `cpm`, `ctr`, `platform_overcount` | small | yes |
-| **E3** Message sends (email and SMS) | new table messages_daily: client · date · channel (email or sms) · stream (a campaign or flow name) · action_id (nullable) · sent · delivered · clicks · unsubscribes · contactable (contacts who could receive the stream that day) | `email_click_rate`, `unsubscribe_rate`, `messages_per_contact`, `delivery_rate` | medium | yes |
-| **E4** Units per order | orders.units (≥ 1) | `units_per_order` | small | yes |
-| **E5** Refund reasons | refunds.reason CHECK in (damaged, wrong_item, not_as_described, late_delivery, changed_mind); all but changed_mind count as avoidable | `avoidable_return_share` | small | yes |
-| **E6** Agent and automation output counts | component_months.outputs, outputs_accepted, exceptions, ai_cost_eur (nullable; automation and agent components only) | `output_acceptance_rate`, `cost_per_accepted_output`, `ai_cost_per_output`, `exception_rate` | small | no |
+| | In plain words | Adds to the data | Unlocks | Effort | Changes the intake |
+|---|---|---|---|---|---|
+| **E1** Funnel steps and device | What shoppers did on the site before buying — viewed a product, added to the cart, started checkout — and whether they were on a phone or a computer; plus how many purchases the analytics tag actually recorded. | sessions.device (mobile or desktop), part of the row's key: client · date · channel · device<br>sessions.product_views, add_to_carts, checkouts_started — sessions that reached each step<br>sessions.tracked_purchases — purchases the analytics tag recorded<br>orders.device | `add_to_cart_rate`, `checkout_completion_rate`, `cart_abandonment_rate`, `mobile_conversion`, `tracking_capture_rate` | medium | yes |
+| **E2** Ad delivery and platform-reported purchases | How many people saw and clicked each channel's ads, and how many purchases the ad platform claims — always more than the store really received from it. | ad_spend.impressions, clicks<br>ad_spend.platform_purchases, platform_revenue_eur — what the ad platform claims | `cpc`, `cpm`, `ctr`, `platform_overcount` | small | yes |
+| **E3** Message sends (email and SMS) | The emails and SMS each store sent — campaigns and automatic flows such as cart recovery — with how many were delivered, clicked and led to an unsubscribe. | new table messages_daily: client · date · channel (email or sms) · stream (a campaign or flow name) · action_id (nullable) · sent · delivered · clicks · unsubscribes · contactable (contacts who could receive the stream that day) | `email_click_rate`, `unsubscribe_rate`, `messages_per_contact`, `delivery_rate` | medium | yes |
+| **E4** Units per order | How many items each order contains, so bundles and cross-selling can be judged. | orders.units (≥ 1) | `units_per_order` | small | yes |
+| **E5** Refund reasons | Why each refund happened — damaged, wrong item, not as described, late, or the customer changed their mind — so preventable returns can be told apart. | refunds.reason CHECK in (damaged, wrong_item, not_as_described, late_delivery, changed_mind); all but changed_mind count as avoidable | `avoidable_return_share` | small | yes |
+| **E6** Agent and automation output counts | For each AI agent and automation, how much work it produced each month, how much of it a person accepted, how often a person had to step in, and what the AI cost. | component_months.outputs, outputs_accepted, exceptions, ai_cost_eur (nullable; automation and agent components only) | `output_acceptance_rate`, `cost_per_accepted_output`, `ai_cost_per_output`, `exception_rate` | small | no |
 
 ### Generation settings
 
@@ -441,9 +466,11 @@ runs, outputs = messages sent (E3), 0–3 exceptions, no AI cost.
    forecasting (spec v2 §13), so the templates use *realised* cohort
    contribution at 90 days and its ratio to CAC.
 
-## Decisions ❓
+## Decisions
 
-**D1 — Measure media actions after media, in their channel.** Today an action's
+**D1 — Measure media actions after media, in their channel.** ✅ *Decided 4
+November: yes — implemented in its own pull request (schema, `measure.py`,
+spec, tests).* Until then, an action's
 contribution result ([`measure.py`](../measure.py), `contribution_between` and
 `before_after_benefit`) never subtracts ad spend and always compares the whole
 store, although spec v2 §4 says before/after is *"for the action's scope"* and
@@ -457,15 +484,20 @@ the before/after result uses that channel's orders and subtracts the change in
 that channel's ad spend. Whole-store actions (scope empty) are unchanged. One
 spec paragraph, one formula, one test.
 
-**D2 — Build the six data extensions.** *Recommendation:* yes, Luna first, in
-the order E4, E5, E2 (a few columns each), then E1 (device joins the
-sessions key), E6, and E3 (the new table). **Timing:** E1, E2, E4 and E5
+**D2 — Which data extensions to build.** ❓ The six extensions, in plain words,
+are in the [Fictional data](#fictional-data) table. *Recommendation (revised 4
+November, after the course's "judgement over volume" rule):* build **E2, E4 and
+E5** — a few columns each — before the Week 5 intake; add **E1** only if time
+allows (it changes the sessions key); **park E3 and E6** (a new table, and
+monthly counts typed by the team). The core set needs E3 only for its
+message click rate and E6 for its two agent metrics, which stay *reference*
+until those are built. **Timing:** E1, E2, E4 and E5
 change the rows the shop-data intake accepts, and the intake automation
 (automation 2 since the 4 November re-map) is built in Week 5 — so decide each
 of them before it is built: build it into the intake from the start, or leave
 it out, rather than change the intake afterwards. E3 adds a new kind of row.
 
-**D3 — Load the catalogue into the app.** *Recommendation:* after D2, load
+**D3 — Load the catalogue into the app.** ❓ *Recommendation:* after D2, load
 `data/metric_templates.json` as read-only reference (like the plan templates),
 let an action's primary metric be any metric marked ⁺, and let *where to grow*
 check every driver and efficiency metric whose data exists — so a weak

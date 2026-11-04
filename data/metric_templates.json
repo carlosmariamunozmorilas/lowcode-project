@@ -1,6 +1,7 @@
 {
-  "source": "Unified ROI System — variables, KPIs, levers and objects (A4 summary, 3 pages, Carlos M. Muñoz Morillas, 4 November 2026), selected for ecommerce in docs/metric-templates.md",
-  "status": "proposal, 4 November 2026 — not loaded by the app; see decisions D1–D3 in docs/metric-templates.md",
+  "source": "Unified ROI System — variables, KPIs, levers and objects (A4 summary, 3 pages, Carlos M. Muñoz Morillas, 4 November 2026; docs/sources/Unified_ROI_Variables_A4_EN.pdf), selected for ecommerce in docs/metric-templates.md",
+  "status": "proposal, 4 November 2026 — not loaded by the app; D1 decided (yes), D2 and D3 open — see docs/metric-templates.md",
+  "generated_by": "scripts/build_metric_templates.py — edit the script, not this file",
   "classes": {
     "outcome": "The verdict — the only class that decides anything",
     "driver": "Explains the outcome",
@@ -18,6 +19,65 @@
     "yes": "in today's vocabulary (lifecycle.METRICS): an action's primary_metric may name it",
     "proposed": "would join the vocabulary under decision D3",
     "no": "never an action's primary metric"
+  },
+  "core_set": {
+    "shared": {
+      "metrics": [
+        "roi",
+        "system_roi",
+        "margin_pct",
+        "refund_rate"
+      ],
+      "why": "The verdict and the two guardrails — shown for every discipline."
+    },
+    "ecommerce": {
+      "metrics": [
+        "conversion",
+        "average_order_value",
+        "contribution_per_session"
+      ],
+      "why": "How many visits buy, how much they spend, and what each visit earns."
+    },
+    "digital_marketing": {
+      "metrics": [
+        "sessions",
+        "new_customers",
+        "email_click_rate"
+      ],
+      "why": "Earned traffic, new buyers, and whether owned messages are read."
+    },
+    "performance_marketing": {
+      "metrics": [
+        "contribution_after_media",
+        "cac",
+        "roas"
+      ],
+      "why": "What media really earned (D1), what a new customer costs, and ROAS shown beside them to explain why it is not ROI."
+    },
+    "digital_growth": {
+      "metrics": [
+        "repeat_rate",
+        "second_order_rate_90d",
+        "contribution_to_cac_d90"
+      ],
+      "why": "Whether customers come back, how soon, and whether the first 90 days paid back their acquisition."
+    },
+    "agentic_ai": {
+      "metrics": [
+        "output_acceptance_rate",
+        "cost_per_accepted_output",
+        "report_correction_rate"
+      ],
+      "why": "How much agent work a person accepts, what it costs, and how often a person corrects it."
+    },
+    "automations": {
+      "metrics": [
+        "run_failure_rate",
+        "cost_per_run",
+        "intake_quality"
+      ],
+      "why": "Whether the workflows run, what a run costs, and whether data arrives intact."
+    }
   },
   "metrics": [
     {
@@ -91,7 +151,8 @@
       ],
       "pdf": "T1 Economics — incremental outcome; ROI formula",
       "note": "Store contribution (Growth P&L) is context, never this figure.",
-      "fits": null
+      "fits": null,
+      "core": false
     },
     {
       "key": "avoided_cost",
@@ -134,7 +195,8 @@
       ],
       "pdf": "T1 cost savings; 06 Economic proof — verified cash saved",
       "note": "Freed hours are never avoided cost.",
-      "fits": null
+      "fits": null,
+      "core": false
     },
     {
       "key": "net_benefit",
@@ -157,7 +219,8 @@
       "plans": [],
       "pdf": "T1 ROI formula — numerator",
       "note": "Adopt only when net benefit ≥ the action's hurdle.",
-      "fits": null
+      "fits": null,
+      "core": false
     },
     {
       "key": "roi",
@@ -180,7 +243,8 @@
       "plans": [],
       "pdf": "T1 ROI formula",
       "note": "Same formula as the PDF. ROAS and MER are never ROI.",
-      "fits": null
+      "fits": null,
+      "core": true
     },
     {
       "key": "system_roi",
@@ -202,7 +266,8 @@
       "plans": [],
       "pdf": "T1 ROI; 'count each saving/cost once'",
       "note": "Compared with the client's roi_target; setup is not counted again.",
-      "fits": null
+      "fits": null,
+      "core": true
     },
     {
       "key": "setup_payback",
@@ -225,7 +290,8 @@
       "plans": [],
       "pdf": "T1 Decision economics — payback",
       "note": "",
-      "fits": null
+      "fits": null,
+      "core": false
     },
     {
       "key": "contribution_before_marketing",
@@ -248,7 +314,8 @@
       "plans": [],
       "pdf": "T1 contribution before media",
       "note": "Store health, never an action's benefit; incomplete when a cost is missing.",
-      "fits": null
+      "fits": null,
+      "core": false
     },
     {
       "key": "contribution_after_marketing",
@@ -272,7 +339,8 @@
       "plans": [],
       "pdf": "T1 contribution after media",
       "note": "Store health, never an action's benefit.",
-      "fits": null
+      "fits": null,
+      "core": false
     },
     {
       "key": "margin_pct",
@@ -301,7 +369,8 @@
       ],
       "pdf": "01 Value & cost KPIs — contribution margin",
       "note": "Breach: more than 2 points below the previous three months' average.",
-      "fits": null
+      "fits": null,
+      "core": true
     },
     {
       "key": "refund_rate",
@@ -327,7 +396,8 @@
       ],
       "pdf": "01 After purchase — refund rate",
       "note": "Breach: more than 1 point above the previous three months' average.",
-      "fits": null
+      "fits": null,
+      "core": true
     },
     {
       "key": "sessions",
@@ -354,7 +424,8 @@
       ],
       "pdf": "01 Funnel KPIs — sessions",
       "note": "",
-      "fits": null
+      "fits": null,
+      "core": true
     },
     {
       "key": "orders",
@@ -378,7 +449,8 @@
       ],
       "pdf": "01 Funnel KPIs — orders",
       "note": "",
-      "fits": null
+      "fits": null,
+      "core": false
     },
     {
       "key": "revenue",
@@ -400,7 +472,8 @@
       "plans": [],
       "pdf": "T1 net sales excluding tax / refunds",
       "note": "",
-      "fits": null
+      "fits": null,
+      "core": false
     },
     {
       "key": "conversion",
@@ -441,7 +514,8 @@
       ],
       "pdf": "01 Funnel KPIs — CVR",
       "note": "",
-      "fits": null
+      "fits": null,
+      "core": true
     },
     {
       "key": "average_order_value",
@@ -469,7 +543,8 @@
       ],
       "pdf": "T1 / 04 — AOV",
       "note": "",
-      "fits": null
+      "fits": null,
+      "core": true
     },
     {
       "key": "contribution_per_session",
@@ -511,7 +586,8 @@
       ],
       "pdf": "01 Value & cost KPIs — revenue / visitor (contribution form)",
       "note": "An action's result is still its incremental contribution; this is the store's rate.",
-      "fits": null
+      "fits": null,
+      "core": true
     },
     {
       "key": "discount_rate",
@@ -536,7 +612,8 @@
       ],
       "pdf": "01 Price & offer — discounts, coupons, thresholds",
       "note": "A lever, read with margin %; discounts are already inside net revenue.",
-      "fits": null
+      "fits": null,
+      "core": false
     },
     {
       "key": "cost_to_serve_per_order",
@@ -561,7 +638,8 @@
       ],
       "pdf": "01 Value & cost KPIs — fulfilment / payment / shipping cost per order",
       "note": "",
-      "fits": null
+      "fits": null,
+      "core": false
     },
     {
       "key": "refund_value_rate",
@@ -586,7 +664,8 @@
       ],
       "pdf": "01 After purchase — refund value",
       "note": "Shown beside the refund-rate guardrail.",
-      "fits": null
+      "fits": null,
+      "core": false
     },
     {
       "key": "units_per_order",
@@ -613,7 +692,8 @@
       ],
       "pdf": "01 Funnel KPIs — units / order",
       "note": "",
-      "fits": null
+      "fits": null,
+      "core": false
     },
     {
       "key": "add_to_cart_rate",
@@ -643,7 +723,8 @@
       ],
       "pdf": "01 Funnel KPIs — add-to-cart rate",
       "note": "",
-      "fits": null
+      "fits": null,
+      "core": false
     },
     {
       "key": "checkout_completion_rate",
@@ -668,7 +749,8 @@
       ],
       "pdf": "01 Funnel KPIs — checkout start / completion",
       "note": "",
-      "fits": null
+      "fits": null,
+      "core": false
     },
     {
       "key": "cart_abandonment_rate",
@@ -694,7 +776,8 @@
       ],
       "pdf": "01 Funnel KPIs — cart abandonment",
       "note": "",
-      "fits": null
+      "fits": null,
+      "core": false
     },
     {
       "key": "mobile_conversion",
@@ -719,7 +802,8 @@
       ],
       "pdf": "01 Experience — mobile UX / performance",
       "note": "",
-      "fits": null
+      "fits": null,
+      "core": false
     },
     {
       "key": "avoidable_return_share",
@@ -744,7 +828,8 @@
       ],
       "pdf": "01 After purchase — return reason",
       "note": "",
-      "fits": null
+      "fits": null,
+      "core": false
     },
     {
       "key": "new_customers",
@@ -773,7 +858,8 @@
       ],
       "pdf": "02 Lifecycle — first customer; 04 new customers",
       "note": "",
-      "fits": null
+      "fits": null,
+      "core": true
     },
     {
       "key": "email_click_rate",
@@ -801,7 +887,8 @@
       ],
       "pdf": "02 CRM KPIs — click rate",
       "note": "Engagement only. Email-platform-attributed revenue is never used: the holdout is.",
-      "fits": null
+      "fits": null,
+      "core": true
     },
     {
       "key": "unsubscribe_rate",
@@ -828,7 +915,8 @@
       ],
       "pdf": "02 CRM KPIs — unsubscribe; Channel quality — message fatigue",
       "note": "Watched like a guardrail on message-heavy actions; the two fixed guardrails stay the only ones that flag a breach (decided 2 November).",
-      "fits": null
+      "fits": null,
+      "core": false
     },
     {
       "key": "messages_per_contact",
@@ -853,7 +941,8 @@
       ],
       "pdf": "02 Channel quality — message pressure / fatigue",
       "note": "Too high drives unsubscribes; too low leaves the list unused.",
-      "fits": null
+      "fits": null,
+      "core": false
     },
     {
       "key": "delivery_rate",
@@ -879,7 +968,8 @@
       ],
       "pdf": "02 CRM KPIs — delivery / bounce; inbox placement",
       "note": "",
-      "fits": null
+      "fits": null,
+      "core": false
     },
     {
       "key": "contribution_after_media",
@@ -913,7 +1003,8 @@
       ],
       "pdf": "04 Measurement — incremental profit; T1 contribution after media",
       "note": "Not measured today: the app's contribution result ignores ad spend and uses the whole store — see D1.",
-      "fits": null
+      "fits": null,
+      "core": true
     },
     {
       "key": "ad_spend",
@@ -935,7 +1026,8 @@
       "plans": [],
       "pdf": "04 Campaign — budget / spend",
       "note": "An input, shown so CPA, CAC and MER can be read.",
-      "fits": null
+      "fits": null,
+      "core": false
     },
     {
       "key": "cpa",
@@ -967,7 +1059,8 @@
       ],
       "pdf": "04 Delivery to value — CPA",
       "note": "",
-      "fits": null
+      "fits": null,
+      "core": false
     },
     {
       "key": "cac",
@@ -995,7 +1088,8 @@
       ],
       "pdf": "04 Measurement — paid CAC",
       "note": "Paid CAC; blended or fully loaded CAC would add agency and tool costs.",
-      "fits": null
+      "fits": null,
+      "core": true
     },
     {
       "key": "cost_per_session",
@@ -1023,7 +1117,8 @@
       ],
       "pdf": "04 Delivery to value — CPC (landing-session form)",
       "note": "Stands in for CPC until clicks exist (E2).",
-      "fits": null
+      "fits": null,
+      "core": false
     },
     {
       "key": "cpc",
@@ -1049,7 +1144,8 @@
       ],
       "pdf": "04 Delivery to value — CPC",
       "note": "",
-      "fits": null
+      "fits": null,
+      "core": false
     },
     {
       "key": "cpm",
@@ -1074,7 +1170,8 @@
       ],
       "pdf": "04 Delivery to value — CPM",
       "note": "",
-      "fits": null
+      "fits": null,
+      "core": false
     },
     {
       "key": "ctr",
@@ -1101,7 +1198,8 @@
       ],
       "pdf": "04 Delivery to value — CTR",
       "note": "A creative and feed diagnostic; never a result.",
-      "fits": null
+      "fits": null,
+      "core": false
     },
     {
       "key": "roas",
@@ -1124,7 +1222,8 @@
       "plans": [],
       "pdf": "04 Delivery to value — ROAS",
       "note": "Never ROI (spec §9: the promotion with ROAS 3.0 had ROI −0.17).",
-      "fits": null
+      "fits": null,
+      "core": true
     },
     {
       "key": "break_even_roas",
@@ -1151,7 +1250,8 @@
       ],
       "pdf": "T1 Decision economics — break-even CAC / ROAS",
       "note": "Read beside ROAS: Luna 2.86, Brote 1.67, Roble 4.00 at their profile margins.",
-      "fits": null
+      "fits": null,
+      "core": false
     },
     {
       "key": "mer",
@@ -1177,7 +1277,8 @@
       ],
       "pdf": "04 Optimisation — MER with defined cost scope",
       "note": "MER is not ROI.",
-      "fits": null
+      "fits": null,
+      "core": false
     },
     {
       "key": "new_customer_share",
@@ -1202,7 +1303,8 @@
       ],
       "pdf": "04 Optimisation — new vs existing customer mix",
       "note": "Plan 31 warns against chasing it: prospecting spend that buys back existing customers is the waste to find.",
-      "fits": null
+      "fits": null,
+      "core": false
     },
     {
       "key": "platform_overcount",
@@ -1229,7 +1331,8 @@
       ],
       "pdf": "04 Measurement — attribution model / window, cross-channel overlap",
       "note": "Shows on screen why platform-attributed revenue is never a result.",
-      "fits": null
+      "fits": null,
+      "core": false
     },
     {
       "key": "tracking_capture_rate",
@@ -1255,7 +1358,8 @@
       ],
       "pdf": "T2 Reliability — order reconciliation, event deduplication",
       "note": "Plan 25's acceptance criterion is capture ≥ 98%.",
-      "fits": null
+      "fits": null,
+      "core": false
     },
     {
       "key": "repeat_rate",
@@ -1284,7 +1388,8 @@
       ],
       "pdf": "03 Cohorts — repeat rate",
       "note": "",
-      "fits": null
+      "fits": null,
+      "core": true
     },
     {
       "key": "second_order_rate_90d",
@@ -1319,7 +1424,8 @@
       "fits": [
         "occasional",
         "monthly"
-      ]
+      ],
+      "core": true
     },
     {
       "key": "orders_per_customer",
@@ -1346,7 +1452,8 @@
       "fits": [
         "occasional",
         "monthly"
-      ]
+      ],
+      "core": false
     },
     {
       "key": "days_to_second_order",
@@ -1375,7 +1482,8 @@
       "fits": [
         "occasional",
         "monthly"
-      ]
+      ],
+      "core": false
     },
     {
       "key": "reactivation_rate",
@@ -1403,7 +1511,8 @@
       "fits": [
         "occasional",
         "monthly"
-      ]
+      ],
+      "core": false
     },
     {
       "key": "cohort_contribution_d90",
@@ -1433,7 +1542,8 @@
       ],
       "pdf": "03 Cohorts — cohort revenue, LTV; T1 revenue- vs contribution-LTV",
       "note": "Realised, never forecast: LTV forecasting stays out of scope (spec §13).",
-      "fits": null
+      "fits": null,
+      "core": false
     },
     {
       "key": "contribution_to_cac_d90",
@@ -1464,7 +1574,8 @@
       ],
       "pdf": "T1 Decision economics — contribution-LTV:CAC, CAC payback",
       "note": "Above 1.0, the first 90 days covered paid acquisition.",
-      "fits": null
+      "fits": null,
+      "core": true
     },
     {
       "key": "output_acceptance_rate",
@@ -1494,7 +1605,8 @@
       ],
       "pdf": "05 Agent KPIs — task success, human acceptance / override",
       "note": "",
-      "fits": null
+      "fits": null,
+      "core": true
     },
     {
       "key": "cost_per_accepted_output",
@@ -1523,7 +1635,8 @@
       ],
       "pdf": "05 Reliability — cost / successful task",
       "note": "Plan 60's decision metric.",
-      "fits": null
+      "fits": null,
+      "core": true
     },
     {
       "key": "ai_cost_per_output",
@@ -1547,7 +1660,8 @@
       ],
       "pdf": "05 Control — token / API / tool cost",
       "note": "",
-      "fits": null
+      "fits": null,
+      "core": false
     },
     {
       "key": "report_correction_rate",
@@ -1571,7 +1685,8 @@
       ],
       "pdf": "05 Agent KPIs — human override",
       "note": "",
-      "fits": null
+      "fits": null,
+      "core": true
     },
     {
       "key": "report_rejection_rate",
@@ -1595,7 +1710,8 @@
       ],
       "pdf": "05 Agent KPIs — accuracy, error rate",
       "note": "",
-      "fits": null
+      "fits": null,
+      "core": false
     },
     {
       "key": "cost_per_report_draft",
@@ -1620,7 +1736,8 @@
       ],
       "pdf": "05 Agent KPIs — cost / task",
       "note": "",
-      "fits": null
+      "fits": null,
+      "core": false
     },
     {
       "key": "run_failure_rate",
@@ -1647,7 +1764,8 @@
       ],
       "pdf": "06 Automation KPIs — runs, success rate",
       "note": "Runs and failed runs are already shown as counts.",
-      "fits": null
+      "fits": null,
+      "core": true
     },
     {
       "key": "cost_per_run",
@@ -1674,7 +1792,8 @@
       ],
       "pdf": "06 Automation KPIs — cost / run",
       "note": "",
-      "fits": null
+      "fits": null,
+      "core": true
     },
     {
       "key": "exception_rate",
@@ -1701,7 +1820,8 @@
       ],
       "pdf": "06 Economic proof — exception / rework rate",
       "note": "",
-      "fits": null
+      "fits": null,
+      "core": false
     },
     {
       "key": "hours_freed",
@@ -1723,7 +1843,8 @@
       "plans": [],
       "pdf": "06 Automation KPIs — time saved",
       "note": "Capacity, never money (spec §4) — see 'Where the PDF and the app differ'.",
-      "fits": null
+      "fits": null,
+      "core": false
     },
     {
       "key": "intake_quality",
@@ -1745,7 +1866,8 @@
       "plans": [],
       "pdf": "T2 Reliability — completeness; 06 Reliability",
       "note": "",
-      "fits": null
+      "fits": null,
+      "core": true
     },
     {
       "key": "duplicate_event_rate",
@@ -1767,7 +1889,8 @@
       "plans": [],
       "pdf": "06 Reliability — idempotency key, duplicate-action rate",
       "note": "A duplicate already changes nothing (external_id); this counts how often it happens.",
-      "fits": null
+      "fits": null,
+      "core": false
     },
     {
       "key": "orders_missing_cost",
@@ -1789,7 +1912,8 @@
       "plans": [],
       "pdf": "T2 Reliability — completeness",
       "note": "Makes the dependent Growth P&L lines incomplete, never zero.",
-      "fits": null
+      "fits": null,
+      "core": false
     },
     {
       "key": "open_alerts",
@@ -1811,7 +1935,8 @@
       "plans": [],
       "pdf": "06 Operations — anomalies, budget alerts",
       "note": "",
-      "fits": null
+      "fits": null,
+      "core": false
     }
   ],
   "scorecards": [
@@ -2042,6 +2167,7 @@
     {
       "id": "E1",
       "name": "Funnel steps and device",
+      "plain": "What shoppers did on the site before buying — viewed a product, added to the cart, started checkout — and whether they were on a phone or a computer; plus how many purchases the analytics tag actually recorded.",
       "adds": [
         "sessions.device (mobile or desktop), part of the row's key: client · date · channel · device",
         "sessions.product_views, add_to_carts, checkouts_started — sessions that reached each step",
@@ -2109,6 +2235,7 @@
     {
       "id": "E2",
       "name": "Ad delivery and platform-reported purchases",
+      "plain": "How many people saw and clicked each channel's ads, and how many purchases the ad platform claims — always more than the store really received from it.",
       "adds": [
         "ad_spend.impressions, clicks",
         "ad_spend.platform_purchases, platform_revenue_eur — what the ad platform claims"
@@ -2160,6 +2287,7 @@
     {
       "id": "E3",
       "name": "Message sends (email and SMS)",
+      "plain": "The emails and SMS each store sent — campaigns and automatic flows such as cart recovery — with how many were delivered, clicked and led to an unsubscribe.",
       "adds": [
         "new table messages_daily: client · date · channel (email or sms) · stream (a campaign or flow name) · action_id (nullable) · sent · delivered · clicks · unsubscribes · contactable (contacts who could receive the stream that day)"
       ],
@@ -2212,6 +2340,7 @@
     {
       "id": "E4",
       "name": "Units per order",
+      "plain": "How many items each order contains, so bundles and cross-selling can be judged.",
       "adds": [
         "orders.units (≥ 1)"
       ],
@@ -2238,6 +2367,7 @@
     {
       "id": "E5",
       "name": "Refund reasons",
+      "plain": "Why each refund happened — damaged, wrong item, not as described, late, or the customer changed their mind — so preventable returns can be told apart.",
       "adds": [
         "refunds.reason CHECK in (damaged, wrong_item, not_as_described, late_delivery, changed_mind); all but changed_mind count as avoidable"
       ],
@@ -2278,6 +2408,7 @@
     {
       "id": "E6",
       "name": "Agent and automation output counts",
+      "plain": "For each AI agent and automation, how much work it produced each month, how much of it a person accepted, how often a person had to step in, and what the AI cost.",
       "adds": [
         "component_months.outputs, outputs_accepted, exceptions, ai_cost_eur (nullable; automation and agent components only)"
       ],
