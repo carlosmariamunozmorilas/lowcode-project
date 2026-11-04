@@ -1,4 +1,4 @@
-"""Money and measurement: spec v2 §11 tests 1–4, 6–8, 10, 26, 28–30, 41, 42."""
+"""Money and measurement: spec v2 §11 tests 1–4, 6–8, 10, 26, 28–30, 41, 42, 46."""
 
 import sqlite3
 
@@ -46,6 +46,41 @@ def test_03_before_after_compares_equal_length_periods(conn):
     assert result.benefit_eur == pytest.approx(53.0)
     assert result.confidence == "before_after"
     assert "2026-06-01" in result.detail and "2026-06-10" in result.detail
+
+
+def _spend(conn, day: str, channel: str, amount: float) -> None:
+    conn.execute("INSERT INTO ad_spend (client_id, date, channel, spend_eur) VALUES (?, ?, ?, ?)",
+                 (LUNA, day, channel, amount))
+
+
+def test_46_a_channel_scope_measures_that_channel_after_media(conn):
+    # Before (06-01..06-10): one google_search order (53) and €300 on google_search.
+    # After (06-11..06-20): the same order count, but spend cut to €100 — the €200
+    # saved is the benefit. The meta order and meta spend change are ignored.
+    add_order(conn, "2026-06-05", "A", channel="google_search")
+    add_order(conn, "2026-06-15", "B", channel="google_search")
+    add_order(conn, "2026-06-16", "C", channel="meta")
+    _spend(conn, "2026-06-05", "google_search", 300.0)
+    _spend(conn, "2026-06-15", "google_search", 100.0)
+    _spend(conn, "2026-06-15", "meta", 999.0)
+    scoped = measure.before_after_benefit(conn, LUNA, "2026-06-11", "2026-06-20",
+                                          channel="google_search")
+    assert scoped.benefit_eur == pytest.approx((53 - 53) - (100 - 300))   # = 200
+    assert scoped.confidence == "before_after"
+    assert "google_search only" in scoped.detail
+    # The whole store, as before D1: contribution only, every channel, no spend.
+    whole = measure.before_after_benefit(conn, LUNA, "2026-06-11", "2026-06-20")
+    assert whole.benefit_eur == pytest.approx(106 - 53)
+    # An action carries its scope into its own result.
+    action = add_action(conn, comparison="before_after", scope_channel="google_search",
+                        window_start="2026-06-11", window_end="2026-06-20", post_period_days=0)
+    row = conn.execute("SELECT * FROM actions WHERE id = ?", (action,)).fetchone()
+    assert measure.action_measured_benefit(conn, row).benefit_eur == pytest.approx(200.0)
+
+
+def test_46b_schema_refuses_a_channel_scope_on_a_holdout(conn):
+    with pytest.raises(sqlite3.IntegrityError):
+        add_action(conn, comparison="holdout", scope_channel="google_search")
 
 
 def test_04_action_net_benefit_includes_setup_operating_and_hours():

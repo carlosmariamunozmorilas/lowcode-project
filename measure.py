@@ -83,11 +83,13 @@ class Contribution:
 
 
 def contribution_between(conn: sqlite3.Connection, client_id: int, start: str, end: str,
-                         refunds_until: str | None = None) -> Contribution:
+                         refunds_until: str | None = None,
+                         channel: str | None = None) -> Contribution:
     """Contribution of the orders placed between start and end (inclusive).
 
     Refunds count when recorded by refunds_until (default: end) — an action's
     result never changes because of a refund recorded after its period.
+    With a channel, only that channel's orders count.
     """
     refunds_until = refunds_until or end
     rows = conn.execute(
@@ -100,9 +102,11 @@ def contribution_between(conn: sqlite3.Connection, client_id: int, start: str, e
         LEFT JOIN refunds r
                ON r.order_id = o.id AND substr(r.refunded_at, 1, 10) <= :until
         WHERE o.client_id = :client AND substr(o.ordered_at, 1, 10) BETWEEN :start AND :end
+          AND (:channel IS NULL OR o.channel = :channel)
         GROUP BY o.id
         """,
-        {"client": client_id, "start": start, "end": end, "until": refunds_until},
+        {"client": client_id, "start": start, "end": end, "until": refunds_until,
+         "channel": channel},
     ).fetchall()
     result = Contribution()
     for r in rows:
@@ -165,17 +169,31 @@ def holdout_benefit(conn: sqlite3.Connection, client_id: int, action_id: int,
 
 
 def before_after_benefit(conn: sqlite3.Connection, client_id: int,
-                         start: str, end: str) -> MeasuredBenefit:
-    """Contribution in the period minus the equal-length period just before it."""
+                         start: str, end: str, channel: str | None = None) -> MeasuredBenefit:
+    """Contribution in the period minus the equal-length period just before it.
+
+    With a channel (an action's scope_channel, decision D1), only that
+    channel's orders count, and the change in that channel's ad spend is
+    subtracted: the result is contribution *after media*, so media an action
+    saves counts as benefit and media it adds counts against it. Without one,
+    the whole store is compared, as before.
+    """
     length = days_between(start, end)
     before_end = shift(start, -1)
     before_start = shift(start, -length)
-    after = contribution_between(conn, client_id, start, end)
-    before = contribution_between(conn, client_id, before_start, before_end)
+    after = contribution_between(conn, client_id, start, end, channel=channel)
+    before = contribution_between(conn, client_id, before_start, before_end, channel=channel)
+    benefit = after.total - before.total
     detail = (f"€{after.total:,.0f} in {start}–{end} against €{before.total:,.0f} "
               f"in {before_start}–{before_end}")
-    return MeasuredBenefit(after.total - before.total, "before_after",
-                           after.incomplete or before.incomplete, detail)
+    if channel is not None:
+        spend_after = spend_by_channel(conn, client_id, start, end).get(channel, 0.0)
+        spend_before = spend_by_channel(conn, client_id, before_start, before_end).get(channel, 0.0)
+        benefit -= spend_after - spend_before
+        detail = (f"{channel} only: contribution €{after.total:,.0f} against "
+                  f"€{before.total:,.0f}, ad spend €{spend_after:,.0f} against "
+                  f"€{spend_before:,.0f} ({start}–{end} against {before_start}–{before_end})")
+    return MeasuredBenefit(benefit, "before_after", after.incomplete or before.incomplete, detail)
 
 
 def action_measured_benefit(conn: sqlite3.Connection, action: sqlite3.Row) -> MeasuredBenefit | None:
@@ -186,8 +204,19 @@ def action_measured_benefit(conn: sqlite3.Connection, action: sqlite3.Row) -> Me
     if action["comparison"] == "holdout":
         return holdout_benefit(conn, action["client_id"], action["id"], start, end)
     if action["comparison"] == "before_after":
-        return before_after_benefit(conn, action["client_id"], start, end)
+        channel = action["scope_channel"] if "scope_channel" in action.keys() else None
+        return before_after_benefit(conn, action["client_id"], start, end, channel=channel)
     return None
+
+
+def client_channels(conn: sqlite3.Connection, client_id: int) -> list[str]:
+    """The channels a client has any sessions, orders or ad spend in."""
+    rows = conn.execute(
+        """SELECT channel FROM sessions WHERE client_id = :c
+           UNION SELECT channel FROM orders WHERE client_id = :c
+           UNION SELECT channel FROM ad_spend WHERE client_id = :c
+           ORDER BY channel""", {"c": client_id}).fetchall()
+    return [r[0] for r in rows if r[0]]
 
 
 # --- store metrics -------------------------------------------------------------

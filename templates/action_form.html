@@ -3,7 +3,7 @@
 {% block content %}
 <h1>{{ 'Edit action' if editing else 'New action' }} · {{ client.name }}</h1>
 {% if plan %}<p class="muted">From plan {{ '%02d'|format(plan.id) }} — {{ plan.title }}. Defaults come from the plan; check them.</p>{% endif %}
-<p class="muted">Everything here can change until the action enters review. From then on, the window, post-period, expected benefit, primary metric, comparison and hurdle are fixed.</p>
+<p class="muted">Everything here can change until the action enters review. From then on, the window, post-period, expected benefit, primary metric, comparison, channel scope and hurdle are fixed.</p>
 <form method="post" action="{{ url_for('actions.edit', action_id=action_id) if editing else url_for('actions.new', client_id=client.id) }}">
     <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
     {% if plan %}<input type="hidden" name="plan" value="{{ plan.id }}">{% endif %}
@@ -21,6 +21,9 @@
         <div><label for="comparison">Comparison</label>
             <select id="comparison" name="comparison"><option value="">—</option>
                 {% for b, cs in comparisons.items() %}{% for cmp in cs|sort %}<option value="{{ cmp }}" {% if action.comparison == cmp %}selected{% endif %}>{{ cmp|label }} ({{ b|label }})</option>{% endfor %}{% endfor %}</select></div>
+        <div><label for="scope_channel">Channel scope</label>
+            <select id="scope_channel" name="scope_channel" aria-describedby="scope_channel_help"><option value="">— whole store</option>{% for ch in channels %}<option value="{{ ch }}" {% if action.scope_channel == ch %}selected{% endif %}>{{ ch|label }}</option>{% endfor %}</select>
+            <p class="small muted" id="scope_channel_help">Before/after only. Measures that channel's orders after media: a change in its ad spend counts in the result.</p></div>
         <div><label for="primary_metric">Primary metric</label>
             <select id="primary_metric" name="primary_metric"><option value="">— (none for an enabler)</option>{% for m in metrics %}<option value="{{ m }}" {% if action.primary_metric == m %}selected{% endif %}>{{ m|label }}</option>{% endfor %}</select></div>
         <div><label for="lifecycle_stage">Lifecycle stage</label>

@@ -110,6 +110,9 @@ CREATE TABLE actions (
     operating_hours      REAL NOT NULL DEFAULT 0 CHECK (operating_hours >= 0),
     hurdle_eur           REAL NOT NULL DEFAULT 500 CHECK (hurdle_eur >= 0),
     comparison           TEXT CHECK (comparison IN ('holdout', 'before_after', 'invoice', 'none')),
+    -- The one channel a before/after result is measured on, after media (D1,
+    -- 4 November); NULL measures the whole store.
+    scope_channel        TEXT,
     window_start         TEXT,
     window_end           TEXT,
     post_period_days     INTEGER CHECK (post_period_days >= 0),
@@ -137,6 +140,8 @@ CREATE TABLE actions (
         OR (benefit_type = 'contribution' AND comparison IN ('holdout', 'before_after'))
         OR (benefit_type = 'avoided_cost' AND comparison = 'invoice')
         OR (benefit_type = 'enabler' AND comparison = 'none')),
+    -- A channel scope only makes sense for a before/after comparison.
+    CHECK (scope_channel IS NULL OR comparison IS NULL OR comparison = 'before_after'),
     CHECK (window_start IS NULL OR window_end IS NULL OR window_end > window_start)
 );
 

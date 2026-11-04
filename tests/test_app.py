@@ -112,6 +112,20 @@ def test_frozen_fields_cannot_be_edited_in_review(client, app_conn):
                             (action,)).fetchone()[0] == 500
 
 
+def test_46d_channel_scope_must_be_one_of_the_clients_channels(client, app_conn):
+    app_conn.execute("""INSERT INTO sessions (client_id, date, channel, sessions)
+                        VALUES (?, '2026-06-01', 'google_search', 10)""", (LUNA,))
+    action = add_action(app_conn, comparison="before_after")
+    app_conn.commit()
+    login(client, CONSULTANT)
+    unknown = post(client, f"/actions/{action}/edit", {"scope_channel": "tiktok"})
+    assert unknown.status_code == 400
+    known = post(client, f"/actions/{action}/edit", {"scope_channel": "google_search"})
+    assert known.status_code == 302
+    assert app_conn.execute("SELECT scope_channel FROM actions WHERE id = ?",
+                            (action,)).fetchone()[0] == "google_search"
+
+
 def test_17_status_change_and_history_are_one_transaction(client, app_conn, monkeypatch):
     action = add_action(app_conn)
     app_conn.commit()

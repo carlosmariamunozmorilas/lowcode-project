@@ -443,8 +443,9 @@ def generate(conn: sqlite3.Connection) -> None:
                    "stops going to queries that never buy, without worsening margin or refunds",
         primary_metric="cpa", benefit_type="contribution", expected_benefit_eur=3000,
         setup_cost_eur=0, setup_hours=32, operating_cost_eur=0, operating_hours=6,
-        hurdle_eur=500, comparison="before_after", window_start="2026-10-01",
-        window_end="2026-11-11", post_period_days=30, requester_id=5, owner_id=5, reviewer_id=2,
+        hurdle_eur=500, comparison="before_after", scope_channel="google_search",
+        window_start="2026-10-01", window_end="2026-11-11", post_period_days=30,
+        requester_id=5, owner_id=5, reviewer_id=2,
         status="approved", benefit_key="roble:search_terms", created_at="2026-09-20T10:00:00Z")
     standard_history(conn, search, 5, 5, 2,
                      ["2026-09-20", "2026-09-21", "2026-09-24", "2026-09-28"], final="approved")

@@ -19,7 +19,8 @@ from db import get_db, transaction
 bp = Blueprint("actions", __name__)
 
 TEXT_FIELDS = ("title", "hypothesis", "primary_metric", "lifecycle_stage", "benefit_type",
-               "comparison", "window_start", "window_end", "benefit_key", "discipline")
+               "comparison", "scope_channel", "window_start", "window_end", "benefit_key",
+               "discipline")
 MONEY_FIELDS = ("expected_benefit_eur", "setup_cost_eur", "setup_hours", "operating_cost_eur",
                 "operating_hours", "hurdle_eur")
 INT_FIELDS = ("post_period_days",)
@@ -85,6 +86,16 @@ def read_form(form) -> dict:
     return values
 
 
+def check_scope(client_id: int, scope_channel: str | None, comparison: str | None) -> None:
+    """A channel scope must be one of the client's channels, and needs before/after (D1)."""
+    if not scope_channel:
+        return
+    if scope_channel not in measure.client_channels(get_db(), client_id):
+        raise FormError("the channel scope must be one of this client's channels")
+    if comparison != "before_after":
+        raise FormError("a channel scope works only with a before/after comparison")
+
+
 def form_choices(client_id: int) -> dict:
     return {
         "people": assigned_people(client_id),
@@ -93,6 +104,7 @@ def form_choices(client_id: int) -> dict:
         "disciplines": DISCIPLINES,
         "benefit_types": sorted(lifecycle.BENEFIT_TYPES),
         "comparisons": lifecycle.COMPARISONS_FOR,
+        "channels": measure.client_channels(get_db(), client_id),
     }
 
 
@@ -129,6 +141,7 @@ def new(client_id):
             values["benefit_type"] = values["benefit_type"] or "contribution"
             if values.get("comparison") not in lifecycle.COMPARISONS_FOR[values["benefit_type"]]:
                 values["comparison"] = DEFAULT_COMPARISON[values["benefit_type"]]
+            check_scope(client_id, values.get("scope_channel"), values["comparison"])
             columns = {**values, "client_id": client_id, "requester_id": g.user["id"],
                        "plan_template_id": plan["id"] if plan else None, "status": "submitted"}
             with transaction(conn):
@@ -229,7 +242,10 @@ def edit(action_id):
                     raise FormError(
                         f"a {benefit_type} action needs the comparison: "
                         + ", ".join(sorted(lifecycle.COMPARISONS_FOR[benefit_type])))
-                sets = ", ".join(f"{k} = ?" for k in changed)
+                current_scope = action["scope_channel"] if "scope_channel" in action.keys() else None
+                check_scope(action["client_id"], values.get("scope_channel", current_scope),
+                            comparison)
+                sets =", ".join(f"{k} = ?" for k in changed)
                 with transaction(conn):
                     conn.execute(f"UPDATE actions SET {sets} WHERE id = ?",
                                  (*(values[k] for k in changed), action_id))

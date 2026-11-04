@@ -65,7 +65,7 @@ EARLY_STOP_REASONS = frozenset({
 # Once an action is in review, its prediction cannot change (spec v2 §5).
 FROZEN_IN_REVIEW = frozenset({
     "window_start", "window_end", "post_period_days", "expected_benefit_eur",
-    "primary_metric", "comparison", "hurdle_eur",
+    "primary_metric", "comparison", "hurdle_eur", "scope_channel",
 })
 
 # Fields only the workflow writes; a form that posts them is ignored.
@@ -105,6 +105,7 @@ class Action:
     lifecycle_stage: str | None = None
     expected_benefit_eur: float | None = None
     comparison: str | None = None
+    scope_channel: str | None = None
     window_start: str | None = None
     window_end: str | None = None
     post_period_days: int | None = None
@@ -161,6 +162,10 @@ def check_ready_for_review(action: Action, ctx: Context) -> None:
         allowed = ", ".join(sorted(COMPARISONS_FOR[action.benefit_type]))
         raise TransitionError(
             f"a {action.benefit_type} action needs the comparison: {allowed}"
+        )
+    if action.scope_channel and action.comparison != "before_after":
+        raise TransitionError(
+            "a channel scope works only with a before/after comparison"
         )
     if not (action.window_start and action.window_end):
         raise TransitionError("an action cannot enter review without its measurement window")
