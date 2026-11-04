@@ -162,9 +162,13 @@ Make, Google and Calendly:
    CCT student account, a Google Workspace account — not his personal Gmail.
    The read scope lets Make read the *whole* connected inbox, so it should
    reach only a mailbox kept for this work: least privilege, and the Week 8
-   audit should find it this way round. A first connection was made with the
-   personal Gmail on 4 November and is attached to the scenario until the
-   switch; it is then disconnected. Three things follow from the choice:
+   audit should find it this way round. ✅ *Switched on 4 November:* the
+   connection *"Scaling mailbox (CCT student)"* (3 scopes, valid until 3 May
+   2027) is on modules 3, 4, 5 and E, and `own_address` and `team_address`
+   point at that mailbox; the college's Workspace allowed the sign-in, and
+   Make saves the scenario with no warnings. The first connection, made with
+   the personal Gmail, is no longer used by the scenario and can be removed in
+   Make. Three things follow from the choice:
    - the college's Google Workspace administrators decide which outside apps
      may connect; if they block Make or the read scope, Google says so at
      sign-in, and the fallback is a new free Gmail account kept only for
