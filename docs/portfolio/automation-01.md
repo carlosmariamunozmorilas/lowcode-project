@@ -74,8 +74,9 @@ through `POST /api/events`.
 
 ## 3 · The build
 
-**Tools:** Make (EU zone `eu2`) · Gmail for the inquiry address, for sending,
-and — through Gmail's API — as the record of who has been answered · Google
+**Tools:** Make (EU zone `eu2`) · Gmail — Scaling's own mailbox, a Google
+Workspace account — for the inquiry address, for sending, and — through
+Gmail's API — as the record of who has been answered · Google
 Forms for the intake form, created by a Google Apps Script · Calendly for the
 booking page.
 
@@ -148,22 +149,39 @@ Make, Google and Calendly:
 1. **Choose a plan in Make.** On 4 November Make's API reported the
    organisation as *"No license"*, paused, with zero operations, so nothing can
    run. The **Free** plan is enough.
-2. ✅ *Done 4 November: "Carlos's Gmail connection", 3 scopes, valid until
-   3 May 2027, attached to modules 3, 4, 5 and E.* **Connect Gmail** — one
-   connection, used by modules 3, 4, 5 and E. Gmail
-   app **version 4** needs no Google Cloud project: *Create a connection* →
-   in **Additional scopes** add `https://www.googleapis.com/auth/gmail.readonly`
-   (module 3 calls Gmail's API to search the Sent folder, and *Make an API
-   call* uses only the scopes the connection was given) → *Sign in with Google*
-   → *Allow*. If Google refuses the extra scope, the fallback is Make's
-   *Advanced settings* with your own Google Cloud client. A connection made
-   with a personal @gmail.com account must be **reauthorised every six
-   months** (Google's rule since June 2024) — a known way for this automation
-   to stop, worth a line in the Week 11 governance page.
+2. **Connect the agency mailbox to Gmail.** One connection, used by modules 3,
+   4, 5 and E. Gmail app **version 4** needs no Google Cloud project: *Create
+   a connection* → in **Additional scopes** add
+   `https://www.googleapis.com/auth/gmail.readonly` (module 3 calls Gmail's
+   API to search the Sent folder, and *Make an API call* uses only the scopes
+   the connection was given) → *Sign in with Google* → *Allow*. If Google
+   refuses the extra scope, the fallback is Make's *Advanced settings* with
+   your own Google Cloud client.
+
+   **Which mailbox (decided 4 November):** Scaling's own mailbox — Carlos's
+   CCT student account, a Google Workspace account — not his personal Gmail.
+   The read scope lets Make read the *whole* connected inbox, so it should
+   reach only a mailbox kept for this work: least privilege, and the Week 8
+   audit should find it this way round. A first connection was made with the
+   personal Gmail on 4 November and is attached to the scenario until the
+   switch; it is then disconnected. Three things follow from the choice:
+   - the college's Google Workspace administrators decide which outside apps
+     may connect; if they block Make or the read scope, Google says so at
+     sign-in, and the fallback is a new free Gmail account kept only for
+     Scaling;
+   - the mailbox belongs to the college and closes when the course ends;
+   - the course guide asks for **personal accounts for deployment** (hosting);
+     this is a mailbox, not a deployment, but say so in the portfolio entry.
+
+   A connection made with a personal @gmail.com account must be
+   **reauthorised every six months** (Google's rule since June 2024); a
+   Workspace account follows its administrators' rules instead. Either way it
+   is a known way for this automation to stop, worth a line in the Week 11
+   governance page.
 3. **Check the settings in module 2.** `own_address` and `team_address` are
-   both `carlosmariamunozmorillas@gmail.com` (set on 4 November): the scenario
-   sends from that account, tells it about each inquiry, and **ignores any
-   email from it** — so test from a different address. `signer_name` is
+   both the agency mailbox (the address is kept out of this public
+   repository): the scenario sends from it, tells it about each inquiry, and
+   **ignores any email from it** — so test from a different address. `signer_name` is
    *Carlos*, `form_link` the intake form's public link and `call_length`
    *30-minute*, matching your existing Calendly *30 Minute Meeting*, whose link
    now sits on the form's confirmation page. If you create a 45-minute
@@ -313,7 +331,8 @@ the first automation in the portfolio that handles a member of the public's
 personal data:
 
 - the prospect's name, email address, subject, message and email headers pass
-  through **Gmail** (Google) and **Make** (EU zone); Make's run history keeps a
+  through **Gmail** (Google, in the college's Google Workspace, under its
+  administrators and policies) and **Make** (EU zone); Make's run history keeps a
   run's data for the plan's log retention period — 7 days on the Free plan, as
   Make's plan page lists it. Once testing is done, the scenario setting *"Data is
   confidential"* stops Make storing run data at all, at the cost of harder
@@ -323,7 +342,9 @@ personal data:
   anyway;
 - the **intake form's answers** — the prospect's name and email, and
   commercial figures about their store — are stored by **Google Forms** in
-  Carlos's Google account and emailed to the team; the form says they are
+  Carlos's personal Google account, which owns the form, and emailed there
+  (moving the form to the agency mailbox would keep all of it in one place —
+  open); the form says they are
   deleted after 6 months if no work follows, a promise someone has to keep by
   hand (a Week 11 governance item). The Apps Script that built the form was
   granted access to Google Forms only;
