@@ -305,10 +305,12 @@ CREATE TABLE automation_events (
     received_at          TEXT NOT NULL DEFAULT (strftime('%Y-%m-%dT%H:%M:%SZ', 'now'))
 );
 
--- A redelivered event changes nothing: one live row per source and external
--- id. Duplicates are still recorded, so the quality metrics can count them.
+-- A redelivered event changes nothing: one accepted row per source and
+-- external id. Duplicates and rejections are still recorded, so the quality
+-- metrics can count them, but a rejection does not hold its id: the corrected
+-- batch can be resent under the same id.
 CREATE UNIQUE INDEX automation_events_once
-    ON automation_events (source, external_id) WHERE status <> 'duplicate';
+    ON automation_events (source, external_id) WHERE status = 'accepted';
 
 -- Ids-only announcements to Make, written in the same transaction as the
 -- change they announce.

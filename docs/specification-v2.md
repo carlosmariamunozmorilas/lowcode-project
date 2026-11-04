@@ -249,10 +249,12 @@ stock returns). The original order is never edited.
 **`automation_events`** — what the automations write: `id`, `source`,
 `client_id`, `event_type` (`shop_data`, `alerts`, `report_draft`),
 `external_id`, `payload`, `status` CHECK in (`accepted`, `rejected`,
-`duplicate`), `reason`, `received_at`. A partial unique index allows one row
-per `source` and `external_id` that is not a `duplicate`: a redelivered event
-changes nothing, but is still recorded as `duplicate`, so the quality metrics
-can count it. For shop-data batches also the control totals
+`duplicate`), `reason`, `received_at`. A partial unique index allows one
+`accepted` row per `source` and `external_id`: a redelivered event changes
+nothing, but is still recorded as `duplicate`, so the quality metrics can count
+it. A `rejected` event is kept with its reason but does not hold its id, so the
+corrected batch is resent under the same id (decided 4 November: the scenario
+can re-run the same batch without inventing versions). For shop-data batches also the control totals
 `expected_rows`, `parsed_rows`, `expected_revenue_eur` and
 `parsed_revenue_eur`. **A batch is all or nothing:** if the row count differs,
 the revenue totals differ once rounded to the cent, or any row
@@ -697,6 +699,7 @@ time; the spec keeps them so the design stays complete.
 42. An action's result subtracts refunds recorded by the end of its measurement period and ignores later ones; a refund recorded after the action closed leaves its result unchanged but appears in that month's Growth P&L
 43. A form POST without the session's CSRF token is refused and changes nothing
 44. A component month whose `client_id` differs from its component's client is refused by the schema
+45. A rejected shop-data batch does not hold its `external_id`: the corrected batch resent under the same id is accepted, the rejection stays on record, and a further copy is a duplicate
 
 ## 12 · Security surface — what Week 8 should find
 
