@@ -520,12 +520,14 @@ the only signal.
 
 ## 8 · Automations
 
-As in [`portfolio/portfolio-plan.md`](portfolio/portfolio-plan.md): daily
-shop-data intake (scheduled, W4) · below-target alert on `data.loaded` (event,
-W5) · approval routing to the named lead (human approval, W7) · monthly client
-report drafted by a read-only AI and reviewed before sending (scheduled AI, W8,
-written up W11). The application computes every flag and figure; Make only moves
-data and messages. Design references in the action plans: 61 and 71 (intake and
+As in [`portfolio/portfolio-plan.md`](portfolio/portfolio-plan.md), re-mapped
+on 4 November: reply to a new inquiry with a booking link (event, W4) · daily
+shop-data intake (scheduled, W5) · approval routing to the named lead (human
+approval, W7) · monthly client report drafted by a read-only AI and reviewed
+before sending (scheduled AI, W8, written up W11) · optionally, a below-target
+alert on `data.loaded` (event). The application computes every flag and figure;
+Make only moves data and messages. The inquiry reply runs before a client exists
+and does not touch the application, so it needs no service user or API secret. Design references in the action plans: 61 and 71 (intake and
 validation), 70 (alerts), 69 and 50 (the report), 72 (idempotency, bounded
 retries, unknown outcomes held for review).
 
