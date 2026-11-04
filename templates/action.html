@@ -15,6 +15,7 @@
         <dt>Primary metric</dt><dd>{{ action.primary_metric|label }}</dd>
         <dt>Guardrails</dt><dd>margin % and refund rate (always)</dd>
         <dt>Comparison</dt><dd>{{ action.comparison|label }}{% if groups %} · {{ groups.get('test', 0) }} test, {{ groups.get('control', 0) }} control customers{% endif %}</dd>
+        <dt>Measured on</dt><dd>{% if action.scope_channel %}{{ action.scope_channel|label }} only, after media{% else %}the whole store{% endif %}</dd>
         <dt>Window</dt><dd>{{ action.window_start or '—' }} to {{ action.window_end or '—' }}, post-period {{ action.post_period_days if action.post_period_days is not none else '—' }} days</dd>
         <dt>Measurement ends</dt><dd>{{ measurement_end or '—' }}</dd>
         <dt>Expected benefit</dt><dd>{{ action.expected_benefit_eur|eur }}</dd>

@@ -68,6 +68,14 @@ def test_37_comparison_must_match_the_benefit_type():
         check_transition(replace(enabler, comparison="holdout"), "in_review", owner, review_ctx)
 
 
+def test_46c_a_channel_scope_needs_before_after():
+    with pytest.raises(TransitionError, match="before/after"):
+        check_transition(replace(ready, scope_channel="google_search"), "in_review", owner,
+                         review_ctx)       # `ready` compares with a holdout
+    check_transition(replace(ready, comparison="before_after", scope_channel="google_search"),
+                     "in_review", owner, review_ctx)
+
+
 @pytest.mark.parametrize("person, roles", [
     (REQUESTER, {"lead"}), (OWNER, {"lead"}), (REQUESTER, {"lead", "admin"}),
     (OTHER_LEAD, {"lead"}), (ADMIN, {"admin"}), (REVIEWER, {"consultant"}),
@@ -138,7 +146,7 @@ def test_40_prediction_is_fixed_once_in_review():
     check_edit(ready, {"window_end", "hurdle_eur"})                 # before review: fine
     in_review = replace(ready, status="in_review")
     for field in ("window_start", "window_end", "post_period_days", "expected_benefit_eur",
-                  "primary_metric", "comparison", "hurdle_eur"):
+                  "primary_metric", "comparison", "hurdle_eur", "scope_channel"):
         with pytest.raises(TransitionError, match="fixed"):
             check_edit(in_review, {field})
 

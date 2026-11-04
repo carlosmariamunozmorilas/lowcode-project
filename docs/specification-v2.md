@@ -315,7 +315,13 @@ action's measurement period (the window plus `post_period_days`):
   customer counts, including those who bought nothing. Confidence `holdout`.
 - `before_after`: contribution in the window − contribution in the equal-length
   period immediately before, for the action's scope. Confidence `before_after`,
-  shown as weaker evidence.
+  shown as weaker evidence. **The scope** (decided 4 November, D1): an action's
+  optional `scope_channel` names one channel; with it, only that channel's
+  orders count and the change in that channel's ad spend is subtracted — the
+  result is contribution *after media*, so media an action saves counts as
+  benefit. Without it, the whole store is compared. A channel scope works only
+  with `before_after` (a `CHECK` in the schema) and must be one of the client's
+  channels.
 
 **Which refunds count.** An action's result subtracts the refunds of orders in
 its measurement period that were recorded (`refunded_at`) by the end of that
@@ -406,8 +412,8 @@ figures the code has calculated.
   post-period, and a named reviewer who is a lead assigned to the client and is
   neither requester nor owner.
 - **The prediction is fixed in review.** Once an action enters review, its
-  window, post-period, expected benefit, primary metric, comparison and hurdle
-  cannot change. To change one, the action is cancelled and a new one opened,
+  window, post-period, expected benefit, primary metric, comparison, channel
+  scope and hurdle cannot change. To change one, the action is cancelled and a new one opened,
   so the history shows both.
 - **To close:** measured benefit and confidence (unless enabler), an
   `evidence_note` for an avoided cost, and a decision, certified by the named
@@ -694,12 +700,13 @@ time; the spec keeps them so the design stays complete.
 37. The comparison must match the benefit type (`contribution` → `holdout` or `before_after`, `avoided_cost` → `invoice`, `enabler` → `none`), and an enabler enters review without a primary metric
 38. A component month for a `holdout_kept` or `pilot_estimate` component ignores a typed benefit and stores the app's figure; an `invoice` month recorded by the origin action's requester or owner is refused
 39. A `pilot_estimate` component becomes `review_due` six months after it started
-40. Once an action is in review, a change to its window, post-period, expected benefit, primary metric, comparison or hurdle is refused
+40. Once an action is in review, a change to its window, post-period, expected benefit, primary metric, comparison, channel scope or hurdle is refused
 41. "Where to grow" lists a plan only when its `moves` include a weak metric, it suits the client's business model and purchase frequency, and its `data_fit` is not `no`; a metric within tolerance lists nothing
 42. An action's result subtracts refunds recorded by the end of its measurement period and ignores later ones; a refund recorded after the action closed leaves its result unchanged but appears in that month's Growth P&L
 43. A form POST without the session's CSRF token is refused and changes nothing
 44. A component month whose `client_id` differs from its component's client is refused by the schema
 45. A rejected shop-data batch does not hold its `external_id`: the corrected batch resent under the same id is accepted, the rejection stays on record, and a further copy is a duplicate
+46. With a channel scope, a before/after result counts only that channel's orders and subtracts the change in its ad spend; without one, the whole store is compared as before; a scope with a holdout, or a channel the client does not have, is refused
 
 ## 12 · Security surface — what Week 8 should find
 
