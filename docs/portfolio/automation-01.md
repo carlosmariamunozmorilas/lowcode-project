@@ -101,7 +101,7 @@ anyone who has it can make the scenario send mail (see *Spoofing* below).
 | — | Filter | continues only if the search returned no message |
 | 4 | Gmail · Send an email | the reply below, as `Re: {subject}`, with `In-Reply-To` and `References` set to the inquiry's `Message-ID` so it lands in the same thread |
 | 5 | Gmail · Send an email (internal) | to the team: *"New inquiry from {name} <{address}>. The automatic reply with the intake form has been sent. Their answers will arrive from Google Forms when they submit it. Please follow up personally."* |
-| E | Error handler on 4 | to the team: *"The automatic reply to {address} failed. Please reply by hand."*, then **Rollback**, so the run shows as failed in the history instead of passing silently |
+| E | Error handler on 4 | to the team: *"The automatic reply to {address} failed. Please reply by hand."*, then **Rollback**, so the run shows as failed in the history instead of passing silently. Since 14 November it sends through a **second, fallback mailbox**: the first real run showed that a warning sent through the same connection fails together with the reply (see *Runs* below) |
 
 **Why the Sent folder and not a data store.** The first design kept each
 answered address in a Make data store. Creating one was refused — the
@@ -186,7 +186,8 @@ Make, Google and Calendly:
    both the agency mailbox (the address is kept out of this public
    repository): the scenario sends from it, tells it about each inquiry, and
    **ignores any email from it** — so test from a different address. `signer_name` is
-   *Carlos*, `form_link` the intake form's public link and `call_length`
+   *Alex* (a fictional name, like the agency; changed from *Carlos* on 14 November),
+   `form_link` the intake form's public link and `call_length`
    *30-minute*, matching your existing Calendly *30 Minute Meeting*, whose link
    now sits on the form's confirmation page. If you create a 45-minute
    *"Scaling — onboarding call"* event type, change `call_length` and the
@@ -324,7 +325,8 @@ both be searched before the first reply is sent — sequential processing,
 switched on, removes that race by handling them one at a time.
 
 **What if a step fails halfway?** If sending fails (step 4), the error route
-tells the team to reply by hand and marks the run as failed; nothing was sent,
+tells the team — through the fallback mailbox, so the warning does not depend on
+the connection that just failed — to reply by hand and marks the run as failed; nothing was sent,
 so the Sent folder holds no reply and a redelivery tries again. If the search
 fails (step 3), the run stops before anything is sent and shows as failed. If
 the team notification fails (step 5), the prospect still has their reply; the
@@ -337,8 +339,8 @@ personal data:
 - the prospect's name, email address, subject, message and email headers pass
   through **Gmail** (Google, in the college's Google Workspace, under its
   administrators and policies) and **Make** (EU zone); Make's run history keeps a
-  run's data for the plan's log retention period — 7 days on the Free plan, as
-  Make's plan page lists it. Once testing is done, the scenario setting *"Data is
+  run's data for the plan's log retention period — 30 days on the Pro plan
+  the organisation has used since 14 November, as Make's API reports it. Once testing is done, the scenario setting *"Data is
   confidential"* stops Make storing run data at all, at the cost of harder
   debugging;
 - the automation keeps **no store of its own**: the only record of who was
@@ -347,8 +349,8 @@ personal data:
 - the **intake form's answers** — the prospect's name and email, and
   commercial figures about their store — are stored by **Google Forms** in
   Carlos's personal Google account, which owns the form, and emailed there
-  (moving the form to the agency mailbox would keep all of it in one place —
-  open); the form says they are
+  (decided 14 November to keep it there: the student mailbox ends with the
+  course); the form says they are
   deleted after 6 months if no work follows, a promise someone has to keep by
   hand (a Week 11 governance item). The Apps Script that built the form was
   granted access to Google Forms only;
@@ -362,3 +364,50 @@ personal data:
 
 The Week 11 GDPR page carries this forward: prospects become the one group of
 outside people whose personal data the system handles, besides the team.
+
+## 7 · Runs
+
+The organisation had no Make plan until 14 November, so nothing could run
+before then. Make Pro (yearly) was bought that day and the scenario switched on.
+
+| When (UTC, 14 Nov) | Test email | Result | Steps run | What it showed |
+|---|---|---|---|---|
+| 19:13 | "Help growing my online store" | **Failed:** `[403] Request had insufficient authentication scopes` at step 4 | 5 | The mailbox connection had lost its Gmail permissions. The error route used **the same connection**, so the warning failed too: no reply and no warning — a silent failure |
+| 19:25 | "Growing my homeware store" | Success | 5 | Reply sent and threaded under the inquiry; team notified |
+| 19:26 | "One more question" (same sender) | Success, stopped after step 3 | 3 | The Sent-folder check found the first reply: no second reply, no notification |
+
+**What was wrong and how it was fixed.** Reauthorising a connection from
+Make's *Credentials* page gives back only Google's three sign-in permissions
+(profile, email, openid). Make asks Google for the Gmail permissions
+(`gmail.send`, `gmail.readonly`) only from inside a module that needs them: the
+module's connection field showed empty, and selecting the connection again
+raised *"Update the connection permissions"*. After that the connection held
+five permissions and the 19:25 run succeeded. The warning now goes through a
+second mailbox, so it no longer fails together with the reply.
+
+The two later test emails were sent from the personal test address by Claude
+Code through the Gmail connector, at Carlos's request.
+
+## 8 · The app's webhook handler with bad input (lab Block 2)
+
+Automation 1 does not call the app. The lab's handler requirement — *"bad input
+returns 400, not a 500 stack trace"* — is met by the app's own signed webhook,
+`POST /api/events`, which automations 2–4 use. On 14 November it was sent 30
+correctly signed requests with bad input (`tests/test_api_bad_input.py`); each
+must be refused with a 4xx and a reason, and write nothing.
+
+**11 of them crashed the app with a 500** before the fix:
+
+| Bad input | Before | After |
+|---|---|---|
+| Body is a JSON list, `null` or a string | 500 | 400 *body must be a JSON object* |
+| `event_type` sent as a list | 500 | 400 *event_type must be text* |
+| `orders` / `refunds` / `sessions` / `ad_spend` not a list of rows (6 cases) | 500 | 422 *… must be a list of rows* |
+| Report `month` as a number or `null` (2 cases) | 500 | 422 *month must look like 2026-10* |
+| A 100,000-character `external_id` or `customer_ref` | 201 accepted | 400 / 422 — limits: 100 characters for ids, 200 for other short text, 20,000 for a report draft |
+
+Already refused correctly before the fix: an empty body, text that is not
+JSON, a missing `external_id` or `client_id`, a client id sent as text, a date
+that is not a date, negative, NaN or text revenue, a missing report text, and a
+body over 2 MB (413). The fix and the tests are pull request #34; the full
+suite passes (129 tests).
