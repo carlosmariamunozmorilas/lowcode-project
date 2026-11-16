@@ -1,7 +1,9 @@
 """The signed API the Make automations use — and the only way they reach the app.
 
-Every request names its automation in X-Automation and signs the raw body with
-that automation's own secret in X-Signature (hex HMAC-SHA256). An unknown or
+Every request names its automation in X-Automation and signs with that
+automation's own secret in X-Signature (hex HMAC-SHA256): a POST signs its raw
+body; a GET signs its path and query string (e.g. `/api/alerts?client_id=1`),
+so a read's signature cannot be reused for another client. An unknown or
 deactivated name, a missing secret or a bad signature is refused before
 anything is read or written. Each automation may use only its own event types.
 
@@ -16,9 +18,13 @@ import json
 import math
 import sqlite3
 
-from flask import Blueprint, current_app, jsonify, request
+from datetime import date, timedelta
+
+from flask import Blueprint, current_app, g, jsonify, request
 
 import measure
+import roi
+from auth import today
 from db import get_db, transaction
 
 bp = Blueprint("api", __name__, url_prefix="/api")
@@ -50,10 +56,18 @@ def authenticate() -> tuple[sqlite3.Row, dict]:
     secret = current_app.config["AUTOMATION_SECRETS"].get(name)
     if user is None or secret is None or name not in AUTOMATION_SCOPES:
         raise Refused(401, "unknown automation")
-    expected = hmac.new(secret.encode(), request.get_data(), hashlib.sha256).hexdigest()
+    expected = hmac.new(secret.encode(), signed_message(), hashlib.sha256).hexdigest()
     if not hmac.compare_digest(expected, signature):
         raise Refused(401, "bad signature")
     return user, AUTOMATION_SCOPES[name]
+
+
+def signed_message() -> bytes:
+    """What the signature covers: a POST's raw body, a GET's path and query."""
+    if request.method == "GET":
+        query = request.query_string.decode()
+        return (request.path + ("?" + query if query else "")).encode()
+    return request.get_data()
 
 
 @bp.errorhandler(Refused)
@@ -245,6 +259,7 @@ def _shop_data(conn, source, client_id, external_id, event):
         # The transaction rolled back: not one row of the batch was written.
         return _reject(conn, source, client_id, "shop_data", external_id, event, str(error), 422,
                        **totals)
+    g.announce = True
     return jsonify({"status": "accepted", "rows": len(orders)}), 201
 
 
@@ -312,4 +327,198 @@ def metrics():
         "guardrails": [g.__dict__ for g in measure.guardrails(current, baseline)],
         "system": system.__dict__,
         "below_target": system.roi is not None and system.roi < client["roi_target"],
+        "actions_closed": _actions_closed(conn, client_id, month),
+        "alerts_raised": _alerts_raised(conn, client_id, month),
+        # No email addresses: these figures go into an AI prompt (automation 5).
     })
+
+
+# --- reads for the automations ------------------------------------------------
+# Ids, names, flags and work emails only: never order rows or customer references.
+
+def _require(scope: dict, grant: str) -> None:
+    if not scope.get(grant):
+        raise Refused(403, f"this automation may not read {grant}")
+
+
+def _active_client(conn, client_id) -> sqlite3.Row:
+    client = conn.execute("SELECT * FROM clients WHERE id = ? AND is_active = 1",
+                          (client_id,)).fetchone()
+    if client is None:
+        raise Refused(404, "unknown client")
+    return client
+
+
+def _month(value: str | None, default: str) -> str:
+    month = value or default
+    if len(month) != 7 or month[4] != "-" or not (month[:4] + month[5:]).isdigit():
+        raise Refused(400, "month must look like 2026-10")
+    return month
+
+
+def _previous_month(day: date) -> str:
+    return (day.replace(day=1) - timedelta(days=1)).strftime("%Y-%m")
+
+
+def _consultant_emails(conn, client_id: int) -> list[str]:
+    return [r[0] for r in conn.execute(
+        """SELECT u.email FROM users u
+           JOIN client_assignments a ON a.user_id = u.id
+           JOIN user_roles r ON r.user_id = u.id AND r.role = 'consultant'
+           WHERE a.client_id = ? AND u.is_active = 1 AND u.is_service = 0
+           ORDER BY u.email""", (client_id,))]
+
+
+def _person(conn, user_id) -> dict | None:
+    row = conn.execute("SELECT full_name, email FROM users WHERE id = ? AND is_active = 1",
+                       (user_id,)).fetchone()
+    return None if row is None else {"name": row["full_name"], "email": row["email"]}
+
+
+def _actions_closed(conn, client_id: int, month: str) -> list[dict]:
+    start, end = measure.month_range(month)
+    rows = conn.execute(
+        """SELECT a.id, a.title, a.decision, a.confidence, a.measured_benefit_eur
+           FROM actions a WHERE a.client_id = ? AND a.status = 'closed'
+             AND EXISTS (SELECT 1 FROM action_history h WHERE h.action_id = a.id
+                         AND h.to_status = 'closed' AND substr(h.created_at, 1, 10) BETWEEN ? AND ?)
+           ORDER BY a.id""", (client_id, start, end)).fetchall()
+    return [dict(r) for r in rows]
+
+
+def _alerts_raised(conn, client_id: int, month: str) -> list[str]:
+    rows = conn.execute(
+        """SELECT payload FROM automation_events
+           WHERE client_id = ? AND event_type = 'alerts' AND status = 'accepted'
+             AND substr(received_at, 1, 7) = ? ORDER BY id""", (client_id, month)).fetchall()
+    return [json.loads(r["payload"]).get("message", "") for r in rows]
+
+
+def business_days_between(start: date, end: date) -> int:
+    """Weekdays after start, up to and including end."""
+    days, day = 0, start
+    while day < end:
+        day += timedelta(days=1)
+        days += day.weekday() < 5
+    return days
+
+
+MAX_CATCH_UP_DAYS = 31
+
+
+@bp.route("/clients", methods=["GET"])
+def clients():
+    """The active clients, which month counts as 'last month' today, and for the
+    intake, the next day of shop data each client needs and how many days behind
+    yesterday it is (at most 31 per run, oldest first)."""
+    authenticate()
+    yesterday = today() - timedelta(days=1)
+    out = []
+    for row in get_db().execute(
+            """SELECT c.id, c.name, (SELECT MAX(s.date) FROM sessions s WHERE s.client_id = c.id)
+                      AS last_day FROM clients c WHERE c.is_active = 1 ORDER BY c.id"""):
+        next_day = (date.fromisoformat(row["last_day"]) + timedelta(days=1)
+                    if row["last_day"] else yesterday)
+        behind = max(0, min((yesterday - next_day).days + 1, MAX_CATCH_UP_DAYS))
+        out.append({"id": row["id"], "name": row["name"], "next_day": next_day.isoformat(),
+                    "days_behind": behind})
+    return jsonify({"clients": out, "today": today().isoformat(),
+                    "last_month": _previous_month(today())})
+
+
+@bp.route("/alerts", methods=["GET"])
+def alerts():
+    """What deserves an alert for one client. The app decides; Make only follows the flags.
+
+    Below target: the growth system, or a running component, under the client's
+    ROI target in the month (by default the latest month with results). Window
+    ended: an approved action whose measurement period is over with no result.
+    """
+    _, scope = authenticate()
+    _require(scope, "metrics")
+    conn = get_db()
+    client = _active_client(conn, request.args.get("client_id", type=int))
+    latest = conn.execute("SELECT MAX(month) FROM component_months WHERE client_id = ?",
+                          (client["id"],)).fetchone()[0]
+    month = _month(request.args.get("month"), latest or _previous_month(today()))
+    target, cid, flags = client["roi_target"], client["id"], []
+
+    system = measure.system_month(conn, client, month)
+    if system.roi is not None and system.roi < target:
+        flags.append({"kind": "system_below_target", "item_id": cid,
+                      "external_id": f"alert:{cid}:system:{month}", "path": f"/clients/{cid}",
+                      "message": f"{client['name']}: growth-system ROI {system.roi:.0%} in {month} "
+                                 f"is below the {target:.0%} target."})
+    for row in measure.latest_component_months(conn, cid, month):
+        cost = roi.component_month_cost(row["operating_cost_eur"], row["operating_hours"],
+                                        client["hourly_rate_eur"])
+        value = roi.continuation_roi(row["measured_benefit_eur"], cost)
+        if value is not None and value < target:
+            flags.append({"kind": "component_below_target", "item_id": row["component_id"],
+                          "external_id": f"alert:{cid}:component:{row['component_id']}:{month}",
+                          "path": f"/components/{row['component_id']}",
+                          "message": f"{client['name']}: component '{row['name']}' returned "
+                                     f"{value:.0%} in {month}, below the {target:.0%} target."})
+    for action in conn.execute(
+            """SELECT * FROM actions WHERE client_id = ? AND status = 'approved'
+                 AND measured_benefit_eur IS NULL AND window_start IS NOT NULL
+                 AND window_end IS NOT NULL ORDER BY id""", (cid,)):
+        _, end = measure.measurement_period(action)
+        if end < today().isoformat():
+            flags.append({"kind": "window_ended", "item_id": action["id"],
+                          "external_id": f"alert:{cid}:action:{action['id']}:window_ended",
+                          "path": f"/actions/{action['id']}",
+                          "message": f"{client['name']}: action #{action['id']} "
+                                     f"'{action['title']}' finished measuring on {end} "
+                                     f"and has no recorded result."})
+    return jsonify({"client": {"id": cid, "name": client["name"]}, "month": month,
+                    "flags": flags, "recipients": _consultant_emails(conn, cid)})
+
+
+@bp.route("/actions/<int:action_id>", methods=["GET"])
+def action_detail(action_id: int):
+    """One action's routing facts: who asked, who reviews, where it stands."""
+    _, scope = authenticate()
+    _require(scope, "reviews")
+    conn = get_db()
+    action = conn.execute(
+        """SELECT a.*, c.name AS client_name FROM actions a JOIN clients c ON c.id = a.client_id
+           WHERE a.id = ?""", (action_id,)).fetchone()
+    if action is None:
+        raise Refused(404, "unknown action")
+    last = conn.execute(
+        """SELECT to_status, note, created_at FROM action_history WHERE action_id = ?
+           ORDER BY id DESC LIMIT 1""", (action_id,)).fetchone()
+    return jsonify({
+        "id": action["id"], "title": action["title"], "status": action["status"],
+        "client": {"id": action["client_id"], "name": action["client_name"]},
+        "requester": _person(conn, action["requester_id"]),
+        "reviewer": _person(conn, action["reviewer_id"]),
+        "last_change": None if last is None else dict(last),
+        "path": f"/actions/{action['id']}",
+    })
+
+
+@bp.route("/reviews", methods=["GET"])
+def reviews():
+    """Actions in review, with how many business days each has been waiting."""
+    _, scope = authenticate()
+    _require(scope, "reviews")
+    minimum = request.args.get("min_business_days", default=0, type=int)
+    if minimum < 0:
+        raise Refused(400, "min_business_days must be 0 or more")
+    conn, now, out = get_db(), today(), []
+    for row in conn.execute(
+            """SELECT a.id, a.title, a.client_id, a.reviewer_id, c.name AS client_name,
+                      (SELECT MAX(h.created_at) FROM action_history h
+                       WHERE h.action_id = a.id AND h.to_status = 'in_review') AS since
+               FROM actions a JOIN clients c ON c.id = a.client_id
+               WHERE a.status = 'in_review' ORDER BY a.id"""):
+        since = date.fromisoformat(row["since"][:10]) if row["since"] else now
+        waiting = business_days_between(since, now)
+        if waiting >= minimum:
+            out.append({"id": row["id"], "title": row["title"],
+                        "client": {"id": row["client_id"], "name": row["client_name"]},
+                        "reviewer": _person(conn, row["reviewer_id"]),
+                        "business_days_waiting": waiting, "path": f"/actions/{row['id']}"})
+    return jsonify({"actions": out})

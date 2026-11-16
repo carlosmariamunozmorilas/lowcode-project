@@ -17,11 +17,11 @@ from app import create_app  # noqa: E402
 
 PASSWORD = "fixture-password-only"
 SECRETS = {"shop_intake": "intake-secret", "report_draft": "report-secret",
-           "below_target_alert": "alert-secret"}
+           "below_target_alert": "alert-secret", "approval_routing": "routing-secret"}
 
 # Fixture people: ids are referred to by name in the tests.
 ADMIN, LEAD_A, LEAD_B, CONSULTANT, OTHER_CONSULTANT = 1, 2, 3, 4, 5
-INTAKE, REPORTER, ALERTER = 6, 7, 8
+INTAKE, REPORTER, ALERTER, ROUTER = 6, 7, 8, 9
 LUNA, OTHER = 1, 2
 
 
@@ -50,7 +50,7 @@ def build(conn, password_hash) -> None:
             conn.execute("INSERT INTO client_assignments (user_id, client_id) VALUES (?, ?)",
                          (uid, c))
     for uid, name in ((INTAKE, "shop_intake"), (REPORTER, "report_draft"),
-                      (ALERTER, "below_target_alert")):
+                      (ALERTER, "below_target_alert"), (ROUTER, "approval_routing")):
         conn.execute(
             """INSERT INTO users (id, email, full_name, is_service, automation_name)
                VALUES (?, ?, ?, 1, ?)""", (uid, f"{name}@test.example", name, name))
@@ -100,12 +100,15 @@ def post(test_client, url: str, data: dict | None = None, **kwargs):
 
 def signed(test_client, url: str, body: dict, automation: str = "shop_intake",
            secret: str | None = None, method: str = "post"):
-    raw = json.dumps(body).encode()
     key = (secret or SECRETS[automation]).encode()
-    signature = hmac.new(key, raw, hashlib.sha256).hexdigest()
-    return getattr(test_client, method)(
-        url, data=raw, content_type="application/json",
-        headers={"X-Automation": automation, "X-Signature": signature})
+    headers = {"X-Automation": automation}
+    if method == "get":         # a read signs its path and query, and has no body
+        headers["X-Signature"] = hmac.new(key, url.encode(), hashlib.sha256).hexdigest()
+        return test_client.get(url, headers=headers)
+    raw = json.dumps(body).encode()
+    headers["X-Signature"] = hmac.new(key, raw, hashlib.sha256).hexdigest()
+    return getattr(test_client, method)(url, data=raw, content_type="application/json",
+                                        headers=headers)
 
 
 # --- data builders ---------------------------------------------------------------

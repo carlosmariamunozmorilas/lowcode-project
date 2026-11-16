@@ -283,6 +283,8 @@ def move(action_row, to_status: str, ctx: lifecycle.Context, note: str = "",
             conn.execute(
                 "INSERT INTO outbound_events (event_type, client_id, entity_id) VALUES (?, ?, ?)",
                 (outbound, action_row["client_id"], action_row["id"]))
+    if outbound:
+        g.announce = True      # sent to Make after the response is built (app.py)
 
 
 def done(action_id, message):

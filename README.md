@@ -95,7 +95,11 @@ with `ruff check .`.
 
 `SECRET_KEY`, `DATABASE_PATH` and one `API_SECRET_<AUTOMATION>` per
 automation are read from the environment; without a `SECRET_KEY` the app
-makes a random one for each run and says so. What was built, and how it
+makes a random one for each run and says so. For the Make automations the app
+also reads `MAKE_WEBHOOK_DATA_LOADED` and `MAKE_WEBHOOK_ACTIONS` (where its
+announcements go) and `OUTBOX_SECRET` (which signs them); without the webhook
+URLs the announcements simply wait in the outbox, and
+`flask --app app send-announcements` sends any that are waiting. What was built, and how it
 differs from the specification, is in
 [`docs/v2-build-notes.md`](docs/v2-build-notes.md).
 

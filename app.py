@@ -7,15 +7,18 @@ data, check access and call them.
     flask --app app init-db          # empty database with the 72 plan templates
     python scripts/generate_shop_data.py   # or: the fictional demo database
     flask --app app run
+    flask --app app send-announcements   # resend announcements Make has not accepted yet
 """
 
 import os
 
-from flask import Flask, render_template
+import click
+from flask import Flask, g, render_template
 
 import auth
 import config
 import db
+import outbox
 from routes import actions, admin, api, clients, components, reports, review
 
 
@@ -32,6 +35,28 @@ def create_app(overrides: dict | None = None) -> Flask:
         app.register_blueprint(module.bp)
 
     app.jinja_env.filters.update(eur=fmt_eur, pct=fmt_pct, num=fmt_num, label=fmt_label)
+
+    def send_announcements() -> int:
+        return outbox.dispatch(db.get_db(), app.config["MAKE_WEBHOOKS"],
+                               app.config["OUTBOX_SECRET"])
+
+    @app.after_request
+    def announce(response):
+        # A request that wrote an announcement rings Make's doorbell once its
+        # transaction is committed. A failure here never spoils the response:
+        # the row stays in the outbox for the next send.
+        if g.pop("announce", False) and app.config["MAKE_WEBHOOKS"]:
+            try:
+                send_announcements()
+            except Exception:  # noqa: BLE001 — logged; the outbox keeps the row
+                app.logger.exception("could not send announcements to Make")
+        return response
+
+    @app.cli.command("send-announcements")
+    def send_announcements_command():
+        """Send the announcements Make has not accepted yet."""
+        with app.app_context():
+            click.echo(f"{send_announcements()} announcement(s) delivered")
 
     @app.errorhandler(404)
     def not_found(error):
