@@ -72,7 +72,7 @@ flowchart LR
 | Shop-data feed Sheet — one row per store per day (1 Nov 2026 – 31 Jan 2027), with the export's own control totals | Google Sheets, from `scripts/export_shop_feed.py` | Created |
 | Run log Sheet — every scenario writes its outcomes and errors | Google Sheets | Created |
 | Team variables: app URL, team inbox, demo inbox, one HMAC secret per automation | Make | Created; the four secrets are still placeholders. **Carlos's decision (16 Nov, confirmed 17 Nov): the secrets live in Make team variables**, which Make stores unencrypted; see *Credentials* below |
-| Reachability — Make cannot call `localhost` | hosting | **Open:** the app must be deployed or tunnelled before A2–A5 can run |
+| Reachability — Make cannot call `localhost` | hosting | **Tunnel for tests (17 Nov):** a Cloudflare quick tunnel (`cloudflared tunnel --url http://localhost:5000`) gives a public `trycloudflare.com` address, new on every start, so `scaling_app_url` must be updated each time. Checked: a correctly signed `GET /api/clients` through the tunnel returns the three stores; a wrong key gets 401. Permanent address with the Week 10 deploy |
 
 ### Credentials: where the secrets live, and the remaining risk
 
