@@ -1,0 +1,2442 @@
+{
+  "source": "Unified ROI System — variables, KPIs, levers and objects (A4 summary, 3 pages, Carlos M. Muñoz Morillas, 4 November 2026; docs/sources/Unified_ROI_Variables_A4_EN.pdf), selected for ecommerce in docs/metric-templates.md",
+  "status": "proposal, 4 November 2026 — not loaded by the app; D1 decided (yes), D2 and D3 open — see docs/metric-templates.md",
+  "generated_by": "scripts/build_metric_templates.py — edit the script, not this file",
+  "classes": {
+    "outcome": "The verdict — the only class that decides anything",
+    "driver": "Explains the outcome",
+    "efficiency": "Cost of the result",
+    "diagnostic": "Helps find causes; never a result",
+    "guardrail": "Stops destructive optimisation — margin % and refund rate only (decided 2 November)",
+    "quality_risk": "Watches the system itself: data, automations, agents"
+  },
+  "status_values": {
+    "built": "the app computes it today",
+    "data_ready": "the fictional data already holds what it needs; measure.py needs the formula",
+    "needs_data": "needs the data extension named in `extension`"
+  },
+  "primary_values": {
+    "yes": "in today's vocabulary (lifecycle.METRICS): an action's primary_metric may name it",
+    "proposed": "would join the vocabulary under decision D3",
+    "no": "never an action's primary metric"
+  },
+  "core_set": {
+    "shared": {
+      "metrics": [
+        "roi",
+        "system_roi",
+        "margin_pct",
+        "refund_rate"
+      ],
+      "why": "The verdict and the two guardrails — shown for every discipline."
+    },
+    "ecommerce": {
+      "metrics": [
+        "conversion",
+        "average_order_value",
+        "contribution_per_session"
+      ],
+      "why": "How many visits buy, how much they spend, and what each visit earns."
+    },
+    "digital_marketing": {
+      "metrics": [
+        "sessions",
+        "new_customers",
+        "email_click_rate"
+      ],
+      "why": "Earned traffic, new buyers, and whether owned messages are read."
+    },
+    "performance_marketing": {
+      "metrics": [
+        "contribution_after_media",
+        "cac",
+        "roas"
+      ],
+      "why": "What media really earned (D1), what a new customer costs, and ROAS shown beside them to explain why it is not ROI."
+    },
+    "digital_growth": {
+      "metrics": [
+        "repeat_rate",
+        "second_order_rate_90d",
+        "contribution_to_cac_d90"
+      ],
+      "why": "Whether customers come back, how soon, and whether the first 90 days paid back their acquisition."
+    },
+    "agentic_ai": {
+      "metrics": [
+        "output_acceptance_rate",
+        "cost_per_accepted_output",
+        "report_correction_rate"
+      ],
+      "why": "How much agent work a person accepts, what it costs, and how often a person corrects it."
+    },
+    "automations": {
+      "metrics": [
+        "run_failure_rate",
+        "cost_per_run",
+        "intake_quality"
+      ],
+      "why": "Whether the workflows run, what a run costs, and whether data arrives intact."
+    }
+  },
+  "metrics": [
+    {
+      "key": "contribution",
+      "name": "Incremental contribution",
+      "discipline": "shared",
+      "class": "outcome",
+      "definition": "The extra contribution an action or component caused, from the store's own orders.",
+      "formula": "holdout: (contribution per assigned test customer − per assigned control customer) × test customers; before/after: contribution in the measurement period − the equal period before. Order contribution = net revenue − product cost − shipping − payment fee − refunds + restocked cost; the discount is never subtracted again",
+      "unit": "eur",
+      "better": "higher",
+      "grain": "action period; component month",
+      "source": [
+        "orders",
+        "refunds",
+        "assignments"
+      ],
+      "status": "built",
+      "extension": null,
+      "decision": null,
+      "primary": "yes",
+      "plans": [
+        1,
+        2,
+        3,
+        4,
+        5,
+        6,
+        7,
+        8,
+        9,
+        10,
+        12,
+        13,
+        14,
+        15,
+        16,
+        17,
+        18,
+        19,
+        20,
+        21,
+        22,
+        23,
+        24,
+        26,
+        27,
+        28,
+        29,
+        30,
+        31,
+        32,
+        33,
+        34,
+        35,
+        36,
+        39,
+        40,
+        41,
+        42,
+        43,
+        44,
+        45,
+        46,
+        47,
+        54,
+        55,
+        64,
+        65,
+        66
+      ],
+      "pdf": "T1 Economics — incremental outcome; ROI formula",
+      "note": "Store contribution (Growth P&L) is context, never this figure.",
+      "fits": null,
+      "core": false
+    },
+    {
+      "key": "avoided_cost",
+      "name": "Verified avoided cost",
+      "discipline": "shared",
+      "class": "outcome",
+      "definition": "Paid spending that genuinely fell — a cancelled service, a smaller invoice.",
+      "formula": "paid cost before − paid cost after, from invoices, with an evidence note; confidence documented",
+      "unit": "eur",
+      "better": "higher",
+      "grain": "action period; component month",
+      "source": [
+        "actions.measured_benefit_eur",
+        "actions.evidence_note",
+        "component_months.measured_benefit_eur"
+      ],
+      "status": "built",
+      "extension": null,
+      "decision": null,
+      "primary": "yes",
+      "plans": [
+        49,
+        50,
+        51,
+        52,
+        53,
+        56,
+        57,
+        58,
+        59,
+        61,
+        62,
+        63,
+        67,
+        68,
+        69,
+        70,
+        71,
+        72
+      ],
+      "pdf": "T1 cost savings; 06 Economic proof — verified cash saved",
+      "note": "Freed hours are never avoided cost.",
+      "fits": null,
+      "core": false
+    },
+    {
+      "key": "net_benefit",
+      "name": "Net benefit",
+      "discipline": "shared",
+      "class": "outcome",
+      "definition": "What an action earned after everything it cost.",
+      "formula": "measured benefit − setup cost − setup hours × hourly rate − operating cost − operating hours × hourly rate",
+      "unit": "eur",
+      "better": "higher",
+      "grain": "action period",
+      "source": [
+        "actions",
+        "clients.hourly_rate_eur"
+      ],
+      "status": "built",
+      "extension": null,
+      "decision": null,
+      "primary": "no",
+      "plans": [],
+      "pdf": "T1 ROI formula — numerator",
+      "note": "Adopt only when net benefit ≥ the action's hurdle.",
+      "fits": null,
+      "core": false
+    },
+    {
+      "key": "roi",
+      "name": "ROI (action, full payback)",
+      "discipline": "shared",
+      "class": "outcome",
+      "definition": "Net benefit per euro invested in the action.",
+      "formula": "net benefit ÷ (setup cost + setup hours × rate + operating cost + operating hours × rate)",
+      "unit": "ratio",
+      "better": "higher",
+      "grain": "action period",
+      "source": [
+        "actions",
+        "clients.hourly_rate_eur"
+      ],
+      "status": "built",
+      "extension": null,
+      "decision": null,
+      "primary": "no",
+      "plans": [],
+      "pdf": "T1 ROI formula",
+      "note": "Same formula as the PDF. ROAS and MER are never ROI.",
+      "fits": null,
+      "core": true
+    },
+    {
+      "key": "system_roi",
+      "name": "System ROI (continuation)",
+      "discipline": "shared",
+      "class": "outcome",
+      "definition": "Return of the client's running growth system in a month.",
+      "formula": "(Σ monthly benefits − Σ monthly operating costs incl. hours × rate) ÷ Σ monthly operating costs, over running components, each benefit_key once",
+      "unit": "ratio",
+      "better": "higher",
+      "grain": "client·month",
+      "source": [
+        "component_months"
+      ],
+      "status": "built",
+      "extension": null,
+      "decision": null,
+      "primary": "no",
+      "plans": [],
+      "pdf": "T1 ROI; 'count each saving/cost once'",
+      "note": "Compared with the client's roi_target; setup is not counted again.",
+      "fits": null,
+      "core": true
+    },
+    {
+      "key": "setup_payback",
+      "name": "Setup payback",
+      "discipline": "shared",
+      "class": "outcome",
+      "definition": "How much of the setup cost the running components have earned back.",
+      "formula": "cumulative net benefit since each component started ÷ total setup cost",
+      "unit": "ratio",
+      "better": "higher",
+      "grain": "client·month",
+      "source": [
+        "component_months",
+        "actions.setup_cost_eur"
+      ],
+      "status": "built",
+      "extension": null,
+      "decision": null,
+      "primary": "no",
+      "plans": [],
+      "pdf": "T1 Decision economics — payback",
+      "note": "",
+      "fits": null,
+      "core": false
+    },
+    {
+      "key": "contribution_before_marketing",
+      "name": "Store contribution before marketing",
+      "discipline": "shared",
+      "class": "driver",
+      "definition": "Growth P&L line: what the month's orders left after product, delivery and payment costs.",
+      "formula": "net revenue − refunds − (product cost − restocked cost) − shipping − payment fees",
+      "unit": "eur",
+      "better": "higher",
+      "grain": "client·month",
+      "source": [
+        "orders",
+        "refunds"
+      ],
+      "status": "built",
+      "extension": null,
+      "decision": null,
+      "primary": "no",
+      "plans": [],
+      "pdf": "T1 contribution before media",
+      "note": "Store health, never an action's benefit; incomplete when a cost is missing.",
+      "fits": null,
+      "core": false
+    },
+    {
+      "key": "contribution_after_marketing",
+      "name": "Store contribution after marketing",
+      "discipline": "shared",
+      "class": "driver",
+      "definition": "Growth P&L line: store contribution after ad spend.",
+      "formula": "contribution before marketing − ad spend",
+      "unit": "eur",
+      "better": "higher",
+      "grain": "client·month",
+      "source": [
+        "orders",
+        "refunds",
+        "ad_spend"
+      ],
+      "status": "built",
+      "extension": null,
+      "decision": null,
+      "primary": "no",
+      "plans": [],
+      "pdf": "T1 contribution after media",
+      "note": "Store health, never an action's benefit.",
+      "fits": null,
+      "core": false
+    },
+    {
+      "key": "margin_pct",
+      "name": "Contribution margin %",
+      "discipline": "shared",
+      "class": "guardrail",
+      "definition": "Share of net revenue, after refunds, left as contribution before marketing.",
+      "formula": "contribution before marketing ÷ (net revenue − refunds) × 100",
+      "unit": "percent",
+      "better": "higher",
+      "grain": "client·month; action window",
+      "source": [
+        "orders",
+        "refunds"
+      ],
+      "status": "built",
+      "extension": null,
+      "decision": null,
+      "primary": "yes",
+      "plans": [
+        2,
+        3,
+        11,
+        26,
+        46
+      ],
+      "pdf": "01 Value & cost KPIs — contribution margin",
+      "note": "Breach: more than 2 points below the previous three months' average.",
+      "fits": null,
+      "core": true
+    },
+    {
+      "key": "refund_rate",
+      "name": "Refund rate",
+      "discipline": "shared",
+      "class": "guardrail",
+      "definition": "Orders refunded in the period per order placed in it.",
+      "formula": "orders refunded in the period ÷ orders placed in the period × 100",
+      "unit": "percent",
+      "better": "lower",
+      "grain": "client·month; action window",
+      "source": [
+        "orders",
+        "refunds"
+      ],
+      "status": "built",
+      "extension": null,
+      "decision": null,
+      "primary": "yes",
+      "plans": [
+        12,
+        40
+      ],
+      "pdf": "01 After purchase — refund rate",
+      "note": "Breach: more than 1 point above the previous three months' average.",
+      "fits": null,
+      "core": true
+    },
+    {
+      "key": "sessions",
+      "name": "Sessions",
+      "discipline": "ecommerce",
+      "class": "driver",
+      "definition": "Visits to the store, by channel when scoped.",
+      "formula": "Σ sessions",
+      "unit": "count",
+      "better": "higher",
+      "grain": "client·month·channel",
+      "source": [
+        "sessions"
+      ],
+      "status": "built",
+      "extension": null,
+      "decision": null,
+      "primary": "yes",
+      "plans": [
+        16,
+        17,
+        19,
+        33
+      ],
+      "pdf": "01 Funnel KPIs — sessions",
+      "note": "",
+      "fits": null,
+      "core": true
+    },
+    {
+      "key": "orders",
+      "name": "Orders",
+      "discipline": "ecommerce",
+      "class": "driver",
+      "definition": "Orders placed.",
+      "formula": "count of orders",
+      "unit": "count",
+      "better": "higher",
+      "grain": "client·month·channel",
+      "source": [
+        "orders"
+      ],
+      "status": "built",
+      "extension": null,
+      "decision": null,
+      "primary": "yes",
+      "plans": [
+        29
+      ],
+      "pdf": "01 Funnel KPIs — orders",
+      "note": "",
+      "fits": null,
+      "core": false
+    },
+    {
+      "key": "revenue",
+      "name": "Net revenue",
+      "discipline": "ecommerce",
+      "class": "driver",
+      "definition": "Sales after discounts, excluding tax.",
+      "formula": "Σ net revenue (refunds are their own P&L line)",
+      "unit": "eur",
+      "better": "higher",
+      "grain": "client·month·channel",
+      "source": [
+        "orders.net_revenue_eur"
+      ],
+      "status": "built",
+      "extension": null,
+      "decision": null,
+      "primary": "yes",
+      "plans": [],
+      "pdf": "T1 net sales excluding tax / refunds",
+      "note": "",
+      "fits": null,
+      "core": false
+    },
+    {
+      "key": "conversion",
+      "name": "Conversion rate",
+      "discipline": "ecommerce",
+      "class": "driver",
+      "definition": "Orders per session.",
+      "formula": "orders ÷ sessions",
+      "unit": "ratio",
+      "better": "higher",
+      "grain": "client·month·channel",
+      "source": [
+        "orders",
+        "sessions"
+      ],
+      "status": "built",
+      "extension": null,
+      "decision": null,
+      "primary": "yes",
+      "plans": [
+        1,
+        2,
+        4,
+        5,
+        6,
+        7,
+        13,
+        14,
+        15,
+        18,
+        23,
+        34,
+        35,
+        54,
+        55,
+        64,
+        65
+      ],
+      "pdf": "01 Funnel KPIs — CVR",
+      "note": "",
+      "fits": null,
+      "core": true
+    },
+    {
+      "key": "average_order_value",
+      "name": "Average order value",
+      "discipline": "ecommerce",
+      "class": "driver",
+      "definition": "Net revenue per order.",
+      "formula": "net revenue ÷ orders",
+      "unit": "eur",
+      "better": "higher",
+      "grain": "client·month·channel",
+      "source": [
+        "orders"
+      ],
+      "status": "built",
+      "extension": null,
+      "decision": null,
+      "primary": "yes",
+      "plans": [
+        1,
+        3,
+        8,
+        9,
+        46
+      ],
+      "pdf": "T1 / 04 — AOV",
+      "note": "",
+      "fits": null,
+      "core": true
+    },
+    {
+      "key": "contribution_per_session",
+      "name": "Contribution per session",
+      "discipline": "ecommerce",
+      "class": "driver",
+      "definition": "Store contribution per visit — the per-visitor rate most ecommerce plans decide on.",
+      "formula": "contribution before marketing ÷ sessions",
+      "unit": "eur",
+      "better": "higher",
+      "grain": "client·month",
+      "source": [
+        "orders",
+        "refunds",
+        "sessions"
+      ],
+      "status": "data_ready",
+      "extension": null,
+      "decision": null,
+      "primary": "proposed",
+      "plans": [
+        1,
+        2,
+        3,
+        4,
+        5,
+        6,
+        8,
+        9,
+        13,
+        14,
+        15,
+        18,
+        23,
+        34,
+        46,
+        54,
+        55
+      ],
+      "pdf": "01 Value & cost KPIs — revenue / visitor (contribution form)",
+      "note": "An action's result is still its incremental contribution; this is the store's rate.",
+      "fits": null,
+      "core": true
+    },
+    {
+      "key": "discount_rate",
+      "name": "Discount rate",
+      "discipline": "ecommerce",
+      "class": "diagnostic",
+      "definition": "Share of gross sales given away as discounts.",
+      "formula": "Σ discounts ÷ (Σ net revenue + Σ discounts)",
+      "unit": "ratio",
+      "better": "lower",
+      "grain": "client·month",
+      "source": [
+        "orders.discount_eur",
+        "orders.net_revenue_eur"
+      ],
+      "status": "data_ready",
+      "extension": null,
+      "decision": null,
+      "primary": "no",
+      "plans": [
+        3
+      ],
+      "pdf": "01 Price & offer — discounts, coupons, thresholds",
+      "note": "A lever, read with margin %; discounts are already inside net revenue.",
+      "fits": null,
+      "core": false
+    },
+    {
+      "key": "cost_to_serve_per_order",
+      "name": "Cost to serve per order",
+      "discipline": "ecommerce",
+      "class": "efficiency",
+      "definition": "Delivery and payment cost of an average order.",
+      "formula": "(Σ shipping cost + Σ payment fees) ÷ orders",
+      "unit": "eur",
+      "better": "lower",
+      "grain": "client·month",
+      "source": [
+        "orders.shipping_cost_eur",
+        "orders.payment_fee_eur"
+      ],
+      "status": "data_ready",
+      "extension": null,
+      "decision": null,
+      "primary": "proposed",
+      "plans": [
+        11
+      ],
+      "pdf": "01 Value & cost KPIs — fulfilment / payment / shipping cost per order",
+      "note": "",
+      "fits": null,
+      "core": false
+    },
+    {
+      "key": "refund_value_rate",
+      "name": "Refund value rate",
+      "discipline": "ecommerce",
+      "class": "diagnostic",
+      "definition": "Share of net revenue given back as refunds.",
+      "formula": "Σ refunds recorded in the period ÷ Σ net revenue",
+      "unit": "ratio",
+      "better": "lower",
+      "grain": "client·month",
+      "source": [
+        "refunds.amount_eur",
+        "orders.net_revenue_eur"
+      ],
+      "status": "data_ready",
+      "extension": null,
+      "decision": null,
+      "primary": "no",
+      "plans": [
+        12
+      ],
+      "pdf": "01 After purchase — refund value",
+      "note": "Shown beside the refund-rate guardrail.",
+      "fits": null,
+      "core": false
+    },
+    {
+      "key": "units_per_order",
+      "name": "Units per order",
+      "discipline": "ecommerce",
+      "class": "driver",
+      "definition": "Items in an average order.",
+      "formula": "Σ units ÷ orders",
+      "unit": "ratio",
+      "better": "higher",
+      "grain": "client·month",
+      "source": [
+        "orders.units (E4)"
+      ],
+      "status": "needs_data",
+      "extension": "E4",
+      "decision": null,
+      "primary": "proposed",
+      "plans": [
+        1,
+        8,
+        9,
+        46
+      ],
+      "pdf": "01 Funnel KPIs — units / order",
+      "note": "",
+      "fits": null,
+      "core": false
+    },
+    {
+      "key": "add_to_cart_rate",
+      "name": "Add-to-cart rate",
+      "discipline": "ecommerce",
+      "class": "diagnostic",
+      "definition": "Sessions in which something was added to the cart.",
+      "formula": "sessions with an add-to-cart ÷ sessions",
+      "unit": "ratio",
+      "better": "higher",
+      "grain": "client·month·channel·device",
+      "source": [
+        "sessions.add_to_carts (E1)"
+      ],
+      "status": "needs_data",
+      "extension": "E1",
+      "decision": null,
+      "primary": "proposed",
+      "plans": [
+        1,
+        4,
+        5,
+        15,
+        23,
+        54,
+        55
+      ],
+      "pdf": "01 Funnel KPIs — add-to-cart rate",
+      "note": "",
+      "fits": null,
+      "core": false
+    },
+    {
+      "key": "checkout_completion_rate",
+      "name": "Checkout completion rate",
+      "discipline": "ecommerce",
+      "class": "diagnostic",
+      "definition": "Checkouts that became orders.",
+      "formula": "orders ÷ sessions that started checkout",
+      "unit": "ratio",
+      "better": "higher",
+      "grain": "client·month·device",
+      "source": [
+        "sessions.checkouts_started (E1)",
+        "orders"
+      ],
+      "status": "needs_data",
+      "extension": "E1",
+      "decision": null,
+      "primary": "proposed",
+      "plans": [
+        7
+      ],
+      "pdf": "01 Funnel KPIs — checkout start / completion",
+      "note": "",
+      "fits": null,
+      "core": false
+    },
+    {
+      "key": "cart_abandonment_rate",
+      "name": "Cart abandonment rate",
+      "discipline": "ecommerce",
+      "class": "diagnostic",
+      "definition": "Carts that never became orders.",
+      "formula": "1 − orders ÷ sessions with an add-to-cart",
+      "unit": "ratio",
+      "better": "lower",
+      "grain": "client·month·device",
+      "source": [
+        "sessions.add_to_carts (E1)",
+        "orders"
+      ],
+      "status": "needs_data",
+      "extension": "E1",
+      "decision": null,
+      "primary": "proposed",
+      "plans": [
+        7,
+        65
+      ],
+      "pdf": "01 Funnel KPIs — cart abandonment",
+      "note": "",
+      "fits": null,
+      "core": false
+    },
+    {
+      "key": "mobile_conversion",
+      "name": "Mobile conversion rate",
+      "discipline": "ecommerce",
+      "class": "driver",
+      "definition": "Orders per mobile session.",
+      "formula": "mobile orders ÷ mobile sessions",
+      "unit": "ratio",
+      "better": "higher",
+      "grain": "client·month",
+      "source": [
+        "sessions.device (E1)",
+        "orders.device (E1)"
+      ],
+      "status": "needs_data",
+      "extension": "E1",
+      "decision": null,
+      "primary": "proposed",
+      "plans": [
+        6
+      ],
+      "pdf": "01 Experience — mobile UX / performance",
+      "note": "",
+      "fits": null,
+      "core": false
+    },
+    {
+      "key": "avoidable_return_share",
+      "name": "Avoidable return share",
+      "discipline": "ecommerce",
+      "class": "diagnostic",
+      "definition": "Refunds the store could have prevented.",
+      "formula": "refunds with reason damaged, wrong item, not as described or late delivery ÷ all refunds",
+      "unit": "ratio",
+      "better": "lower",
+      "grain": "client·month",
+      "source": [
+        "refunds.reason (E5)"
+      ],
+      "status": "needs_data",
+      "extension": "E5",
+      "decision": null,
+      "primary": "proposed",
+      "plans": [
+        12,
+        40
+      ],
+      "pdf": "01 After purchase — return reason",
+      "note": "",
+      "fits": null,
+      "core": false
+    },
+    {
+      "key": "new_customers",
+      "name": "New customers",
+      "discipline": "digital_marketing",
+      "class": "driver",
+      "definition": "First-time buyers.",
+      "formula": "orders with is_new_customer = 1",
+      "unit": "count",
+      "better": "higher",
+      "grain": "client·month·channel",
+      "source": [
+        "orders.is_new_customer"
+      ],
+      "status": "built",
+      "extension": null,
+      "decision": null,
+      "primary": "yes",
+      "plans": [
+        21,
+        22,
+        39,
+        44,
+        45,
+        47
+      ],
+      "pdf": "02 Lifecycle — first customer; 04 new customers",
+      "note": "",
+      "fits": null,
+      "core": true
+    },
+    {
+      "key": "email_click_rate",
+      "name": "Message click rate",
+      "discipline": "digital_marketing",
+      "class": "diagnostic",
+      "definition": "Delivered messages that were clicked.",
+      "formula": "clicks ÷ delivered",
+      "unit": "ratio",
+      "better": "higher",
+      "grain": "client·month·stream",
+      "source": [
+        "messages_daily (E3)"
+      ],
+      "status": "needs_data",
+      "extension": "E3",
+      "decision": null,
+      "primary": "no",
+      "plans": [
+        20,
+        21,
+        64,
+        65,
+        66
+      ],
+      "pdf": "02 CRM KPIs — click rate",
+      "note": "Engagement only. Email-platform-attributed revenue is never used: the holdout is.",
+      "fits": null,
+      "core": true
+    },
+    {
+      "key": "unsubscribe_rate",
+      "name": "Unsubscribe rate",
+      "discipline": "digital_marketing",
+      "class": "diagnostic",
+      "definition": "Delivered messages that made the contact opt out.",
+      "formula": "unsubscribes ÷ delivered",
+      "unit": "ratio",
+      "better": "lower",
+      "grain": "client·month·stream",
+      "source": [
+        "messages_daily (E3)"
+      ],
+      "status": "needs_data",
+      "extension": "E3",
+      "decision": null,
+      "primary": "no",
+      "plans": [
+        20,
+        21,
+        65,
+        66
+      ],
+      "pdf": "02 CRM KPIs — unsubscribe; Channel quality — message fatigue",
+      "note": "Watched like a guardrail on message-heavy actions; the two fixed guardrails stay the only ones that flag a breach (decided 2 November).",
+      "fits": null,
+      "core": false
+    },
+    {
+      "key": "messages_per_contact",
+      "name": "Message pressure",
+      "discipline": "digital_marketing",
+      "class": "diagnostic",
+      "definition": "Messages each contactable contact received in the month.",
+      "formula": "Σ delivered in the month ÷ contactable contacts",
+      "unit": "ratio",
+      "better": "neither",
+      "grain": "client·month",
+      "source": [
+        "messages_daily (E3)"
+      ],
+      "status": "needs_data",
+      "extension": "E3",
+      "decision": null,
+      "primary": "no",
+      "plans": [
+        20,
+        66
+      ],
+      "pdf": "02 Channel quality — message pressure / fatigue",
+      "note": "Too high drives unsubscribes; too low leaves the list unused.",
+      "fits": null,
+      "core": false
+    },
+    {
+      "key": "delivery_rate",
+      "name": "Delivery rate",
+      "discipline": "digital_marketing",
+      "class": "quality_risk",
+      "definition": "Messages that reached an inbox or a phone.",
+      "formula": "delivered ÷ sent",
+      "unit": "ratio",
+      "better": "higher",
+      "grain": "client·month·stream",
+      "source": [
+        "messages_daily (E3)"
+      ],
+      "status": "needs_data",
+      "extension": "E3",
+      "decision": null,
+      "primary": "no",
+      "plans": [
+        20,
+        65,
+        66
+      ],
+      "pdf": "02 CRM KPIs — delivery / bounce; inbox placement",
+      "note": "",
+      "fits": null,
+      "core": false
+    },
+    {
+      "key": "contribution_after_media",
+      "name": "Incremental contribution after media",
+      "discipline": "performance_marketing",
+      "class": "outcome",
+      "definition": "What a media change earned: the extra contribution in its channel minus the extra spend — or plus the spend it saved.",
+      "formula": "incremental contribution of the orders in the action's channel − change in that channel's ad spend, over the same periods and comparison",
+      "unit": "eur",
+      "better": "higher",
+      "grain": "action period",
+      "source": [
+        "orders.channel",
+        "ad_spend"
+      ],
+      "status": "data_ready",
+      "extension": null,
+      "decision": "D1",
+      "primary": "no",
+      "plans": [
+        24,
+        26,
+        27,
+        28,
+        29,
+        30,
+        31,
+        32,
+        33,
+        35
+      ],
+      "pdf": "04 Measurement — incremental profit; T1 contribution after media",
+      "note": "Not measured today: the app's contribution result ignores ad spend and uses the whole store — see D1.",
+      "fits": null,
+      "core": true
+    },
+    {
+      "key": "ad_spend",
+      "name": "Ad spend",
+      "discipline": "performance_marketing",
+      "class": "driver",
+      "definition": "Paid media cost.",
+      "formula": "Σ spend",
+      "unit": "eur",
+      "better": "neither",
+      "grain": "client·month·channel",
+      "source": [
+        "ad_spend"
+      ],
+      "status": "built",
+      "extension": null,
+      "decision": null,
+      "primary": "no",
+      "plans": [],
+      "pdf": "04 Campaign — budget / spend",
+      "note": "An input, shown so CPA, CAC and MER can be read.",
+      "fits": null,
+      "core": false
+    },
+    {
+      "key": "cpa",
+      "name": "Cost per order (CPA)",
+      "discipline": "performance_marketing",
+      "class": "efficiency",
+      "definition": "Media cost of an order.",
+      "formula": "ad spend ÷ orders (by channel: channel spend ÷ channel orders)",
+      "unit": "eur",
+      "better": "lower",
+      "grain": "client·month·channel",
+      "source": [
+        "ad_spend",
+        "orders"
+      ],
+      "status": "built",
+      "extension": null,
+      "decision": null,
+      "primary": "yes",
+      "plans": [
+        24,
+        27,
+        28,
+        29,
+        30,
+        31,
+        32,
+        35
+      ],
+      "pdf": "04 Delivery to value — CPA",
+      "note": "",
+      "fits": null,
+      "core": false
+    },
+    {
+      "key": "cac",
+      "name": "Customer acquisition cost (CAC)",
+      "discipline": "performance_marketing",
+      "class": "efficiency",
+      "definition": "Media cost of a new customer.",
+      "formula": "ad spend ÷ new customers",
+      "unit": "eur",
+      "better": "lower",
+      "grain": "client·month·channel",
+      "source": [
+        "ad_spend",
+        "orders.is_new_customer"
+      ],
+      "status": "built",
+      "extension": null,
+      "decision": null,
+      "primary": "yes",
+      "plans": [
+        22,
+        24,
+        28,
+        31
+      ],
+      "pdf": "04 Measurement — paid CAC",
+      "note": "Paid CAC; blended or fully loaded CAC would add agency and tool costs.",
+      "fits": null,
+      "core": true
+    },
+    {
+      "key": "cost_per_session",
+      "name": "Cost per paid session",
+      "discipline": "performance_marketing",
+      "class": "efficiency",
+      "definition": "Media cost of a visit from a paid channel.",
+      "formula": "channel spend ÷ channel sessions",
+      "unit": "eur",
+      "better": "lower",
+      "grain": "client·month·channel",
+      "source": [
+        "ad_spend",
+        "sessions"
+      ],
+      "status": "data_ready",
+      "extension": null,
+      "decision": null,
+      "primary": "proposed",
+      "plans": [
+        27,
+        29,
+        30,
+        33
+      ],
+      "pdf": "04 Delivery to value — CPC (landing-session form)",
+      "note": "Stands in for CPC until clicks exist (E2).",
+      "fits": null,
+      "core": false
+    },
+    {
+      "key": "cpc",
+      "name": "Cost per click (CPC)",
+      "discipline": "performance_marketing",
+      "class": "efficiency",
+      "definition": "Media cost of a click.",
+      "formula": "spend ÷ clicks",
+      "unit": "eur",
+      "better": "lower",
+      "grain": "client·month·channel",
+      "source": [
+        "ad_spend.clicks (E2)"
+      ],
+      "status": "needs_data",
+      "extension": "E2",
+      "decision": null,
+      "primary": "no",
+      "plans": [
+        27,
+        29,
+        30
+      ],
+      "pdf": "04 Delivery to value — CPC",
+      "note": "",
+      "fits": null,
+      "core": false
+    },
+    {
+      "key": "cpm",
+      "name": "Cost per thousand impressions (CPM)",
+      "discipline": "performance_marketing",
+      "class": "efficiency",
+      "definition": "Media cost of reach.",
+      "formula": "spend ÷ impressions × 1,000",
+      "unit": "eur",
+      "better": "lower",
+      "grain": "client·month·channel",
+      "source": [
+        "ad_spend.impressions (E2)"
+      ],
+      "status": "needs_data",
+      "extension": "E2",
+      "decision": null,
+      "primary": "no",
+      "plans": [
+        27,
+        32
+      ],
+      "pdf": "04 Delivery to value — CPM",
+      "note": "",
+      "fits": null,
+      "core": false
+    },
+    {
+      "key": "ctr",
+      "name": "Click-through rate (CTR)",
+      "discipline": "performance_marketing",
+      "class": "diagnostic",
+      "definition": "Impressions that were clicked.",
+      "formula": "clicks ÷ impressions",
+      "unit": "ratio",
+      "better": "higher",
+      "grain": "client·month·channel",
+      "source": [
+        "ad_spend.clicks",
+        "ad_spend.impressions (E2)"
+      ],
+      "status": "needs_data",
+      "extension": "E2",
+      "decision": null,
+      "primary": "no",
+      "plans": [
+        27,
+        32,
+        33
+      ],
+      "pdf": "04 Delivery to value — CTR",
+      "note": "A creative and feed diagnostic; never a result.",
+      "fits": null,
+      "core": false
+    },
+    {
+      "key": "roas",
+      "name": "ROAS",
+      "discipline": "performance_marketing",
+      "class": "diagnostic",
+      "definition": "Store revenue per euro of channel spend.",
+      "formula": "channel net revenue (store orders) ÷ channel spend",
+      "unit": "ratio",
+      "better": "higher",
+      "grain": "client·month·channel",
+      "source": [
+        "orders",
+        "ad_spend"
+      ],
+      "status": "built",
+      "extension": null,
+      "decision": null,
+      "primary": "no",
+      "plans": [],
+      "pdf": "04 Delivery to value — ROAS",
+      "note": "Never ROI (spec §9: the promotion with ROAS 3.0 had ROI −0.17).",
+      "fits": null,
+      "core": true
+    },
+    {
+      "key": "break_even_roas",
+      "name": "Break-even ROAS",
+      "discipline": "performance_marketing",
+      "class": "diagnostic",
+      "definition": "The ROAS at which a channel's orders only just pay for their own media.",
+      "formula": "1 ÷ contribution margin before marketing (as a ratio)",
+      "unit": "ratio",
+      "better": "neither",
+      "grain": "client·month",
+      "source": [
+        "orders",
+        "refunds"
+      ],
+      "status": "data_ready",
+      "extension": null,
+      "decision": null,
+      "primary": "no",
+      "plans": [
+        24,
+        26,
+        28
+      ],
+      "pdf": "T1 Decision economics — break-even CAC / ROAS",
+      "note": "Read beside ROAS: Luna 2.86, Brote 1.67, Roble 4.00 at their profile margins.",
+      "fits": null,
+      "core": false
+    },
+    {
+      "key": "mer",
+      "name": "Marketing efficiency ratio (MER)",
+      "discipline": "performance_marketing",
+      "class": "diagnostic",
+      "definition": "Store revenue per euro of total ad spend.",
+      "formula": "net revenue ÷ total ad spend (cost scope: ad spend only)",
+      "unit": "ratio",
+      "better": "higher",
+      "grain": "client·month",
+      "source": [
+        "orders",
+        "ad_spend"
+      ],
+      "status": "data_ready",
+      "extension": null,
+      "decision": null,
+      "primary": "no",
+      "plans": [
+        24,
+        28
+      ],
+      "pdf": "04 Optimisation — MER with defined cost scope",
+      "note": "MER is not ROI.",
+      "fits": null,
+      "core": false
+    },
+    {
+      "key": "new_customer_share",
+      "name": "New-customer share",
+      "discipline": "performance_marketing",
+      "class": "diagnostic",
+      "definition": "Share of orders from first-time buyers.",
+      "formula": "new-customer orders ÷ orders (by channel when scoped)",
+      "unit": "ratio",
+      "better": "neither",
+      "grain": "client·month·channel",
+      "source": [
+        "orders.is_new_customer"
+      ],
+      "status": "data_ready",
+      "extension": null,
+      "decision": null,
+      "primary": "no",
+      "plans": [
+        22,
+        31
+      ],
+      "pdf": "04 Optimisation — new vs existing customer mix",
+      "note": "Plan 31 warns against chasing it: prospecting spend that buys back existing customers is the waste to find.",
+      "fits": null,
+      "core": false
+    },
+    {
+      "key": "platform_overcount",
+      "name": "Platform overcount",
+      "discipline": "performance_marketing",
+      "class": "quality_risk",
+      "definition": "How far the ad platform's purchase count exceeds the store's own orders from that channel.",
+      "formula": "platform-reported purchases ÷ store orders from the channel",
+      "unit": "ratio",
+      "better": "lower",
+      "grain": "client·month·channel",
+      "source": [
+        "ad_spend.platform_purchases (E2)",
+        "orders.channel"
+      ],
+      "status": "needs_data",
+      "extension": "E2",
+      "decision": null,
+      "primary": "no",
+      "plans": [
+        25,
+        26,
+        36
+      ],
+      "pdf": "04 Measurement — attribution model / window, cross-channel overlap",
+      "note": "Shows on screen why platform-attributed revenue is never a result.",
+      "fits": null,
+      "core": false
+    },
+    {
+      "key": "tracking_capture_rate",
+      "name": "Tracking capture rate",
+      "discipline": "performance_marketing",
+      "class": "quality_risk",
+      "definition": "Store orders that the analytics purchase tag recorded.",
+      "formula": "tagged purchases ÷ store orders",
+      "unit": "ratio",
+      "better": "higher",
+      "grain": "client·month",
+      "source": [
+        "sessions.tracked_purchases (E1)",
+        "orders"
+      ],
+      "status": "needs_data",
+      "extension": "E1",
+      "decision": null,
+      "primary": "no",
+      "plans": [
+        25,
+        37
+      ],
+      "pdf": "T2 Reliability — order reconciliation, event deduplication",
+      "note": "Plan 25's acceptance criterion is capture ≥ 98%.",
+      "fits": null,
+      "core": false
+    },
+    {
+      "key": "repeat_rate",
+      "name": "Repeat-purchase rate",
+      "discipline": "digital_growth",
+      "class": "driver",
+      "definition": "Customers who bought more than once recently.",
+      "formula": "customers with two or more orders in the trailing 90 days ÷ customers with one or more",
+      "unit": "ratio",
+      "better": "higher",
+      "grain": "client·month",
+      "source": [
+        "orders.customer_ref"
+      ],
+      "status": "built",
+      "extension": null,
+      "decision": null,
+      "primary": "yes",
+      "plans": [
+        20,
+        40,
+        41,
+        42,
+        43,
+        66
+      ],
+      "pdf": "03 Cohorts — repeat rate",
+      "note": "",
+      "fits": null,
+      "core": true
+    },
+    {
+      "key": "second_order_rate_90d",
+      "name": "Second-order rate within 90 days",
+      "discipline": "digital_growth",
+      "class": "driver",
+      "definition": "First-time customers who came back within 90 days.",
+      "formula": "first-time customers of a month who order again within 90 days ÷ first-time customers of that month",
+      "unit": "ratio",
+      "better": "higher",
+      "grain": "first-order cohort month",
+      "source": [
+        "orders.customer_ref",
+        "orders.is_new_customer"
+      ],
+      "status": "data_ready",
+      "extension": null,
+      "decision": null,
+      "primary": "proposed",
+      "plans": [
+        20,
+        21,
+        39,
+        40,
+        41,
+        42,
+        43,
+        66
+      ],
+      "pdf": "03 Cohorts — new / returning; Growth detail — purchase frequency",
+      "note": "A cohort needs 90 days after its month, so the latest three cohorts show as incomplete.",
+      "fits": [
+        "occasional",
+        "monthly"
+      ],
+      "core": true
+    },
+    {
+      "key": "orders_per_customer",
+      "name": "Orders per customer (180 days)",
+      "discipline": "digital_growth",
+      "class": "driver",
+      "definition": "How often a customer buys.",
+      "formula": "orders ÷ distinct customers over the trailing 180 days",
+      "unit": "ratio",
+      "better": "higher",
+      "grain": "client·month",
+      "source": [
+        "orders.customer_ref"
+      ],
+      "status": "data_ready",
+      "extension": null,
+      "decision": null,
+      "primary": "proposed",
+      "plans": [
+        43
+      ],
+      "pdf": "03 Growth detail — purchase frequency",
+      "note": "",
+      "fits": [
+        "occasional",
+        "monthly"
+      ],
+      "core": false
+    },
+    {
+      "key": "days_to_second_order",
+      "name": "Days to second order",
+      "discipline": "digital_growth",
+      "class": "diagnostic",
+      "definition": "How long a returning customer took to buy again.",
+      "formula": "median days between first and second order, for customers with a second order",
+      "unit": "days",
+      "better": "lower",
+      "grain": "first-order cohort month",
+      "source": [
+        "orders.customer_ref",
+        "orders.ordered_at"
+      ],
+      "status": "data_ready",
+      "extension": null,
+      "decision": null,
+      "primary": "no",
+      "plans": [
+        41,
+        43
+      ],
+      "pdf": "03 Growth detail — interpurchase time, time to first value",
+      "note": "",
+      "fits": [
+        "occasional",
+        "monthly"
+      ],
+      "core": false
+    },
+    {
+      "key": "reactivation_rate",
+      "name": "Reactivation rate",
+      "discipline": "digital_growth",
+      "class": "driver",
+      "definition": "Lapsed customers who bought again.",
+      "formula": "lapsed customers who order in the month ÷ customers lapsed at its start; lapsed = no order for 180 days (occasional stores) or 60 days (monthly stores)",
+      "unit": "ratio",
+      "better": "higher",
+      "grain": "client·month",
+      "source": [
+        "orders.customer_ref"
+      ],
+      "status": "data_ready",
+      "extension": null,
+      "decision": null,
+      "primary": "proposed",
+      "plans": [
+        20,
+        35
+      ],
+      "pdf": "02 Lifecycle — lapsed, reactivated",
+      "note": "Not used for rare-purchase stores such as Roble.",
+      "fits": [
+        "occasional",
+        "monthly"
+      ],
+      "core": false
+    },
+    {
+      "key": "cohort_contribution_d90",
+      "name": "Cohort contribution at 90 days",
+      "discipline": "digital_growth",
+      "class": "driver",
+      "definition": "What a new customer has actually earned the store in their first 90 days.",
+      "formula": "contribution of a first-time customer's orders in the 90 days from the first order, averaged over the cohort",
+      "unit": "eur",
+      "better": "higher",
+      "grain": "first-order cohort month",
+      "source": [
+        "orders",
+        "refunds"
+      ],
+      "status": "data_ready",
+      "extension": null,
+      "decision": null,
+      "primary": "proposed",
+      "plans": [
+        21,
+        39,
+        40,
+        42,
+        43,
+        48
+      ],
+      "pdf": "03 Cohorts — cohort revenue, LTV; T1 revenue- vs contribution-LTV",
+      "note": "Realised, never forecast: LTV forecasting stays out of scope (spec §13).",
+      "fits": null,
+      "core": false
+    },
+    {
+      "key": "contribution_to_cac_d90",
+      "name": "90-day contribution to CAC",
+      "discipline": "digital_growth",
+      "class": "efficiency",
+      "definition": "Whether a new customer's first 90 days paid back what it cost to acquire them.",
+      "formula": "cohort contribution at 90 days ÷ CAC of the cohort month",
+      "unit": "ratio",
+      "better": "higher",
+      "grain": "first-order cohort month",
+      "source": [
+        "orders",
+        "refunds",
+        "ad_spend"
+      ],
+      "status": "data_ready",
+      "extension": null,
+      "decision": null,
+      "primary": "no",
+      "plans": [
+        22,
+        24,
+        28,
+        31,
+        44,
+        48
+      ],
+      "pdf": "T1 Decision economics — contribution-LTV:CAC, CAC payback",
+      "note": "Above 1.0, the first 90 days covered paid acquisition.",
+      "fits": null,
+      "core": true
+    },
+    {
+      "key": "output_acceptance_rate",
+      "name": "Output acceptance rate",
+      "discipline": "agentic_ai",
+      "class": "quality_risk",
+      "definition": "Agent outputs a person accepted without a substantive correction.",
+      "formula": "outputs accepted ÷ outputs reviewed",
+      "unit": "ratio",
+      "better": "higher",
+      "grain": "component·month",
+      "source": [
+        "component_months.outputs",
+        "component_months.outputs_accepted (E6)"
+      ],
+      "status": "needs_data",
+      "extension": "E6",
+      "decision": null,
+      "primary": "no",
+      "plans": [
+        49,
+        50,
+        51,
+        52,
+        53,
+        60
+      ],
+      "pdf": "05 Agent KPIs — task success, human acceptance / override",
+      "note": "",
+      "fits": null,
+      "core": true
+    },
+    {
+      "key": "cost_per_accepted_output",
+      "name": "Cost per accepted output",
+      "discipline": "agentic_ai",
+      "class": "efficiency",
+      "definition": "What one usable piece of agent work costs, people included.",
+      "formula": "(operating cost + operating hours × hourly rate) ÷ outputs accepted",
+      "unit": "eur",
+      "better": "lower",
+      "grain": "component·month",
+      "source": [
+        "component_months (E6)",
+        "clients.hourly_rate_eur"
+      ],
+      "status": "needs_data",
+      "extension": "E6",
+      "decision": null,
+      "primary": "no",
+      "plans": [
+        49,
+        50,
+        52,
+        53,
+        60
+      ],
+      "pdf": "05 Reliability — cost / successful task",
+      "note": "Plan 60's decision metric.",
+      "fits": null,
+      "core": true
+    },
+    {
+      "key": "ai_cost_per_output",
+      "name": "AI cost per output",
+      "discipline": "agentic_ai",
+      "class": "diagnostic",
+      "definition": "Model and API cost of one output.",
+      "formula": "AI cost ÷ outputs",
+      "unit": "eur",
+      "better": "lower",
+      "grain": "component·month",
+      "source": [
+        "component_months.ai_cost_eur (E6)"
+      ],
+      "status": "needs_data",
+      "extension": "E6",
+      "decision": null,
+      "primary": "no",
+      "plans": [
+        60
+      ],
+      "pdf": "05 Control — token / API / tool cost",
+      "note": "",
+      "fits": null,
+      "core": false
+    },
+    {
+      "key": "report_correction_rate",
+      "name": "Report correction rate",
+      "discipline": "agentic_ai",
+      "class": "quality_risk",
+      "definition": "Sent client reports a reviewer had to correct substantively.",
+      "formula": "sent reports with was_corrected = 1 ÷ sent reports",
+      "unit": "ratio",
+      "better": "lower",
+      "grain": "client",
+      "source": [
+        "client_reports"
+      ],
+      "status": "built",
+      "extension": null,
+      "decision": null,
+      "primary": "no",
+      "plans": [
+        50
+      ],
+      "pdf": "05 Agent KPIs — human override",
+      "note": "",
+      "fits": null,
+      "core": true
+    },
+    {
+      "key": "report_rejection_rate",
+      "name": "Report rejection rate",
+      "discipline": "agentic_ai",
+      "class": "quality_risk",
+      "definition": "Report drafts a reviewer rejected.",
+      "formula": "rejected drafts ÷ reviewed drafts",
+      "unit": "ratio",
+      "better": "lower",
+      "grain": "client",
+      "source": [
+        "client_reports"
+      ],
+      "status": "built",
+      "extension": null,
+      "decision": null,
+      "primary": "no",
+      "plans": [
+        50
+      ],
+      "pdf": "05 Agent KPIs — accuracy, error rate",
+      "note": "",
+      "fits": null,
+      "core": false
+    },
+    {
+      "key": "cost_per_report_draft",
+      "name": "Cost per report draft",
+      "discipline": "agentic_ai",
+      "class": "efficiency",
+      "definition": "Model cost of one report draft.",
+      "formula": "Σ generation cost ÷ drafts",
+      "unit": "eur",
+      "better": "lower",
+      "grain": "client",
+      "source": [
+        "client_reports.generation_cost_eur"
+      ],
+      "status": "built",
+      "extension": null,
+      "decision": null,
+      "primary": "no",
+      "plans": [
+        50,
+        60
+      ],
+      "pdf": "05 Agent KPIs — cost / task",
+      "note": "",
+      "fits": null,
+      "core": false
+    },
+    {
+      "key": "run_failure_rate",
+      "name": "Run failure rate",
+      "discipline": "automations",
+      "class": "quality_risk",
+      "definition": "Runs that failed.",
+      "formula": "failed runs ÷ runs",
+      "unit": "ratio",
+      "better": "lower",
+      "grain": "component·month",
+      "source": [
+        "component_months.runs",
+        "component_months.failed_runs"
+      ],
+      "status": "data_ready",
+      "extension": null,
+      "decision": null,
+      "primary": "no",
+      "plans": [
+        70,
+        71,
+        72
+      ],
+      "pdf": "06 Automation KPIs — runs, success rate",
+      "note": "Runs and failed runs are already shown as counts.",
+      "fits": null,
+      "core": true
+    },
+    {
+      "key": "cost_per_run",
+      "name": "Cost per run",
+      "discipline": "automations",
+      "class": "efficiency",
+      "definition": "What one run costs, people included.",
+      "formula": "(operating cost + operating hours × hourly rate) ÷ runs",
+      "unit": "eur",
+      "better": "lower",
+      "grain": "component·month",
+      "source": [
+        "component_months",
+        "clients.hourly_rate_eur"
+      ],
+      "status": "data_ready",
+      "extension": null,
+      "decision": null,
+      "primary": "no",
+      "plans": [
+        61,
+        69,
+        72
+      ],
+      "pdf": "06 Automation KPIs — cost / run",
+      "note": "",
+      "fits": null,
+      "core": true
+    },
+    {
+      "key": "exception_rate",
+      "name": "Exception rate",
+      "discipline": "automations",
+      "class": "quality_risk",
+      "definition": "Runs a person had to finish by hand.",
+      "formula": "exceptions ÷ runs",
+      "unit": "ratio",
+      "better": "lower",
+      "grain": "component·month",
+      "source": [
+        "component_months.exceptions (E6)"
+      ],
+      "status": "needs_data",
+      "extension": "E6",
+      "decision": null,
+      "primary": "no",
+      "plans": [
+        61,
+        70,
+        71,
+        72
+      ],
+      "pdf": "06 Economic proof — exception / rework rate",
+      "note": "",
+      "fits": null,
+      "core": false
+    },
+    {
+      "key": "hours_freed",
+      "name": "Hours freed (capacity)",
+      "discipline": "automations",
+      "class": "quality_risk",
+      "definition": "Staff hours a component freed in the month.",
+      "formula": "as recorded on the component month",
+      "unit": "hours",
+      "better": "higher",
+      "grain": "component·month",
+      "source": [
+        "component_months.hours_freed"
+      ],
+      "status": "built",
+      "extension": null,
+      "decision": null,
+      "primary": "no",
+      "plans": [],
+      "pdf": "06 Automation KPIs — time saved",
+      "note": "Capacity, never money (spec §4) — see 'Where the PDF and the app differ'.",
+      "fits": null,
+      "core": false
+    },
+    {
+      "key": "intake_quality",
+      "name": "Intake quality",
+      "discipline": "automations",
+      "class": "quality_risk",
+      "definition": "Share of received shop-data batches that were accepted.",
+      "formula": "accepted ÷ received shop-data batches",
+      "unit": "ratio",
+      "better": "higher",
+      "grain": "client·month",
+      "source": [
+        "automation_events"
+      ],
+      "status": "built",
+      "extension": null,
+      "decision": null,
+      "primary": "no",
+      "plans": [],
+      "pdf": "T2 Reliability — completeness; 06 Reliability",
+      "note": "",
+      "fits": null,
+      "core": true
+    },
+    {
+      "key": "duplicate_event_rate",
+      "name": "Duplicate delivery rate",
+      "discipline": "automations",
+      "class": "quality_risk",
+      "definition": "Events delivered more than once.",
+      "formula": "duplicate events ÷ received events",
+      "unit": "ratio",
+      "better": "lower",
+      "grain": "client·month",
+      "source": [
+        "automation_events.status"
+      ],
+      "status": "data_ready",
+      "extension": null,
+      "decision": null,
+      "primary": "no",
+      "plans": [],
+      "pdf": "06 Reliability — idempotency key, duplicate-action rate",
+      "note": "A duplicate already changes nothing (external_id); this counts how often it happens.",
+      "fits": null,
+      "core": false
+    },
+    {
+      "key": "orders_missing_cost",
+      "name": "Orders with a missing cost",
+      "discipline": "automations",
+      "class": "quality_risk",
+      "definition": "Orders whose product, shipping or payment cost did not arrive.",
+      "formula": "count of orders with any cost missing",
+      "unit": "count",
+      "better": "lower",
+      "grain": "client·month",
+      "source": [
+        "orders"
+      ],
+      "status": "built",
+      "extension": null,
+      "decision": null,
+      "primary": "no",
+      "plans": [],
+      "pdf": "T2 Reliability — completeness",
+      "note": "Makes the dependent Growth P&L lines incomplete, never zero.",
+      "fits": null,
+      "core": false
+    },
+    {
+      "key": "open_alerts",
+      "name": "Below-target alerts",
+      "discipline": "automations",
+      "class": "quality_risk",
+      "definition": "Alerts the below-target automation raised in the month.",
+      "formula": "accepted alert events",
+      "unit": "count",
+      "better": "lower",
+      "grain": "client·month",
+      "source": [
+        "automation_events"
+      ],
+      "status": "built",
+      "extension": null,
+      "decision": null,
+      "primary": "no",
+      "plans": [],
+      "pdf": "06 Operations — anomalies, budget alerts",
+      "note": "",
+      "fits": null,
+      "core": false
+    }
+  ],
+  "scorecards": [
+    {
+      "discipline": "ecommerce",
+      "question": "Does the store turn its visits into profitable orders?",
+      "decides_on": [
+        "contribution"
+      ],
+      "comparison": "holdout per visitor or customer where a group can be assigned; otherwise before/after",
+      "primary": [
+        "conversion",
+        "average_order_value",
+        "contribution_per_session",
+        "add_to_cart_rate",
+        "checkout_completion_rate",
+        "mobile_conversion",
+        "units_per_order",
+        "cost_to_serve_per_order",
+        "margin_pct",
+        "refund_rate"
+      ],
+      "driver": [
+        "sessions",
+        "conversion",
+        "average_order_value",
+        "contribution_per_session",
+        "units_per_order",
+        "mobile_conversion"
+      ],
+      "efficiency": [
+        "cost_to_serve_per_order"
+      ],
+      "diagnostic": [
+        "add_to_cart_rate",
+        "checkout_completion_rate",
+        "cart_abandonment_rate",
+        "discount_rate",
+        "refund_value_rate",
+        "avoidable_return_share"
+      ],
+      "quality_risk": [
+        "orders_missing_cost",
+        "tracking_capture_rate"
+      ],
+      "featured_plan": 3,
+      "store_fit": "All three stores. Roble's few orders (about 36 a week at 0.6%) need a longer window than Luna's or Brote's before any result means anything."
+    },
+    {
+      "discipline": "digital_marketing",
+      "question": "Does the store earn demand and keep its customers buying, without paying for every visit?",
+      "decides_on": [
+        "contribution"
+      ],
+      "comparison": "holdout per assigned contact for CRM; before/after on the organic channel for SEO and content (observational)",
+      "primary": [
+        "new_customers",
+        "repeat_rate",
+        "sessions",
+        "conversion"
+      ],
+      "driver": [
+        "sessions",
+        "new_customers",
+        "repeat_rate",
+        "conversion"
+      ],
+      "efficiency": [],
+      "diagnostic": [
+        "email_click_rate",
+        "unsubscribe_rate",
+        "messages_per_contact"
+      ],
+      "quality_risk": [
+        "delivery_rate"
+      ],
+      "featured_plan": 20,
+      "store_fit": "CRM fits Brote (monthly) and Luna (occasional); for Roble (rare purchases) the useful levers are search and content. Owned channels have no media cost: their cost is the action's own setup and hours."
+    },
+    {
+      "discipline": "performance_marketing",
+      "question": "Does each euro of media buy contribution the store would not have had anyway?",
+      "decides_on": [
+        "contribution_after_media"
+      ],
+      "comparison": "before/after on the action's channel; a matched-region holdout when the plan allows it (plan 36)",
+      "primary": [
+        "cpa",
+        "cac",
+        "cost_per_session",
+        "orders",
+        "conversion",
+        "new_customers",
+        "margin_pct"
+      ],
+      "driver": [
+        "ad_spend",
+        "sessions",
+        "orders",
+        "conversion",
+        "average_order_value"
+      ],
+      "efficiency": [
+        "cpa",
+        "cac",
+        "cost_per_session",
+        "cpc",
+        "cpm"
+      ],
+      "diagnostic": [
+        "roas",
+        "break_even_roas",
+        "mer",
+        "new_customer_share",
+        "ctr"
+      ],
+      "quality_risk": [
+        "platform_overcount",
+        "tracking_capture_rate"
+      ],
+      "featured_plan": 30,
+      "store_fit": "All three stores buy media (8–15% of revenue). Until D1 is decided, the result is measured as plain incremental contribution."
+    },
+    {
+      "discipline": "digital_growth",
+      "question": "Do first-time buyers come back, and do the stages after the first order grow?",
+      "decides_on": [
+        "contribution"
+      ],
+      "comparison": "holdout per customer, over the plan's horizon (30–180 days)",
+      "primary": [
+        "repeat_rate",
+        "second_order_rate_90d",
+        "orders_per_customer",
+        "reactivation_rate",
+        "cohort_contribution_d90",
+        "new_customers"
+      ],
+      "driver": [
+        "repeat_rate",
+        "second_order_rate_90d",
+        "orders_per_customer",
+        "reactivation_rate",
+        "cohort_contribution_d90",
+        "new_customers"
+      ],
+      "efficiency": [
+        "contribution_to_cac_d90"
+      ],
+      "diagnostic": [
+        "days_to_second_order"
+      ],
+      "quality_risk": [
+        "orders_missing_cost"
+      ],
+      "featured_plan": 43,
+      "store_fit": "Repeat and reactivation fit Luna (occasional) and Brote (monthly). For Roble (rare purchases) growth means new customers and referral, not repeat."
+    },
+    {
+      "discipline": "agentic_ai",
+      "question": "Does the agent produce accepted work for less than it costs, with a person reviewing every output?",
+      "decides_on": [
+        "avoided_cost",
+        "contribution"
+      ],
+      "comparison": "invoice for saved paid work (documented); holdout for shopper-facing assistants (plans 54, 55)",
+      "primary": [
+        "avoided_cost",
+        "conversion"
+      ],
+      "driver": [],
+      "efficiency": [
+        "cost_per_accepted_output",
+        "cost_per_report_draft"
+      ],
+      "diagnostic": [
+        "ai_cost_per_output"
+      ],
+      "quality_risk": [
+        "output_acceptance_rate",
+        "report_correction_rate",
+        "report_rejection_rate",
+        "run_failure_rate",
+        "hours_freed"
+      ],
+      "featured_plan": 50,
+      "store_fit": "Any store. Agents never calculate ROI or forecast (spec §4); freed hours are capacity."
+    },
+    {
+      "discipline": "automations",
+      "question": "Does the workflow run reliably, and does it save paid cost or win contribution?",
+      "decides_on": [
+        "avoided_cost",
+        "contribution"
+      ],
+      "comparison": "invoice for saved paid work; a kept holdout for customer-facing flows (plan 65)",
+      "primary": [
+        "avoided_cost",
+        "conversion",
+        "repeat_rate"
+      ],
+      "driver": [
+        "conversion",
+        "repeat_rate"
+      ],
+      "efficiency": [
+        "cost_per_run"
+      ],
+      "diagnostic": [
+        "cart_abandonment_rate",
+        "email_click_rate",
+        "unsubscribe_rate"
+      ],
+      "quality_risk": [
+        "run_failure_rate",
+        "exception_rate",
+        "intake_quality",
+        "duplicate_event_rate",
+        "orders_missing_cost",
+        "hours_freed",
+        "open_alerts"
+      ],
+      "featured_plan": 65,
+      "store_fit": "Any store; cart recovery needs carts to recover, so it suits Luna and Brote more than Roble."
+    }
+  ],
+  "data_extensions": [
+    {
+      "id": "E1",
+      "name": "Funnel steps and device",
+      "plain": "What shoppers did on the site before buying — viewed a product, added to the cart, started checkout — and whether they were on a phone or a computer; plus how many purchases the analytics tag actually recorded.",
+      "adds": [
+        "sessions.device (mobile or desktop), part of the row's key: client · date · channel · device",
+        "sessions.product_views, add_to_carts, checkouts_started — sessions that reached each step",
+        "sessions.tracked_purchases — purchases the analytics tag recorded",
+        "orders.device"
+      ],
+      "effort": "medium",
+      "changes_intake": true,
+      "serves_plans": [
+        4,
+        5,
+        6,
+        7,
+        23,
+        25,
+        34,
+        37,
+        54,
+        55,
+        65
+      ],
+      "params": {
+        "Luna Home": {
+          "mobile": 0.68,
+          "views": 0.62,
+          "atc": 0.06,
+          "start": 0.45,
+          "rel": 0.6,
+          "capture": 0.93,
+          "completion": 0.667,
+          "desktop_conversion": 0.0247,
+          "mobile_conversion": 0.0148
+        },
+        "Brote Cosmetics": {
+          "mobile": 0.75,
+          "views": 0.66,
+          "atc": 0.075,
+          "start": 0.5,
+          "rel": 0.75,
+          "capture": 0.95,
+          "completion": 0.667,
+          "desktop_conversion": 0.0308,
+          "mobile_conversion": 0.0231
+        },
+        "Roble Muebles": {
+          "mobile": 0.55,
+          "views": 0.55,
+          "atc": 0.025,
+          "start": 0.4,
+          "rel": 0.45,
+          "capture": 0.9,
+          "completion": 0.6,
+          "desktop_conversion": 0.0086,
+          "mobile_conversion": 0.0039
+        }
+      },
+      "unlocks": [
+        "add_to_cart_rate",
+        "checkout_completion_rate",
+        "cart_abandonment_rate",
+        "mobile_conversion",
+        "tracking_capture_rate"
+      ]
+    },
+    {
+      "id": "E2",
+      "name": "Ad delivery and platform-reported purchases",
+      "plain": "How many people saw and clicked each channel's ads, and how many purchases the ad platform claims — always more than the store really received from it.",
+      "adds": [
+        "ad_spend.impressions, clicks",
+        "ad_spend.platform_purchases, platform_revenue_eur — what the ad platform claims"
+      ],
+      "effort": "small",
+      "changes_intake": true,
+      "serves_plans": [
+        25,
+        26,
+        27,
+        29,
+        30,
+        32,
+        33,
+        36
+      ],
+      "params": {
+        "clicks_per_paid_session": 1.15,
+        "by_channel": {
+          "meta": {
+            "ctr": 0.011,
+            "platform_purchases_per_store_order": 1.35
+          },
+          "google_shopping": {
+            "ctr": 0.009,
+            "platform_purchases_per_store_order": 1.15
+          },
+          "instagram": {
+            "ctr": 0.008,
+            "platform_purchases_per_store_order": 1.4
+          },
+          "google_search": {
+            "ctr": 0.05,
+            "platform_purchases_per_store_order": 1.1
+          },
+          "pinterest": {
+            "ctr": 0.005,
+            "platform_purchases_per_store_order": 1.5
+          }
+        }
+      },
+      "unlocks": [
+        "cpc",
+        "cpm",
+        "ctr",
+        "platform_overcount"
+      ]
+    },
+    {
+      "id": "E3",
+      "name": "Message sends (email and SMS)",
+      "plain": "The emails and SMS each store sent — campaigns and automatic flows such as cart recovery — with how many were delivered, clicked and led to an unsubscribe.",
+      "adds": [
+        "new table messages_daily: client · date · channel (email or sms) · stream (a campaign or flow name) · action_id (nullable) · sent · delivered · clicks · unsubscribes · contactable (contacts who could receive the stream that day)"
+      ],
+      "effort": "medium",
+      "changes_intake": true,
+      "serves_plans": [
+        20,
+        21,
+        40,
+        41,
+        64,
+        65,
+        66
+      ],
+      "params": {
+        "delivery_rate": "0.985–0.992",
+        "flow_click_rate": "2–3 × the campaign rate",
+        "flow_unsubscribe_rate": 0.001,
+        "by_store": {
+          "Luna Home": {
+            "contactable": 14000,
+            "campaigns": "2 a week",
+            "click": 0.022,
+            "unsub": 0.0025,
+            "flows": "welcome; cart recovery (plan 65); post-purchase"
+          },
+          "Brote Cosmetics": {
+            "contactable": 6500,
+            "campaigns": "3 a week",
+            "click": 0.032,
+            "unsub": 0.002,
+            "flows": "welcome; replenishment; plan 20's segmented campaign"
+          },
+          "Roble Muebles": {
+            "contactable": 4000,
+            "campaigns": "2 a month",
+            "click": 0.012,
+            "unsub": 0.004,
+            "flows": "welcome"
+          }
+        }
+      },
+      "unlocks": [
+        "email_click_rate",
+        "unsubscribe_rate",
+        "messages_per_contact",
+        "delivery_rate"
+      ]
+    },
+    {
+      "id": "E4",
+      "name": "Units per order",
+      "plain": "How many items each order contains, so bundles and cross-selling can be judged.",
+      "adds": [
+        "orders.units (≥ 1)"
+      ],
+      "effort": "small",
+      "changes_intake": true,
+      "serves_plans": [
+        1,
+        8,
+        9,
+        46
+      ],
+      "params": {
+        "mean_units": {
+          "Luna Home": 2.2,
+          "Brote Cosmetics": 1.9,
+          "Roble Muebles": 1.15
+        },
+        "rule": "1 + Poisson(mean − 1)"
+      },
+      "unlocks": [
+        "units_per_order"
+      ]
+    },
+    {
+      "id": "E5",
+      "name": "Refund reasons",
+      "plain": "Why each refund happened — damaged, wrong item, not as described, late, or the customer changed their mind — so preventable returns can be told apart.",
+      "adds": [
+        "refunds.reason CHECK in (damaged, wrong_item, not_as_described, late_delivery, changed_mind); all but changed_mind count as avoidable"
+      ],
+      "effort": "small",
+      "changes_intake": true,
+      "serves_plans": [
+        11,
+        12,
+        40
+      ],
+      "params": {
+        "Luna Home": {
+          "damaged": 0.2,
+          "wrong_item": 0.08,
+          "not_as_described": 0.2,
+          "late_delivery": 0.07,
+          "changed_mind": 0.45
+        },
+        "Brote Cosmetics": {
+          "damaged": 0.15,
+          "wrong_item": 0.1,
+          "not_as_described": 0.3,
+          "late_delivery": 0.05,
+          "changed_mind": 0.4
+        },
+        "Roble Muebles": {
+          "damaged": 0.35,
+          "wrong_item": 0.05,
+          "not_as_described": 0.25,
+          "late_delivery": 0.2,
+          "changed_mind": 0.15
+        }
+      },
+      "unlocks": [
+        "avoidable_return_share"
+      ]
+    },
+    {
+      "id": "E6",
+      "name": "Agent and automation output counts",
+      "plain": "For each AI agent and automation, how much work it produced each month, how much of it a person accepted, how often a person had to step in, and what the AI cost.",
+      "adds": [
+        "component_months.outputs, outputs_accepted, exceptions, ai_cost_eur (nullable; automation and agent components only)"
+      ],
+      "effort": "small",
+      "changes_intake": false,
+      "serves_plans": [
+        49,
+        50,
+        51,
+        52,
+        53,
+        60,
+        61,
+        69,
+        70,
+        71,
+        72
+      ],
+      "params": {
+        "Luna analytics agent (plan 50)": "4 outputs a month (weekly report), 3–4 accepted, no exceptions; AI cost = Σ generation cost of the month's report drafts",
+        "Luna cart-recovery flow (plan 65)": "30–31 runs a month (daily); outputs = messages sent (E3); 0–3 exceptions; no AI cost"
+      },
+      "unlocks": [
+        "output_acceptance_rate",
+        "cost_per_accepted_output",
+        "ai_cost_per_output",
+        "exception_rate"
+      ]
+    }
+  ]
+}

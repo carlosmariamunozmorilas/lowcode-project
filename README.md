@@ -66,7 +66,7 @@ week shown.
 | Requirement | Here |
 |---|---|
 | Data model, ≥ 3 related tables | 18 tables in the v2 MVP — [specification v2](docs/specification-v2.md); [ERD](docs/design/erd.md) *v1, revised for Week 5* |
-| Automations: scheduled, event-triggered, human approval | Daily shop-data intake · below-target alert when a client's new data lands · approval routing to a named lead, plus a monthly client report drafted by a read-only AI — [portfolio plan](docs/portfolio/portfolio-plan.md) |
+| Automations: scheduled, event-triggered, human approval | Instant reply to a new inquiry, with a booking link for the onboarding call · daily shop-data intake · approval routing to a named lead, plus a monthly client report drafted by a read-only AI — [portfolio plan](docs/portfolio/portfolio-plan.md) |
 | ≥ 2 roles, enforced on the data | Consultant, lead and admin; each consultant sees only their assigned clients, and nobody approves their own work — [roles](docs/design/roles.md) *v1, revised for Week 5* |
 | Level-1 data flow diagram | [DFD](docs/design/dfd.md) *v1, revised for Week 8* |
 | STRIDE threat analysis | [STRIDE](docs/design/stride.md) *v1, revised for Week 8 — adds one consultant reaching another's clients* |
