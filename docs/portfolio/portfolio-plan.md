@@ -5,17 +5,29 @@ re-mapped on 27 October to the project brief — which requires **one scheduled
 automation, one triggered by an event and one with a human approval step** —
 and re-aimed on 30 October at **product v2**: an agency that advises several
 online stores and builds growth systems for them
-([`product-definition-v2.md`](../product-definition-v2.md)). Each one ships as
-`automation-0N.md` in this folder, in the week shown.
+([`product-definition-v2.md`](../product-definition-v2.md)), and re-mapped on
+4 November so that the first automation is the agency's reply to a new inquiry.
+Each one ships as `automation-0N.md` in this folder, in the week shown.
 
 > **"Most people are short on automations at this point."** That is the Week 11 sheet, describing where the class is when the project is due. Week 4 gives you one, and Weeks 5, 7 and 8 each prompt another; treating the portfolio as an end-of-course task is the single biggest cause of lost marks on a course shaped like this.
 
 | # | Automation | Brief type | Trigger | Week |
 |---|---|---|---|---|
-| 1 | Shop data intake | **Scheduled** | daily, 06:00 | 4 |
-| 2 | Below-target alert | **Triggered by an event** | the application finishes loading a client's new data | 5 |
+| 1 | Reply to a new inquiry | **Triggered by an event** | a prospective client's email arrives | 4 |
+| 2 | Shop data intake | **Scheduled** | daily, 06:00 | 5 |
 | 3 | Approval routing | **Human approval step** | an action is submitted; its named lead decides | 7 |
 | 4 | Monthly client report | Scheduled, with a read-only AI step | first working day of the month | 8, written up 11 |
+| — | Below-target alert *(optional)* | Triggered by an event | the application finishes loading a client's new data | if time after Week 7 |
+
+**What changed on 4 November, and why.** Automation 1 is now Scaling's reply to
+a prospective client's email — the agency's front door, before any client
+exists in the app ([`automation-01.md`](automation-01.md)). It is a real,
+everyday agency process and a true event trigger, and it can be built without
+the app being reachable from the internet, which a Make scenario calling
+`localhost` cannot do before Week 10. The shop-data intake keeps its whole
+design and moves to Week 5 as automation 2, still the scheduled one. The
+below-target alert is no longer needed for the brief's event-triggered type
+and becomes optional.
 
 **What changed on 30 October, and why.** v2 serves several client stores, and
 every result is calculated from each store's own orders, sessions and ad spend
@@ -41,19 +53,19 @@ From the Week 4 sheet, non-negotiable:
 
 The brief adds: **a successful test run of each**, shown in a screenshot.
 
-> ⚠️ **Point 1 has to come from you.** The Week 4 sheet says *"Bring a real one. Contrived scenarios are obvious and they mark badly."* I can design the architecture; the names, frequencies and minutes-per-week are yours, and they are what makes it credible. All four replace work an agency account team really does for its clients — exporting and copying each store's figures, noticing when something stops paying, chasing sign-off, writing the monthly client report.
+> ⚠️ **Point 1 has to come from you.** The Week 4 sheet says *"Bring a real one. Contrived scenarios are obvious and they mark badly."* I can design the architecture; the names, frequencies and minutes-per-week are yours, and they are what makes it credible. All four replace work an agency team really does — answering a new inquiry, exporting and copying each store's figures, chasing sign-off, writing the monthly client report.
 
 ---
 
 ## The shared contract
 
-All four reach the application only through its API. None touches the database, and **none computes ROI or decides anything**: Make moves data and messages, the application does the maths in `roi.py` and enforces the rules in `lifecycle.py`, where both are tested.
+Automations 2–4 reach the application only through its API. None touches the database, and **none computes ROI or decides anything**: Make moves data and messages, the application does the maths in `roi.py` and enforces the rules in `lifecycle.py`, where both are tested. **Automation 1 is the exception:** it runs before a client exists and does not touch the application at all.
 
 | Direction | Route | Used by |
 |---|---|---|
-| Make → app, write | `POST /api/events` | 1 · intake, 2 · alert record |
-| Make → app, read | `GET /api/metrics` | 2 · alert, 3 · approval routing, 4 · client report |
-| App → Make, announce | Make custom webhook | 2 · alert, 3 · approval routing |
+| Make → app, write | `POST /api/events` | 2 · intake, optional alert record |
+| Make → app, read | `GET /api/metrics` | 3 · approval routing, 4 · client report, optional alert |
+| App → Make, announce | Make custom webhook | 3 · approval routing, optional alert |
 
 The writes send:
 
@@ -74,20 +86,49 @@ announcement makes Make read the true state and do nothing, and no content sits
 in Make's execution history. If Make is down, the row stays undelivered and
 goes out with the next one.
 
-Platform: **Make**. Free tier allows multi-step scenarios and 1,000 operations a month; Zapier's free tier caps at two steps and will not carry automation 1. *Operations budget to check in Week 4:* a daily run across three clients must stay inside the free tier — batch rows per request rather than one request per order.
+Platform: **Make**. Free tier allows multi-step scenarios and 1,000 operations a month; Zapier's free tier caps at two steps and will not carry automations 1 or 2. *Operations budget to check in Week 4:* a daily run across three clients must stay inside the free tier — batch rows per request rather than one request per order.
 
-**Together they form one loop:** each client's new data arrives (1) → part of a client's growth system falls below target, and its consultant is told (2) → the consultant proposes an action and its named lead is asked to approve it (3) → the result is measured from the store's own orders, and the monthly report explains the client's system ROI (4).
+**Together they form one loop:** a store owner asks for help and is answered at once, with a booking link for the onboarding call (1) → once they are a client, their new data arrives each day (2) → the consultant proposes an action and its named lead is asked to approve it (3) → the result is measured from the store's own orders, and the monthly report explains the client's system ROI (4).
 
 ---
 
-## Automation 1 — Shop data intake · *scheduled*
-**Week 4 · 4 November**
+## Automation 1 — Reply to a new inquiry · *triggered by an event*
+**Week 4 · 4 November** · full entry: [`automation-01.md`](automation-01.md)
+
+**Replaces:** reading the inquiry inbox and writing each first reply by hand —
+who the agency is, how it works, when to meet, what to prepare. *(Who, how
+many a week, how many minutes — yours to fill.)*
+
+**Scenario** (built 4 November, inactive): Make custom mailhook (instant) →
+settings and safe fields → filter out auto-replies, `noreply` senders and the
+agency's own address → Gmail API: has this reply gone to this address in the
+last 30 days? → send the fixed reply in the same thread, with a link to the
+intake form (a Google Form whose confirmation page holds the Calendly booking
+link, so the form comes before the call) → tell the team to follow up
+personally; an error route tells the team to reply by hand. No data store: the
+Sent folder is the record.
+
+**No AI, on purpose:** the inbound email is untrusted text, and a fixed template
+can be tested and its promises reviewed once.
+
+**Fires twice** → the Sent-folder search finds the first reply: one reply.
+**Fails halfway** → a failed send tells the team and marks the run as failed;
+nothing was sent, so a redelivery retries.
+**Third-party data** → a prospect's name, address and message, through Gmail,
+Make and Calendly — the portfolio's first member-of-the-public personal data;
+lawful basis is answering their own request, and an inquiry is never treated
+as marketing consent.
+
+---
+
+## Automation 2 — Shop data intake · *scheduled*
+**Week 5 · 11 November** *(moved from Week 4 on 4 November)*
 
 **Replaces:** every morning, for each client, exporting yesterday's orders, sessions and ad spend from the store platform, the analytics tool and the ad accounts, and pasting them into each client's reporting sheet by hand. *(Who, which platforms, how many clients, how many minutes — yours to fill.)*
 
 **Where the data comes from:** the client stores are fictional. A generator script writes each store's daily rows into a Google Sheet, one tab per data type, as a store platform's export would. The automation does not know or care that the rows are generated — which is the point: replacing the Sheet with a real export later changes nothing downstream.
 
-**Why a schedule and not a webhook:** the exports are daily batches at a known time, so a schedule is right. This is the opposite of a lead form, where every minute of latency costs money. One run a day is a trivial number of operations — the cost question in the Week 4 forum is worth answering with this contrast.
+**Why a schedule and not a webhook:** the exports are daily batches at a known time, so a schedule is right. This is the opposite of automation 1, a new inquiry, where every minute of latency costs money. One run a day is a trivial number of operations.
 
 **Scenario**
 
@@ -99,7 +140,7 @@ Platform: **Make**. Free tier allows multi-step scenarios and 1,000 operations a
 | 4 | HTTP · Make a request | `POST /api/events`, `source: shop_data`, signed, with `client_id` |
 | 5 | Error handler route | logs 4xx without retrying |
 
-**App behaviour:** validates each row and records it in `orders`, `sessions` or `ad_spend` for that client, `recorded_by` = the intake service user. Each row carries its own `external_id` — `"{client}:{type}:{date}:{row id}"` — so a row already loaded is skipped. A refund arrives as its own row pointing at the original order, which stays untouched. When a client's batch is loaded, the application writes a `data.loaded` announcement — which is what triggers automation 2.
+**App behaviour:** validates each row and records it in `orders`, `sessions` or `ad_spend` for that client, `recorded_by` = the intake service user. Each row carries its own `external_id` — `"{client}:{type}:{date}:{row id}"` — so a row already loaded is skipped. A refund arrives as its own row pointing at the original order, which stays untouched. When a client's batch is loaded, the application writes a `data.loaded` announcement — which is what triggers the optional below-target alert.
 
 **Fires twice** → every row's `external_id` already exists: a no-op.
 
@@ -107,16 +148,16 @@ Platform: **Make**. Free tier allows multi-step scenarios and 1,000 operations a
 
 **Third-party data** → order values, costs, channels and session counts — **no customer names, emails or addresses**: the orders are anonymous by design. Commercially sensitive for a real store, and they cross Make's and Google's servers. In this project the figures are synthetic. The honest write-up notes what would change with a real client's data: a processing agreement, and where Make stores data.
 
-> **What the Week 4 forum asks:** *"Which step could the visual tool not do on its own?"* The handler: validating each row, matching a refund to its order, refusing an unknown client or channel, and skipping duplicates. That logic lives in the application, generated by the AI and reviewed — which is also where the prompts for point 4 come from.
+> **The Week 4 forum question, answered for this automation:** *"Which step could the visual tool not do on its own?"* The handler: validating each row, matching a refund to its order, refusing an unknown client or channel, and skipping duplicates. That logic lives in the application, generated by the AI and reviewed — which is also where the prompts for point 4 come from.
 
 ---
 
-## Automation 2 — Below-target alert · *triggered by an event*
-**Week 5 · 11 November**
+## Optional — Below-target alert · *triggered by an event*
+**If time after Week 7** *(was automation 2 until 4 November; automation 1 now covers the brief's event-triggered type)*
 
 **Replaces:** noticing weeks late that a campaign programme or an automation stopped paying for one client, or that a pilot's measurement window ended and nobody read the result.
 
-**The event:** the application finishes loading a client's new data (`data.loaded`, from automation 1). Not a separate schedule: the check runs when there is something new to check.
+**The event:** the application finishes loading a client's new data (`data.loaded`, from automation 2). Not a separate schedule: the check runs when there is something new to check.
 
 **Scenario**
 
@@ -228,9 +269,10 @@ Capture it while it is on screen. Reconstructing a screenshot in January is how 
 
 - [ ] The Make scenario, whole, in one shot
 - [ ] A successful run in Make's history — the brief requires one per automation
-- [ ] The result visible **in the application** — the loaded orders, the alert, the decision on the timeline, the report draft
+- [ ] The result visible **in the application** — the loaded orders, the decision on the timeline, the report draft; for automation 1, the reply in the prospect's inbox
 - [ ] A duplicate delivery being refused — the screenshot almost nobody has
-- [ ] For automation 1, a refund recorded alongside the original order
+- [ ] For automation 1, an out-of-office reply stopped by the filter
+- [ ] For automation 2, a refund recorded alongside the original order
 - [ ] For automation 3, a wrong person refused when they open the approval link
 - [ ] For automation 4, the consultant's edits to the AI draft
 - [ ] The verbatim prompts used to generate the handler
@@ -241,9 +283,10 @@ Capture it while it is on screen. Reconstructing a screenshot in January is how 
 
 | | Brief type | Built | Written up | Status |
 |---|---|---|---|---|
-| 1 · Shop data intake | Scheduled | Week 4 | Week 4 | |
-| 2 · Below-target alert | Event-triggered | Week 5 | Week 5–6 | |
+| 1 · Reply to a new inquiry | Event-triggered | Week 4 | Week 4 | designed 4 Nov |
+| 2 · Shop data intake | Scheduled | Week 5 | Week 5 | |
 | 3 · Approval routing | Human approval | Week 7 | Week 7 | |
 | 4 · Monthly client report | Scheduled, AI | Week 8 / break | Week 11 | |
+| Optional · Below-target alert | Event-triggered | after Week 7 | — | |
 
 Four, not three. The brief's minimum is three of the three types; the fourth is the AI one, and the cheapest mark on the course: it reads a record that already exists.

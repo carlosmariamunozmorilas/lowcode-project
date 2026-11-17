@@ -136,7 +136,7 @@ type it in.
   demo proves the app *measures correctly*; it does not prove that any tactic
   works. Noise, seasonality and failing actions are included on purpose.
 - **Built to change source:** the app reads the same tables whoever fills them.
-  Today the generator; from Week 4 a Make automation loading new days from a
+  Today the generator; from Week 5 a Make automation loading new days from a
   Google Sheet; later, if there is time, exports or a Shopify development store.
 
 ## The 72 ROI Action Plans
@@ -196,8 +196,8 @@ the append-only history with database triggers, and Werkzeug scrypt passwords.
 
 | Brief type | Automation | Week |
 |---|---|---|
-| Scheduled | Daily intake of new fictional orders, sessions and spend from a Google Sheet, through the signed API | 4 |
-| Event-triggered | When a component's monthly ROI falls below its client's target, or an action's window ends, notify the consultant | 5–7 |
+| Event-triggered | A store owner emails the agency asking for help: an instant reply introduces the team, links to a booking page for the onboarding call and lists what to prepare; the team is told to follow up (re-mapped 4 November) | 4 |
+| Scheduled | Daily intake of new fictional orders, sessions and spend from a Google Sheet, through the signed API | 5 |
 | Human approval | A submitted action is routed to its named lead, who decides **in the app** | 7 |
 | Scheduled, AI | A read-only monthly client report drafted from the dashboard figures, reviewed before sending (design from plan 50) | 8–11 |
 
@@ -206,9 +206,9 @@ the append-only history with database triggers, and Werkzeug scrypt passwords.
 | Requirement | v2 answer |
 |---|---|
 | ≥ 3 related tables | Eighteen, linked through clients, actions and components |
-| ≥ 3 automations, one scheduled, one event-triggered, one with human approval | The four above |
+| ≥ 3 automations, one scheduled, one event-triggered, one with human approval | The four above; a below-target alert stays optional |
 | ≥ 2 roles enforced on the data | Consultant, lead and admin; client isolation and reviewer independence on every query |
-| DFD, STRIDE, GDPR | To revise for v2; GDPR becomes simpler — the fictional orders hold no customer names or contact details, only staff data is personal |
+| DFD, STRIDE, GDPR | To revise for v2; GDPR becomes simpler — the fictional orders hold no customer names or contact details; the personal data is the team's and, through the inquiry reply, prospects' names, addresses and messages |
 
 ## Out of scope for the MVP
 
