@@ -24,6 +24,9 @@ from db import get_db, transaction
 bp = Blueprint("api", __name__, url_prefix="/api")
 
 MAX_BODY_BYTES = 2_000_000
+MAX_ID_CHARS = 100      # external ids and customer references
+MAX_TEXT_CHARS = 200    # short text such as a channel name
+MAX_DRAFT_CHARS = 20_000
 
 
 class Refused(Exception):
@@ -65,9 +68,11 @@ def finite(value, name: str, *, minimum: float = 0.0) -> float:
     return float(value)
 
 
-def text(value, name: str) -> str:
+def text(value, name: str, max_chars: int = MAX_TEXT_CHARS) -> str:
     if not isinstance(value, str) or not value.strip():
         raise ValueError(f"{name} is required")
+    if len(value.strip()) > max_chars:
+        raise ValueError(f"{name} must be {max_chars} characters or fewer")
     return value.strip()
 
 
@@ -87,12 +92,18 @@ def events():
         event = json.loads(request.get_data() or b"{}")
     except ValueError:
         raise Refused(400, "body is not JSON") from None
+    if not isinstance(event, dict):
+        raise Refused(400, "body must be a JSON object")
     event_type = event.get("event_type")
     external_id = event.get("external_id")
+    if not isinstance(event_type, str):
+        raise Refused(400, "event_type must be text")
     if event_type not in scope["events"]:
         raise Refused(403, f"this automation may not send '{event_type}'")
     if not isinstance(external_id, str) or not external_id:
         raise Refused(400, "external_id is required")
+    if len(external_id) > MAX_ID_CHARS:
+        raise Refused(400, f"external_id must be {MAX_ID_CHARS} characters or fewer")
 
     conn = get_db()
     source = user["automation_name"]
@@ -158,10 +169,12 @@ def _shop_data(conn, source, client_id, external_id, event):
     totals = {"expected_rows": expected_rows if isinstance(expected_rows, int) else None,
               "expected_revenue": expected_revenue
               if isinstance(expected_revenue, (int, float)) else None,
-              "parsed_rows": len(orders)}
+              "parsed_rows": len(orders) if isinstance(orders, list) else None}
     try:
-        if not isinstance(orders, list) or not all(isinstance(o, dict) for o in orders):
-            raise ValueError("orders must be a list of rows")
+        for name, given in (("orders", orders), ("refunds", refunds), ("sessions", sessions),
+                            ("ad_spend", spend)):
+            if not isinstance(given, list) or not all(isinstance(row, dict) for row in given):
+                raise ValueError(f"{name} must be a list of rows")
         parsed_revenue = round(sum(finite(o.get("net_revenue_eur"), "net_revenue_eur")
                                    for o in orders), 2)
         totals["parsed_revenue"] = parsed_revenue
@@ -178,9 +191,9 @@ def _shop_data(conn, source, client_id, external_id, event):
             for name in ("product_cost_eur", "shipping_cost_eur", "payment_fee_eur"):
                 # Missing stays missing (NULL): incomplete, never zero.
                 costs.append(None if o.get(name) is None else finite(o[name], name))
-            rows.append((client_id, text(o.get("external_id"), "external_id"),
+            rows.append((client_id, text(o.get("external_id"), "external_id", MAX_ID_CHARS),
                          iso_date(o.get("ordered_at"), "ordered_at"),
-                         text(o.get("customer_ref"), "customer_ref"),
+                         text(o.get("customer_ref"), "customer_ref", MAX_ID_CHARS),
                          1 if o.get("is_new_customer") else 0, text(o.get("channel"), "channel"),
                          finite(o.get("net_revenue_eur"), "net_revenue_eur"),
                          finite(o.get("discount_eur", 0), "discount_eur"), *costs))
@@ -198,13 +211,14 @@ def _shop_data(conn, source, client_id, external_id, event):
             for r in refunds:
                 order = conn.execute(
                     "SELECT id FROM orders WHERE external_id = ? AND client_id = ?",
-                    (text(r.get("order_external_id"), "order_external_id"), client_id)).fetchone()
+                    (text(r.get("order_external_id"), "order_external_id", MAX_ID_CHARS),
+                     client_id)).fetchone()
                 if order is None:
                     raise ValueError(f"refund for unknown order {r.get('order_external_id')}")
                 conn.execute(
                     """INSERT INTO refunds (order_id, external_id, refunded_at, amount_eur,
                            restocked_cost_eur) VALUES (?, ?, ?, ?, ?)""",
-                    (order["id"], text(r.get("external_id"), "external_id"),
+                    (order["id"], text(r.get("external_id"), "external_id", MAX_ID_CHARS),
                      iso_date(r.get("refunded_at"), "refunded_at"),
                      finite(r.get("amount_eur"), "amount_eur"),
                      finite(r.get("restocked_cost_eur", 0), "restocked_cost_eur")))
@@ -245,10 +259,10 @@ def _alert(conn, source, client_id, external_id, event):
 
 
 def _report_draft(conn, source, client_id, external_id, event):
-    month = event.get("month", "")
+    month = event.get("month")
     try:
-        draft = text(event.get("draft_text"), "draft_text")
-        if len(month) != 7 or month[4] != "-":
+        draft = text(event.get("draft_text"), "draft_text", MAX_DRAFT_CHARS)
+        if not isinstance(month, str) or len(month) != 7 or month[4] != "-":
             raise ValueError("month must look like 2026-10")
         cost = event.get("generation_cost_eur")
         cost = None if cost is None else finite(cost, "generation_cost_eur")
