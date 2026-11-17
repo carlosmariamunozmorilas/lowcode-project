@@ -34,6 +34,7 @@ changed to match how this repository already works; each change is marked
 | Password storage | Werkzeug scrypt | ✍️ (recorded in the specification, 28 Oct) |
 | Missing costs | stay missing (NULL) and mark a result incomplete; never counted as zero | ✍️ |
 | A rejected shop-data batch | frees its `external_id`; only an accepted batch holds it (4 Nov) | ✍️ |
+| Where the automations' signing keys live in Make | Team variables (readable in Make), one key per automation with its own permissions, plus the mitigations in `docs/portfolio/automation-strategy.md` (16 Nov, confirmed 17 Nov) | ✍️ |
 
 ## Technology
 

@@ -99,7 +99,10 @@ makes a random one for each run and says so. For the Make automations the app
 also reads `MAKE_WEBHOOK_DATA_LOADED` and `MAKE_WEBHOOK_ACTIONS` (where its
 announcements go) and `OUTBOX_SECRET` (which signs them); without the webhook
 URLs the announcements simply wait in the outbox, and
-`flask --app app send-announcements` sends any that are waiting. What was built, and how it
+`flask --app app send-announcements` sends any that are waiting. Locally these
+values go in a `.env` file next to `app.py`, which the `flask` command loads
+(python-dotenv); [`.env.example`](.env.example) lists every name with no values.
+`.env` is never committed. What was built, and how it
 differs from the specification, is in
 [`docs/v2-build-notes.md`](docs/v2-build-notes.md).
 
