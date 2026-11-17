@@ -1,0 +1,175 @@
+CA2 data layer check
+====================
+
+DATABASE: demo.db (fresh demo database)
+  ✓ 18 table(s) found: action_history, actions, ad_spend, assignments, automation_events, client_assignments, client_reports, clients, component_months, components, orders, outbound_events, plan_template_tags, plan_templates, refunds, sessions, user_roles, users
+  ⚠ No schema_migrations table, so this database was not built with tools/migrate.py.
+
+TABLE: action_history
+  ✓ Primary key: id
+  ✓ Required (NOT NULL): action_id, to_status, actor_id, created_at
+  ⚠ No UNIQUE rule. Is there anything here that must never be duplicated (email, code, tag)?
+  ⚠ No CHECK rule. Is there a column with a fixed list of allowed values, or a number/date with limits?
+  ✓ Foreign key action_history.actor_id -> users.id, ON DELETE RESTRICT
+  ✓ Foreign key action_history.action_id -> actions.id, ON DELETE RESTRICT
+
+TABLE: actions
+  ✓ Primary key: id
+  ✓ Required (NOT NULL): client_id, discipline, title, benefit_type, setup_cost_eur, setup_hours, operating_cost_eur, operating_hours, hurdle_eur, requester_id, status, created_at
+  ⚠ No UNIQUE rule. Is there anything here that must never be duplicated (email, code, tag)?
+  ✓ CHECK rules: 19
+  ✓ Foreign key actions.reviewer_id -> users.id, ON DELETE RESTRICT
+  ✓ Foreign key actions.owner_id -> users.id, ON DELETE RESTRICT
+  ✓ Foreign key actions.requester_id -> users.id, ON DELETE RESTRICT
+  ✓ Foreign key actions.plan_template_id -> plan_templates.id, ON DELETE RESTRICT
+  ✓ Foreign key actions.client_id -> clients.id, ON DELETE RESTRICT
+
+TABLE: ad_spend
+  ✓ Primary key: id
+  ✓ Required (NOT NULL): client_id, date, channel, spend_eur
+  ✓ UNIQUE: client_id, date, channel
+  ✓ CHECK rules: 1
+  ✓ Foreign key ad_spend.client_id -> clients.id, ON DELETE RESTRICT
+
+TABLE: assignments
+  ✗ No primary key. Every table needs one (usually: id INTEGER PRIMARY KEY).
+  ✓ Required (NOT NULL): action_id, customer_ref, group, assigned_at
+  ✓ UNIQUE: action_id, customer_ref
+  ✓ CHECK rules: 1
+  ✓ Foreign key assignments.action_id -> actions.id, ON DELETE RESTRICT
+
+TABLE: automation_events
+  ✓ Primary key: id
+  ✓ Required (NOT NULL): source, event_type, external_id, payload, status, received_at
+  ✓ UNIQUE: source, external_id (only for some rows: a partial index)
+  ✓ CHECK rules: 1
+  ✓ Foreign key automation_events.client_id -> clients.id, ON DELETE RESTRICT
+
+TABLE: client_assignments
+  ✓ Primary key: user_id, client_id
+  ⚠ No NOT NULL columns. Is every field really optional?
+  ⚠ No UNIQUE rule. Is there anything here that must never be duplicated (email, code, tag)?
+  ⚠ No CHECK rule. Is there a column with a fixed list of allowed values, or a number/date with limits?
+  ✓ Foreign key client_assignments.client_id -> clients.id, ON DELETE RESTRICT
+  ✓ Foreign key client_assignments.user_id -> users.id, ON DELETE RESTRICT
+
+TABLE: client_reports
+  ✓ Primary key: id
+  ✓ Required (NOT NULL): client_id, month, draft_text, status, was_corrected, created_at
+  ✓ UNIQUE: client_id, month (only for some rows: a partial index)
+  ✓ CHECK rules: 5
+  ✓ Foreign key client_reports.reviewed_by -> users.id, ON DELETE RESTRICT
+  ✓ Foreign key client_reports.client_id -> clients.id, ON DELETE RESTRICT
+
+TABLE: clients
+  ✓ Primary key: id
+  ✓ Required (NOT NULL): name, sector, products, audience, main_channels, avg_order_value_eur, contribution_margin, purchase_frequency, monthly_budget_eur, roi_target, hourly_rate_eur, business_model, is_fictional, is_active, created_at
+  ✓ UNIQUE: name
+  ✓ CHECK rules: 8
+      (no foreign keys in this table)
+
+TABLE: component_months
+  ✓ Primary key: id
+  ✓ Required (NOT NULL): component_id, client_id, month, operating_cost_eur, operating_hours, recorded_by, created_at
+  ✓ UNIQUE: client_id, month, benefit_key (only for some rows: a partial index)
+  ✓ CHECK rules: 7
+  ✓ Foreign key component_months.recorded_by -> users.id, ON DELETE RESTRICT
+  ✓ Foreign key component_months.supersedes_id -> component_months.id, ON DELETE RESTRICT
+  ✓ Foreign key component_months.client_id -> clients.id, ON DELETE RESTRICT
+  ✓ Foreign key component_months.component_id -> components.id, ON DELETE RESTRICT
+
+TABLE: components
+  ✓ Primary key: id
+  ✓ Required (NOT NULL): client_id, name, discipline, lifecycle_stage, benefit_type, status, started_on
+  ⚠ No UNIQUE rule. Is there anything here that must never be duplicated (email, code, tag)?
+  ✓ CHECK rules: 4
+  ✓ Foreign key components.origin_action_id -> actions.id, ON DELETE RESTRICT
+  ✓ Foreign key components.client_id -> clients.id, ON DELETE RESTRICT
+
+TABLE: orders
+  ✓ Primary key: id
+  ✓ Required (NOT NULL): client_id, external_id, ordered_at, customer_ref, is_new_customer, channel, net_revenue_eur, discount_eur
+  ✓ UNIQUE: external_id
+  ✓ CHECK rules: 6
+  ✓ Foreign key orders.client_id -> clients.id, ON DELETE RESTRICT
+
+TABLE: outbound_events
+  ✓ Primary key: id
+  ✓ Required (NOT NULL): event_type, created_at
+  ⚠ No UNIQUE rule. Is there anything here that must never be duplicated (email, code, tag)?
+  ⚠ No CHECK rule. Is there a column with a fixed list of allowed values, or a number/date with limits?
+  ✓ Foreign key outbound_events.client_id -> clients.id, ON DELETE RESTRICT
+
+TABLE: plan_template_tags
+  ✓ Primary key: plan_template_id, kind, value
+  ⚠ No NOT NULL columns. Is every field really optional?
+  ⚠ No UNIQUE rule. Is there anything here that must never be duplicated (email, code, tag)?
+  ✓ CHECK rules: 1
+  ✓ Foreign key plan_template_tags.plan_template_id -> plan_templates.id, ON DELETE RESTRICT
+
+TABLE: plan_templates
+  ✓ Primary key: id
+  ✓ Required (NOT NULL): discipline, title, summary, benefit_type, lifecycle_stage, default_window_days, default_post_period_days, default_hurdle_eur, setup_hours, data_fit, featured, source_file
+  ⚠ No UNIQUE rule. Is there anything here that must never be duplicated (email, code, tag)?
+  ✓ CHECK rules: 9
+      (no foreign keys in this table)
+
+TABLE: refunds
+  ✓ Primary key: id
+  ✓ Required (NOT NULL): order_id, external_id, refunded_at, amount_eur, restocked_cost_eur
+  ✓ UNIQUE: external_id
+  ✓ CHECK rules: 2
+  ✓ Foreign key refunds.order_id -> orders.id, ON DELETE RESTRICT
+
+TABLE: sessions
+  ✓ Primary key: id
+  ✓ Required (NOT NULL): client_id, date, channel, sessions
+  ✓ UNIQUE: client_id, date, channel
+  ✓ CHECK rules: 1
+  ✓ Foreign key sessions.client_id -> clients.id, ON DELETE RESTRICT
+
+TABLE: user_roles
+  ✓ Primary key: user_id, role
+  ⚠ No NOT NULL columns. Is every field really optional?
+  ⚠ No UNIQUE rule. Is there anything here that must never be duplicated (email, code, tag)?
+  ✓ CHECK rules: 1
+  ✓ Foreign key user_roles.user_id -> users.id, ON DELETE RESTRICT
+
+TABLE: users
+  ✓ Primary key: id
+  ✓ Required (NOT NULL): email, full_name, is_service, is_active, created_at
+  ✓ UNIQUE: automation_name; email
+  ✓ CHECK rules: 4
+      (no foreign keys in this table)
+
+ORPHAN ROWS (rows that point at something that does not exist)
+  ✓ None found.
+
+SOURCE CODE: the lowcode-project folder
+  ✓ 27 Python file(s) scanned
+  ✗ routes\actions.py line 149: SQL built with an f-string that builds SQL. Use ? placeholders instead.
+      f"INSERT INTO actions ({', '.join(columns)}) "
+  ✗ routes\actions.py line 250: SQL built with an f-string inside execute(). Use ? placeholders instead.
+      conn.execute(f"UPDATE actions SET {sets} WHERE id = ?",
+  ✗ routes\actions.py line 277: SQL built with an f-string inside execute(). Use ? placeholders instead.
+      cur = conn.execute(f"UPDATE actions SET {sets} WHERE id = ? AND status = ?",
+  ✗ routes\admin.py line 35: SQL built with an f-string that builds SQL. Use ? placeholders instead.
+      f"INSERT INTO clients ({', '.join(values)}) "
+  ✗ scripts\generate_shop_data.py line 247: SQL built with an f-string inside execute(). Use ? placeholders instead.
+      return conn.execute(f"INSERT INTO actions ({cols}) VALUES ({marks})",
+  ✗ scripts\generate_shop_data.py line 538: SQL built with an f-string inside execute(). Use ? placeholders instead.
+      counts = {t: conn.execute(f"SELECT COUNT(*) FROM {t}").fetchone()[0]
+  ✗ tests\conftest.py line 142: SQL built with an f-string inside execute(). Use ? placeholders instead.
+      return conn.execute(f"INSERT INTO actions ({cols}) VALUES ({', '.join('?' for _ in base)})",
+  ✗ tests\test_api.py line 24: SQL built with an f-string inside execute(). Use ? placeholders instead.
+      return app_conn.execute(f"SELECT COUNT(*) FROM {table}").fetchone()[0]
+  ✗ tests\test_generator.py line 46: SQL built with an f-string inside execute(). Use ? placeholders instead.
+      rows_one = one.execute(f"SELECT * FROM {table} ORDER BY id" if table != "assignments"
+  ✗ tests\test_generator.py line 48: SQL built with an f-string inside execute(). Use ? placeholders instead.
+      rows_two = two.execute(f"SELECT * FROM {table} ORDER BY id" if table != "assignments"
+  ✓ PRAGMA foreign_keys = ON is set in: db.py:34
+      Make sure EVERY connection goes through that code, not just one of them.
+  ✓ No lists at the top of a file that look like in-memory storage.
+
+SUMMARY
+  ✗ 11 thing(s) to fix, 15 thing(s) to look at.
