@@ -71,8 +71,42 @@ flowchart LR
 | One Make webhook per receiving scenario (A3, A4) | Make | Created |
 | Shop-data feed Sheet — one row per store per day (1 Nov 2026 – 31 Jan 2027), with the export's own control totals | Google Sheets, from `scripts/export_shop_feed.py` | Created |
 | Run log Sheet — every scenario writes its outcomes and errors | Google Sheets | Created |
-| Team variables: app URL, team inbox, demo inbox, one HMAC secret per automation | Make | Created; the four secrets are still placeholders. **Carlos's decision (16 Nov): the secrets live in Make team variables**, which Make stores unencrypted |
+| Team variables: app URL, team inbox, demo inbox, one HMAC secret per automation | Make | Created; the four secrets are still placeholders. **Carlos's decision (16 Nov, confirmed 17 Nov): the secrets live in Make team variables**, which Make stores unencrypted; see *Credentials* below |
 | Reachability — Make cannot call `localhost` | hosting | **Open:** the app must be deployed or tunnelled before A2–A5 can run |
+
+### Credentials: where the secrets live, and the remaining risk
+
+**Where each secret is kept**
+
+| Secret | In the app | In Make |
+|---|---|---|
+| One signing key per automation (A2 `shop_intake`, A3 `below_target_alert`, A4 `approval_routing`, A5 `report_draft`) | `.env` (`API_SECRET_*`), never committed; names listed in [`.env.example`](../../.env.example) | Team variables `secret_*` |
+| Key that signs the app's announcements to Make | `.env` (`OUTBOX_SECRET`) | — |
+| Session cookie key | `.env` (`SECRET_KEY`) | — |
+| Make webhook addresses (A3, A4) | `.env` (`MAKE_WEBHOOK_*`) | The webhooks themselves |
+
+**Options considered (17 Nov 2026).** Make's encrypted keychain cannot calculate the HMAC signature the app checks: its Encryptor app offers AES, PGP and an RSA "digital signature", and the `sha256()` function takes the key as plain text. So the realistic choices were:
+
+| Option | Secret readable in Make? | Effect on the app |
+|---|---|---|
+| Team variables (chosen) | Yes, to anyone with access to the team | None |
+| A plain API key in Make's encrypted HTTP keychain | No | The app would stop checking that the message body was not altered |
+| RSA signature: private key in Make's keychain, public key in the app | No, for Make → app | New library and API change; Make would still need a readable key to check the app's announcements (A3, A4) |
+| Move off Make | Depends | Rebuild all five automations |
+
+**Decision (Carlos, 16 Nov, confirmed 17 Nov):** team variables, with the mitigations below.
+✍️ *Why — Carlos to write: the trade-off in his own words.*
+
+**Mitigations**
+
+| Mitigation | Status |
+|---|---|
+| Each automation has its own key and only its own permissions (`AUTOMATION_SCOPES` in `config.py`): a leaked A2 key can send shop data and list the stores' ids and names, but cannot read metrics or reviews | Built |
+| Only Carlos is a member of the Make team "CCT APP" | ✍️ to confirm |
+| Two-factor sign-in on Carlos's Make account (the organisation does not enforce it) | ✍️ to confirm |
+| Rotation: generate new keys, update `.env` and the four team variables, restart the app (about 10 minutes, with the local `set-secrets` script) | Procedure ready, not yet rehearsed |
+| Check on the first run whether a key appears in Make's execution logs | To check on the first A2 run |
+| Secrets never in the repo; GitHub and the Week 8 scanners would flag any that slipped in | In place |
 
 ---
 
